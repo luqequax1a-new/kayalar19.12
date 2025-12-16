@@ -1,5 +1,9 @@
 <section x-data="TopBrands" class="top-brands-wrap clearfix">
     <div class="container">
+        @if (setting('storefront_top_brands_section_title'))
+            <h3 class="section-title">{{ setting('storefront_top_brands_section_title') }}</h3>
+        @endif
+
         <div x-ref="topBrands" class="top-brands swiper clearfix">
             <div class="top-brand-list swiper-wrapper">
                 @foreach ($topBrands as $topBrand)

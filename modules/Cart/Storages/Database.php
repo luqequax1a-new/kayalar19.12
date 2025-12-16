@@ -4,7 +4,6 @@ namespace Modules\Cart\Storages;
 
 use Modules\Cart\Entities\Cart;
 use Darryldecode\Cart\CartCollection;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 
 class Database
@@ -28,16 +27,6 @@ class Database
     {
         $normalizedKey = $this->normalizeKey($key);
 
-        try {
-            Log::info('[CART][DB] get', [
-                'key' => $normalizedKey,
-                'raw_key' => $key,
-                'exists' => (bool) $this->has($normalizedKey),
-                'session_id' => Session::getId(),
-            ]);
-        } catch (\Throwable $e) {
-        }
-
         if ($this->has($normalizedKey)) {
             return new CartCollection(Cart::find($normalizedKey)->data);
         } else {
@@ -48,15 +37,6 @@ class Database
     public function put($key, $value)
     {
         $normalizedKey = $this->normalizeKey($key);
-
-        try {
-            Log::info('[CART][DB] put', [
-                'key' => $normalizedKey,
-                'raw_key' => $key,
-                'session_id' => Session::getId(),
-            ]);
-        } catch (\Throwable $e) {
-        }
 
         if ($row = Cart::find($normalizedKey)) {
             $row->data = $value;

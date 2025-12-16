@@ -1,0 +1,130 @@
+.koleysiyon-grid-section {
+    padding: 60px 0 40px;
+    background-color: #ffffff;
+}
+
+.koleysiyon-grid-inner {
+    max-width: 1120px;
+    margin: 0 auto;
+}
+
+.koleysiyon-grid-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.koleysiyon-grid-title {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.koleysiyon-grid-subtitle {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.koleysiyon-grid {
+    position: relative;
+    padding-bottom: 10px;
+}
+
+.koleysiyon-grid .swiper-button-prev,
+.koleysiyon-grid .swiper-button-next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 5;
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+    color: #111827;
+}
+
+.koleysiyon-grid .swiper-button-prev::after,
+.koleysiyon-grid .swiper-button-next::after {
+    font-size: 14px;
+}
+
+.koleysiyon-grid .swiper-button-prev {
+    left: 8px;
+}
+
+.koleysiyon-grid .swiper-button-next {
+    right: 8px;
+}
+
+.koleysiyon-card {
+    display: flex;
+    flex-direction: column;
+    background-color: #fafafa;
+    border-radius: 14px;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid #e5e7eb;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.koleysiyon-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 18px 35px rgba(15, 23, 42, 0.08);
+    border-color: #d1d5db;
+}
+
+.koleysiyon-card-image img {
+    width: 100%;
+    height: 380px;
+    object-fit: cover;
+    display: block;
+}
+
+.koleysiyon-card-body {
+    padding: 16px 18px 18px;
+    text-align: center;
+}
+
+.koleysiyon-card-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.koleysiyon-card-text {
+    font-size: 14px;
+    color: #4b5563;
+    margin-bottom: 10px;
+}
+
+.koleysiyon-card-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background-color: #111827;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+@media screen and (max-width: 767px) {
+    .koleysiyon-grid-section {
+        padding: 40px 0 30px;
+    }
+
+    .koleysiyon-grid-inner {
+        max-width: 100%;
+    }
+
+    .koleysiyon-grid .swiper-button-prev,
+    .koleysiyon-grid .swiper-button-next {
+        display: none;
+    }
+
+    .koleysiyon-card-image img {
+        height: 260px;
+    }
+}

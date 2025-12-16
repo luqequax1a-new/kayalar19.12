@@ -8,6 +8,10 @@
             <select name="{{ "{$fieldNamePrefix}_product_type" }}" class="form-control custom-select-black product-type" id="{{ "{$fieldNamePrefix}_product_type" }}">
                 <option value="">{{ trans('storefront::storefront.form.please_select') }}</option>
 
+                <option value="all_products" {{ setting("{$fieldNamePrefix}_product_type") === 'all_products' ? 'selected' : '' }}>
+                    Tüm ürünler
+                </option>
+
                 @hasAccess('admin.categories.index')
                     <option value="category_products" {{ setting("{$fieldNamePrefix}_product_type") === 'category_products' ? 'selected' : '' }}>
                         {{ trans('storefront::storefront.form.product_types.category_products') }}
@@ -24,6 +28,12 @@
                     </option>
                 @endunless
 
+                @if (in_array(($fieldNamePrefix ?? ''), ['storefront_carousel_section', 'storefront_carousel_section_2'], true))
+                    <option value="tag_products" {{ setting("{$fieldNamePrefix}_product_type") === 'tag_products' ? 'selected' : '' }}>
+                        Etikete göre ürünler
+                    </option>
+                @endif
+
                 <option value="custom_products" {{ setting("{$fieldNamePrefix}_product_type") === 'custom_products' ? 'selected' : '' }}>
                     {{ trans('storefront::storefront.form.product_types.custom_products') }}
                 </option>
@@ -37,7 +47,13 @@
         </div>
     @endif
 
-    <div class="products-limit {{ in_array(setting("{$fieldNamePrefix}_product_type"), ['latest_products', 'recently_viewed_products','category_products']) ? '' : 'hide' }}">
+    @if (($fieldNamePrefix ?? '') === 'storefront_carousel_section')
+        <div class="tag-products {{ setting("{$fieldNamePrefix}_product_type") === 'tag_products' ? '' : 'hide' }}">
+            {{ Form::select("{$fieldNamePrefix}_tags", 'Etiketler', $errors, $tags ?? [], $settings, ['class' => 'selectize prevent-creation', 'multiple' => true]) }}
+        </div>
+    @endif
+
+    <div class="products-limit {{ in_array(setting("{$fieldNamePrefix}_product_type"), ['all_products','latest_products', 'recently_viewed_products','category_products','tag_products']) ? '' : 'hide' }}">
         {{ Form::number("{$fieldNamePrefix}_products_limit", trans('storefront::attributes.products_limit'), $errors, $settings) }}
     </div>
 

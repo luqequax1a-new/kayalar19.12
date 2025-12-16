@@ -3,7 +3,14 @@ Alpine.store("layout", {
     sidebarCartOpen: false,
     sidebarFilterOpen: false,
     localizationMenuOpen: false,
-    overlay: false,
+    get overlay() {
+        return (
+            this.sidebarMenuOpen ||
+            this.sidebarCartOpen ||
+            this.sidebarFilterOpen ||
+            this.localizationMenuOpen
+        );
+    },
 
     get isOpenSidebarMenu() {
         return this.sidebarMenuOpen;
@@ -23,14 +30,10 @@ Alpine.store("layout", {
 
     openSidebarMenu() {
         this.sidebarMenuOpen = true;
-
-        this.showOverlay();
     },
 
     closeSidebarMenu() {
         this.sidebarMenuOpen = false;
-
-        this.hideOverlay();
     },
 
     openSidebarCart(event) {
@@ -49,45 +52,25 @@ Alpine.store("layout", {
         }
 
         this.sidebarCartOpen = true;
-
-        this.showOverlay();
     },
 
     closeSidebarCart() {
         this.sidebarCartOpen = false;
-
-        this.hideOverlay();
     },
 
     openSidebarFilter() {
         this.sidebarFilterOpen = true;
-
-        this.showOverlay();
     },
 
     closeSidebarFilter() {
         this.sidebarFilterOpen = false;
-
-        this.hideOverlay();
     },
 
     openLocalizationMenu() {
         this.localizationMenuOpen = true;
-
-        this.showOverlay();
     },
 
     closeLocalizationMenu() {
         this.localizationMenuOpen = false;
-
-        this.hideOverlay();
-    },
-
-    showOverlay() {
-        this.overlay = true;
-    },
-
-    hideOverlay() {
-        this.overlay = false;
     },
 });

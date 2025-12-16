@@ -245,6 +245,22 @@
             display: flex;
             align-items: center;
 
+            .home-section-status-dot {
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                margin-left: auto;
+                background: #adb5bd;
+
+                &.is-active {
+                    background: #28a745;
+                }
+
+                &.is-inactive {
+                    background: #dc3545;
+                }
+            }
+
             &:after {
                 content: "";
                 position: absolute;

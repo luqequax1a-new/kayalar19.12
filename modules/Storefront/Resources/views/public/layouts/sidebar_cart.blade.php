@@ -5,6 +5,7 @@
 >
     <div class="sidebar-cart-top">
         <div class="title">
+            
             {{ trans('storefront::layouts.my_cart') }}
 
             <div class="count skeleton" :class="{ skeleton: $store.cart.fetching }" x-text="$store.cart.quantity"></div>

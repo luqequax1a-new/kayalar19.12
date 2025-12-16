@@ -1,35 +1,21 @@
-<section class="landscape-products-wrap">
-    <div class="landscape-products-inner">
-        <div class="products-header">
-            <div class="section-title">
-                {{ trans("storefront::product.related_products") }}
-            </div>
+@if (!empty($relatedProducts) && $relatedProducts->isNotEmpty())
+    <section data-related-products>
+        <div class="tab-products-header text-center">
+            <h3 class="section-title section-title--no-divider">{{ trans("storefront::product.related_products") }}</h3>
         </div>
-    
-        <div class="landscape-products swiper" x-ref="landscapeProducts">
-            <div class="swiper-wrapper">
-                @foreach (range(0, 5) as $skeleton)
-                    <div class="swiper-slide swiper-slide-skeleton">
-                        @include('storefront::public.partials.product_card_skeleton')
-                    </div>
-                @endforeach
 
-                @foreach ($relatedProducts as $relatedProduct)
+        <div class="grid-products products-slider swiper related-products-carousel">
+            <div class="swiper-wrapper">
+                @foreach ($relatedProducts as $rp)
                     <div class="swiper-slide">
-                        @include('storefront::public.partials.product_card', [
-                            'data' => $relatedProduct
-                        ])
+                        <div class="grid-view-products-item">
+                            @include('storefront::public.partials.product_card', ['data' => $rp])
+                        </div>
                     </div>
                 @endforeach
             </div>
-    
-            <div class="swiper-button-next">
-                {{ trans("storefront::layouts.next") }}
-            </div>
-            
-            <div class="swiper-button-prev">
-                {{ trans("storefront::layouts.prev") }}
-            </div>
+
+            <div class="swiper-pagination"></div>
         </div>
-    </div>
-</section>
+    </section>
+@endif

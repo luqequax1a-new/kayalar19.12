@@ -1,7 +1,7 @@
 <div class="list-view-products">
     <template
-        x-for="(product, idx) in products.data"
-        :key="uid()"
+        x-for="(product, idx) in visibleProducts"
+        :key="product.id"
     >
         <div class="list-view-products-item">
             <div x-data="ProductCard(product)" class="list-view-product-card">
@@ -9,17 +9,30 @@
                     <a :href="productUrl" class="product-image"> 
                         <picture>
                             <template x-if="imageSources.avif">
-                                <source :srcset="imageSources.avif" type="image/avif">
+                                <source
+                                    type="image/avif"
+                                    :srcset="imageSrcsets.avif || imageSources.avif"
+                                    sizes="(max-width: 576px) 92vw, (max-width: 992px) 40vw, 400px"
+                                >
                             </template>
                             <template x-if="imageSources.webp">
-                                <source :srcset="imageSources.webp" type="image/webp">
+                                <source :srcset="imageSrcsets.webp || imageSources.webp" type="image/webp">
+                            </template>
+                            <template x-if="Boolean(imageSrcsets.jpeg)">
+                                <source
+                                    type="image/jpeg"
+                                    :srcset="imageSrcsets.jpeg"
+                                    sizes="(max-width: 576px) 92vw, (max-width: 992px) 40vw, 400px"
+                                >
                             </template>
                             <img
                                 class="product-image-img"
                                 :src="imageSources.fallback"
+                                sizes="(max-width: 576px) 92vw, (max-width: 992px) 40vw, 400px"
                                 :alt="productName"
-                                :loading="idx < 4 ? 'eager' : 'lazy'"
-                                :fetchpriority="idx < 4 ? 'high' : 'auto'"
+                                :loading="idx === 0 ? 'eager' : 'lazy'"
+                                :fetchpriority="idx === 0 ? 'high' : 'low'"
+                                decoding="async"
                                 width="400"
                                 height="400"
                             />
@@ -111,7 +124,6 @@
                         </template>
                     </ul>
                 </div>
-
                 <div class="product-card-right">
                     <div class="product-name-and-rating">
                         <a :href="productUrl" class="product-name">

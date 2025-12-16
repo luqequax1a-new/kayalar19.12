@@ -74,19 +74,22 @@ class Category extends Model implements Sitemapable
 
     public static function tree()
     {
-        return Cache::tags('categories')
-            ->rememberForever(md5('categories.tree:' . locale()), function () {
-                return static::with('files')
-                    ->orderByRaw('-position DESC')
-                    ->get()
-                    ->nest();
-            });
+        $key = 'storefront:globals:' . locale() . ':categories:tree:v1';
+
+        return Cache::store('file')->remember($key, now()->addMinutes(10), function () {
+            return static::with('files')
+                ->orderByRaw('-position DESC')
+                ->get()
+                ->nest();
+        });
     }
 
 
     public static function treeList()
     {
-        return Cache::tags('categories')->rememberForever(md5('categories.tree_list:' . locale()), function () {
+        $key = 'storefront:globals:' . locale() . ':categories:tree_list:v1';
+
+        return Cache::store('file')->remember($key, now()->addMinutes(10), function () {
             return static::orderByRaw('-position DESC')
                 ->get()
                 ->nest()
@@ -97,7 +100,9 @@ class Category extends Model implements Sitemapable
 
     public static function keyValuedTreeList()
     {
-        return Cache::tags('categories')->rememberForever(md5('categories.key_valued_tree_list:' . locale()), function () {
+        $key = 'storefront:globals:' . locale() . ':categories:key_valued_tree_list:v1';
+
+        return Cache::store('file')->remember($key, now()->addMinutes(10), function () {
             $categories = static::orderByRaw('-position DESC')
                 ->get()
                 ->nest()
@@ -118,17 +123,18 @@ class Category extends Model implements Sitemapable
 
     public static function searchable()
     {
-        return Cache::tags('categories')
-            ->rememberForever(md5('categories.searchable:' . locale()), function () {
-                return static::where('is_searchable', true)
-                    ->get()
-                    ->map(function ($category) {
-                        return [
-                            'slug' => $category->slug,
-                            'name' => $category->name,
-                        ];
-                    });
-            });
+        $key = 'storefront:globals:' . locale() . ':categories:searchable:v1';
+
+        return Cache::store('file')->remember($key, now()->addMinutes(10), function () {
+            return static::where('is_searchable', true)
+                ->get()
+                ->map(function ($category) {
+                    return [
+                        'slug' => $category->slug,
+                        'name' => $category->name,
+                    ];
+                });
+        });
     }
 
 
@@ -286,9 +292,27 @@ class Category extends Model implements Sitemapable
         $changefreq = setting('support.sitemap.categories_changefreq', Url::CHANGE_FREQUENCY_DAILY);
         $priority = (float) setting('support.sitemap.categories_priority', 0.8);
 
-        return Url::create(route('categories.products.index', $this->slug))
-            ->setLastModificationDate(Carbon::create($this->updated_at))
+        $url = route('categories.products.index', $this->slug);
+
+        if (! is_string($url) || trim($url) === '' || trim($url) === '#') {
+            return [];
+        }
+
+        $tag = Url::create($url)
             ->setChangeFrequency($changefreq)
             ->setPriority($priority);
+
+        if (! empty($this->updated_at)) {
+            try {
+                $tag->setLastModificationDate(
+                    $this->updated_at instanceof \DateTimeInterface
+                        ? $this->updated_at
+                        : Carbon::create($this->updated_at)
+                );
+            } catch (\Throwable $e) {
+            }
+        }
+
+        return $tag;
     }
 }

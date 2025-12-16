@@ -1,8 +1,19 @@
 .featured-categories-wrap {
-    margin-top: 50px;
+    margin-top: 48px;
 
     .featured-categories-header {
         display: flex;
+        align-items: flex-start;
+        gap: 32px;
+    }
+
+/* Her view'de 3 slide: genişliği eşit paylaştır */
+.featured-categories-tabs-swiper .swiper-slide {
+    width: calc(100% / 3) !important;
+}
+
+    .featured-categories-body {
+        margin-top: 28px;
     }
 
     .featured-category-products {
@@ -11,142 +22,145 @@
     }
 }
 
+/* Sol metin alanı  ---------------------------------------------------- */
+
 .featured-categories-text {
-    padding-right: 30px;
-    width: 650px;
+    flex: 0 0 380px;
     max-width: 100%;
 
     .title {
-        font-weight: var(--font-normal);
+        font-weight: 600;
+        font-size: 24px;
+        line-height: 1.3;
+        color: var(--color-dark);
     }
 
     .excerpt {
-        font-weight: var(--font-light);
-        line-height: 24px;
         display: block;
         margin-top: 10px;
+        font-size: 14px;
+        line-height: 22px;
         color: var(--color-gray);
-    }
-
-    .title,
-    .excerpt {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
+        font-weight: var(--font-light);
     }
 }
 
-@media screen and (max-width: 1090px) {
-    .featured-categories-text {
-        padding-right: 0;
-    }
+/* Tab alanı sarmalayıcı ---------------------------------------------- */
+
+.featured-categories-tabs-wrapper {
+    flex: 1 1 auto;
+    min-width: 0;
 }
+
+/* Story tarzı kategori sekmeleri ------------------------------------- */
 
 .featured-categories-tabs {
     display: flex;
-    padding-left: 0;
-    margin-left: auto;
-
-    .tab-item {
-        display: flex;
-        height: 150px;
-        width: 160px;
-        margin-left: 20px;
-        padding: 10px;
-        text-align: center;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        border: 1px solid var(--color-gray-lite);
-        border-radius: var(--radius-default);
-        cursor: pointer;
-        z-index: 0;
-        transition: var(--transition-150);
-        overflow: hidden;
-
-        &:first-child {
-            margin-left: 0;
-        }
-
-        &.active {
-            border-color: var(--color-primary-alpha-80);
-            cursor: default;
-        }
-
-        &.loading {
-            border-color: var(--color-primary-alpha-30);
-            cursor: default;
-
-            &:hover {
-                border-color: var(--color-primary-alpha-30);
-            }
-        }
-
-        &:hover {
-            border-color: var(--color-primary-alpha-80);
-        }
-    }
-
-    .featured-category-image {
-        position: relative;
-        width: 100%;
-        margin-bottom: 10px;
-        padding-bottom: 50%;
-
-        > img {
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            max-height: 100%;
-            max-width: 100%;
-            transform: translate(-50%, -50%);
-        }
-
-        .image-placeholder {
-            height: 45px;
-            width: 45px;
-        }
-    }
-
-    .featured-category-name {
-        font-size: 14px;
-        display: block;
-        max-width: 100%;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
+    flex-wrap: nowrap;
+    gap: 0;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    justify-content: flex-start;
+    align-items: stretch;
 }
 
-@media screen and (max-width: 1300px) {
-    .featured-categories-text {
-        width: 100%;
-    }
-
-    .featured-categories-wrap {
-        .featured-categories-header {
-            flex-direction: column;
-        }
-    }
+.featured-categories-tabs .tab-item {
+    position: relative;
+    flex: 0 0 auto; // genişliği Swiper ayarlayacak
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 0;
+    border-radius: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    text-align: center;
+    transition: none;
+    z-index: 0;
 }
+
+/* Yuvarlak gradient çerçeveli görsel -------------------------------- */
+
+.featured-categories-tabs .featured-category-image {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    padding: 3px;
+    background: conic-gradient(
+        from 180deg,
+        #ff7b7b,
+        #ffb347,
+        #ffeb3b,
+        #4caf50,
+        #3f51b5,
+        #e91e63,
+        #ff7b7b
+    );
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.featured-categories-tabs .featured-category-image > picture,
+.featured-categories-tabs .featured-category-image .image-placeholder.icon {
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.featured-categories-tabs .featured-category-image img {
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+    display: block;
+}
+
+/* Sekme içi metin ---------------------------------------------------- */
+
+.featured-categories-tabs .featured-category-content {
+    min-width: 0;
+}
+
+.featured-categories-tabs .featured-category-name {
+    display: block;
+    margin-top: 2px;
+    font-size: 12px;
+    line-height: 1.3;
+    font-weight: 500;
+    color: var(--color-dark);
+    white-space: normal;
+}
+
+.featured-categories-tabs .featured-category-subtitle {
+    display: none; 
+}
+
+/* Swiper içindeki ürün kartları mobil iyileştirme -------------------- */
 
 @media screen and (max-width: 450px) {
-    .swiper-wrapper {
-        .swiper-slide {
-            .product-card {
-                min-height: 260px;
+    .featured-categories-wrap {
+        .swiper-wrapper {
+            .swiper-slide {
+                .product-card {
+                    min-height: 260px;
 
-                .product-name {
-                    span {
+                    .product-name span {
                         font-size: 13px;
                         line-height: 17px;
                     }
-                }
 
-                .product-price {
-                    font-size: 13px;
-                    line-height: 17px;
+                    .product-price {
+                        font-size: 13px;
+                        line-height: 17px;
+                    }
                 }
             }
         }
@@ -154,93 +168,69 @@
 }
 
 @media screen and (max-width: 350px) {
-    .swiper-wrapper {
-        .swiper-slide {
-            .product-card {
-                min-height: 240px;
+    .featured-categories-wrap {
+        .swiper-wrapper {
+            .swiper-slide {
+                .product-card {
+                    min-height: 240px;
+                }
             }
         }
     }
 }
 
-@media screen and (max-width: 1800px) {
-    .featured-categories-wrap {
-        .tabs {
-            .tab-item {
-                height: 140px;
-                width: 150px;
-            }
-        }
-    }
-}
-
-@media screen and (max-width: 1650px) {
-    .featured-categories-wrap {
-        .tabs {
-            .tab-item {
-                height: 130px;
-                width: 140px;
-            }
-        }
-    }
-}
-
-@media screen and (max-width: 1600px) {
-    .featured-categories-wrap {
-        .tabs {
-            .tab-item {
-                height: 120px;
-                width: 130px;
-            }
-        }
-    }
-}
-
-@media screen and (max-width: 1550px) {
-    .featured-categories-wrap {
-        .tabs {
-            .tab-item {
-                height: 110px;
-                width: 120px;
-            }
-        }
-    }
-}
+/* Responsive kırılımlar  --------------------------------------------- */
 
 @media screen and (max-width: 1300px) {
     .featured-categories-wrap {
         .featured-categories-header {
-            flex-wrap: wrap;
-            text-align: center;
-            justify-content: center;
+            flex-direction: column;
+            align-items: stretch;
+            text-align: left;
         }
 
-        .tabs {
-            margin: 30px -10px -20px;
-            flex-wrap: wrap;
-            justify-content: center;
+        .featured-categories-text {
+            flex-basis: auto;
+        }
 
-            .tab-item {
-                margin: 0 10px 20px !important;
-            }
+        .featured-categories-tabs {
+            justify-content: flex-start;
         }
     }
 }
 
 @media screen and (max-width: 991px) {
     .featured-categories-wrap {
-        margin-top: 30px;
+        margin-top: 32px;
 
-        .tab-content {
-            .featured-category-products {
-                padding-top: 25px;
-            }
+        .featured-categories-body {
+            margin-top: 24px;
+        }
+    }
+}
+
+@media screen and (max-width: 600px) {
+    .featured-categories-text {
+        .title {
+            font-size: 20px;
         }
 
-        .tabs {
-            .tab-item {
-                margin: 0px 7.5px 15px !important;
-            }
+        .excerpt {
+            font-size: 13px;
+            line-height: 20px;
+        }
+    }
+
+    .featured-categories-tabs .tab-item {
+        min-width: 140px;
+        padding-inline: 10px;
+
+        .featured-category-name {
+            font-size: 13px;
+        }
+
+        .featured-category-subtitle {
+            display: none; // yer yetmezse alt açıklamayı gizle
         }
     }
 }

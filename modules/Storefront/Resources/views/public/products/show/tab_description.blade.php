@@ -2,6 +2,7 @@
     <div
         x-ref="descriptionContent" 
         class="content"
+        style="min-height: 260px;"
         :class="{ 
             active: showDescriptionContent,
             'less-content': !showMore }

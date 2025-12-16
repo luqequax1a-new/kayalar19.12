@@ -10,6 +10,34 @@
 @import "sections/_grid-view-product"; 
 @import "sections/_list-view-product";
 
+ .lcp-discovery {
+     position: absolute !important;
+     width: 1px !important;
+     height: 1px !important;
+     overflow: hidden !important;
+     clip: rect(0 0 0 0) !important;
+     clip-path: inset(50%) !important;
+     white-space: nowrap !important;
+     pointer-events: none !important;
+     opacity: 0 !important;
+ }
+
+ .product-image-wrap {
+     position: relative;
+     overflow: hidden;
+ }
+
+ .product-image-img.is-lqip {
+     filter: blur(16px);
+     transform: scale(1.06);
+ }
+
+ .product-image-img.is-hq {
+     filter: none;
+     transform: none;
+     transition: filter 180ms ease, transform 180ms ease;
+ }
+
 .product-search-wrap {
     margin-top: 50px;
 
@@ -27,7 +55,7 @@
 }
 
 .product-badge-label img {
-    max-height: 51px; // ~%15 daha küçük (60 -> 51)
+    max-height: 34px; // ~%15 daha küçük (60 -> 51)
     width: auto;
     display: block;
 }
@@ -61,7 +89,7 @@
 
 @media (max-width: 576px) {
     .product-badge-label img {
-        max-height: 38px;
+        max-height: 28px;
     }
 }
 }

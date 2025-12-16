@@ -2,27 +2,27 @@
 
 return [
     'posts' => [
-        'name' => 'Blog Post',
+        'name' => 'Blog Yazıları',
         'groups' => [
-            'featured_image' => 'Featured Image',
-            'publish' => 'Publish',
-            'categories' => 'Categories',
-            'tags' => 'Tags',
-            'general' => 'General',
+            'featured_image' => 'Öne Çıkan Görsel',
+            'publish' => 'Yayınlama',
+            'categories' => 'Kategoriler',
+            'tags' => 'Etiketler',
+            'general' => 'Genel Bilgiler',
             'seo' => 'SEO',
         ],
         'form' => [
-            'enable_the_blog_category' => 'Enable the blog category',
+            'enable_the_blog_category' => 'Blog kategorisini etkinleştir',
             'publish_status' => [
-                'published' => 'Published',
-                'unpublished' => 'Unpublished',
+                'published' => 'Yayında',
+                'unpublished' => 'Taslak',
             ],
         ],
     ],
     'categories' => [
-        'name' => 'Blog Category',
+        'name' => 'Blog Kategorileri',
     ],
     'tags' => [
-        'name' => 'Blog Tag',
+        'name' => 'Blog Etiketleri',
     ],
 ];

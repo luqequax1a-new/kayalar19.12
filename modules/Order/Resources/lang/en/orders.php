@@ -15,7 +15,7 @@ return [
     'tracking_reference_placeholder' => 'Tracking reference such as Tracking Code, Tracking URL, Tracking ID, etc.',
     'order_and_account_information' => 'Order & Account Information',
     'order_information' => 'Order Information',
-    'order_id' => 'Order ID',
+    'order_id' => 'Order No',
     'order_date' => 'Order Date',
     'order_status' => 'Order Status',
     'payment_method' => 'Payment Method',

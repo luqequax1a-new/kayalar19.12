@@ -19,15 +19,18 @@
         margin-top: 50px;
     }
 
-    &.three-column-banner {
+    // Three column banners: show full image without cropping/zoom
+    &.three-column-banner,
+    &.three-column-full-width-banner {
         .banner {
-            background: rgba(0,0,0,.04);
-            padding-bottom: 40%;
-            
+            background: rgba(0, 0, 0, 0.04);
+
             img {
-                position: absolute;
-                left: 0;
-                top: 0;
+                position: static;
+                display: block;
+                width: 100%;
+                height: auto;
+                object-fit: contain;
             }
         }
     }

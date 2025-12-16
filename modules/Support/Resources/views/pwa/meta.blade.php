@@ -1,5 +1,5 @@
 <!-- Web Application Manifest -->
-<link rel="manifest" href="{{ route('manifest.json') }}">
+<link rel="manifest" href="{{ asset('manifest.json') }}">
 
 <!-- Chrome for Android theme color -->
 <meta name="theme-color" content="{{ $config['theme_color'] }}">
@@ -31,12 +31,10 @@
 <meta name="msapplication-TileColor" content="{{ $config['background_color'] }}">
 <meta name="msapplication-TileImage" content="{{ data_get(end($config['icons']), 'src') }}">
 
-{{-- GEÇİCİ: Service Worker devre dışı --}}
-{{--
 <script type="module">
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/serviceworker.js', {
-            scope: '.'
+            scope: '/'
         }).then(function (registration) {
             console.log('PWA: ServiceWorker registration successful with scope: ', registration.scope);
         }, function (err) {
@@ -44,4 +42,4 @@
         });
     }
 </script>
---}}
+

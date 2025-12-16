@@ -13,7 +13,7 @@
         x-data="postEdit({
             formData: {{ $blogPost }},
             meta: {{ $blogPost->meta }},
-            tags: {{ $blogPost->tags }}
+            tags: @json($blogPost->tags->pluck('id'))
         })"
         @input="errors.clear($event.target.name)"
         @submit.prevent
@@ -25,6 +25,7 @@
             <div class="form-left-column col-lg-8 col-md-12">
                 @include('blog::admin.posts.groups.general')
                 @include('blog::admin.posts.groups.seo')
+                @include('blog::admin.posts.groups.faqs')
             </div>
 
             <div class="form-right-column col-lg-4 col-md-12">

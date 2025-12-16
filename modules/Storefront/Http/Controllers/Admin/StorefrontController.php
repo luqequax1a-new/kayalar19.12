@@ -2,6 +2,7 @@
 
 namespace Modules\Storefront\Http\Controllers\Admin;
 
+use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Modules\Admin\Ui\Facades\TabManager;
 use Modules\Storefront\Http\Requests\SaveStorefrontRequest;
@@ -32,5 +33,21 @@ class StorefrontController
         setting($request->except('_token', '_method'));
 
         return back()->withSuccess(trans('admin::messages.resource_updated', ['resource' => trans('setting::settings.settings')]));
+    }
+
+
+    public function updateHomePageSectionsOrder(Request $request)
+    {
+        $order = $request->input('order', []);
+
+        if (is_string($order)) {
+            $order = json_decode($order, true);
+        }
+
+        $order = is_array($order) ? array_values($order) : [];
+
+        setting(['storefront_home_page_sections_order' => $order]);
+
+        return response()->json(['success' => true]);
     }
 }

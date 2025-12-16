@@ -3,6 +3,7 @@
 namespace Modules\Review\Http\Controllers;
 
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cache;
 use Modules\Review\Entities\Review;
 use Modules\Product\Entities\Product;
 use Modules\Order\Entities\Order;
@@ -23,22 +24,39 @@ class ProductReviewController
      */
     public function index($productId)
     {
-        $query = Review::where('product_id', $productId)->with(['files']);
+        $productId = (int) $productId;
+        $locale = locale();
 
-        $sort = request('sort', 'latest');
-        if ($sort === 'highest') {
-            $query->orderByDesc('rating');
-        } elseif ($sort === 'lowest') {
-            $query->orderBy('rating');
-        } else {
-            $query->latest();
-        }
+        $page = (int) request('page', 1);
+        $sort = (string) request('sort', 'latest');
+        $rating = request('rating');
+        $rating = $rating !== null ? (int) $rating : null;
 
-        if ($rating = request('rating')) {
-            $query->where('rating', (int) $rating);
-        }
+        $cacheKey = 'storefront:product:' . $productId . ':reviews:' . $locale . ':' . md5(json_encode([
+            'page' => $page,
+            'sort' => $sort,
+            'rating' => $rating,
+        ])) . ':v1';
 
-        return $query->paginate(5);
+        return Cache::store('file')->remember($cacheKey, now()->addMinutes(10), function () use ($productId, $sort, $rating) {
+            $query = Review::query()
+                ->where('product_id', $productId)
+                ->with(['files']);
+
+            if ($sort === 'highest') {
+                $query->orderByDesc('rating');
+            } elseif ($sort === 'lowest') {
+                $query->orderBy('rating');
+            } else {
+                $query->latest();
+            }
+
+            if ($rating !== null && $rating > 0) {
+                $query->where('rating', $rating);
+            }
+
+            return $query->paginate(5);
+        });
     }
 
 

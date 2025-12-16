@@ -11,25 +11,23 @@
         border-color: var(--color-white-lite);
         box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.1);
         z-index: 1;
-
-        .blog-post-featured-image {
-            > img,
-            .image-placeholder > img {
-                transform: scale(1.08) rotate(-2deg);
-            }
-        }
     }
 
     .blog-post-featured-image {
         position: relative;
-        padding-bottom: 56%;
+        padding-bottom: 56.25%; // 16:9 oranı
+        overflow: hidden;
+        border-radius: var(--radius-default) var(--radius-default) 0 0;
 
-        > img {
+        > img,
+        picture img {
             position: absolute;
-            height: 100%;
+            left: 0;
+            top: 0;
             width: 100%;
-            border-radius: var(--radius-default) var(--radius-default) 0 0;
+            height: 100%;
             object-fit: cover;
+            display: block;
             transition: var(--transition-200);
         }
 
@@ -43,8 +41,6 @@
             justify-content: center;
             align-items: center;
             background: var(--color-white-dark);
-            border-bottom: none;
-            border-radius: var(--radius-default) var(--radius-default) 0 0;
 
             > img {
                 height: 100px;
@@ -52,6 +48,13 @@
                 transition: var(--transition-200);
             }
         }
+    }
+
+    .blog-post-body {
+        padding: 20px 20px 25px;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
     }
 
     .blog-post-meta {
@@ -77,12 +80,9 @@
         }
     }
 
-    .blog-post-body {
-        padding: 20px 20px 25px;
-    }
-
     .blog-post-title {
-        max-height: 60px;
+        flex: 1;
+        min-height: 36px; // 2 satır için minimum yükseklik
 
         > a {
             color: var(--color-black);
@@ -93,6 +93,7 @@
             max-width: 100%;
             margin-bottom: 13px;
             -webkit-line-clamp: 2;
+            line-clamp: 2; // Standard property for compatibility
             -webkit-box-orient: vertical;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -109,6 +110,7 @@
     .blog-post-read-more {
         font-size: 14px;
         color: var(--color-primary);
+        margin-top: auto; // Aşağıya itmek için
 
         i {
             opacity: 0;
@@ -124,6 +126,14 @@
                 visibility: visible;
                 transform: translateX(5px);
             }
+        }
+    }
+}
+
+@media screen and (max-width: 767px) {
+    .blog-post {
+        .blog-post-featured-image {
+            padding-bottom: 56.25%; // mobilde de 16:9 koru
         }
     }
 }

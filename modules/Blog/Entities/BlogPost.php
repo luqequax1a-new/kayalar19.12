@@ -34,7 +34,7 @@ class BlogPost extends Model implements Sitemapable
      *
      * @var array
      */
-    protected $fillable = ['slug', 'user_id', 'blog_category_id', 'publish_status'];
+    protected $fillable = ['slug', 'user_id', 'blog_category_id', 'publish_status', 'faqs'];
 
     /**
      * The attributes that are translatable.
@@ -57,6 +57,15 @@ class BlogPost extends Model implements Sitemapable
      */
     protected $appends = ['featured_image'];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'faqs' => 'array',
+    ];
+
 
     /**
      * Perform any actions required after the model boots.
@@ -68,7 +77,7 @@ class BlogPost extends Model implements Sitemapable
         static::saved(function ($blogPost) {
             $attributes = request()->all();
 
-            if (!empty($attributes)) {
+            if (! empty($attributes)) {
                 $blogPost->tags()->sync(array_get($attributes, 'tags', []));
             }
         });
@@ -192,9 +201,27 @@ class BlogPost extends Model implements Sitemapable
         $changefreq = setting('support.sitemap.blog_posts_changefreq', Url::CHANGE_FREQUENCY_WEEKLY);
         $priority = (float) setting('support.sitemap.blog_posts_priority', 0.6);
 
-        return Url::create($this->url())
-            ->setLastModificationDate(Carbon::create($this->updated_at))
+        $url = $this->url();
+
+        if (! is_string($url) || trim($url) === '' || trim($url) === '#') {
+            return [];
+        }
+
+        $tag = Url::create($url)
             ->setChangeFrequency($changefreq)
             ->setPriority($priority);
+
+        if (! empty($this->updated_at)) {
+            try {
+                $tag->setLastModificationDate(
+                    $this->updated_at instanceof \DateTimeInterface
+                        ? $this->updated_at
+                        : Carbon::create($this->updated_at)
+                );
+            } catch (\Throwable $e) {
+            }
+        }
+
+        return $tag;
     }
 }

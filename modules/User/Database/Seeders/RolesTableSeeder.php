@@ -94,6 +94,11 @@ class RolesTableSeeder extends Seeder
             'admin.tags.create' => true,
             'admin.tags.edit' => true,
             'admin.tags.destroy' => true,
+            # size charts
+            'admin.size_charts.index' => true,
+            'admin.size_charts.create' => true,
+            'admin.size_charts.edit' => true,
+            'admin.size_charts.destroy' => true,
             # orders
             'admin.orders.index' => true,
             'admin.orders.show' => true,

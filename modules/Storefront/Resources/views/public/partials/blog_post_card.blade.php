@@ -44,13 +44,17 @@
                 <li class="d-flex align-items-center">
                     <i class="las la-user"></i>
 
-                    {{ $blogPost->username }}
+                    @if ($blogPost->user_name && $blogPost->user_name !== 'Admin User')
+                        {{ $blogPost->user_name }}
+                    @else
+                        Kayalar Manifatura
+                    @endif
                 </li>
 
                 <li class="d-flex align-items-center">
                     <i class="las la-calendar"></i>
 
-                    {{ (new \DateTime())->format('d M, Y') }}
+                    {{ $blogPost->created_at->locale('tr_TR')->translatedFormat('d M, Y') }}
                 </li>
             </ul>
 

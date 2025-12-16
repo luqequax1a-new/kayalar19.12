@@ -27,7 +27,7 @@
                         <tbody>
                             <tr>
                                 <td>{{ trans('order::orders.order_id') }}</td>
-                                <td>{{ $order->id }}</td>
+                                <td>{{ $order->displayOrderNumber() }}</td>
                             </tr>
                             <tr>
                                 <td>{{ trans('order::orders.order_date') }}</td>

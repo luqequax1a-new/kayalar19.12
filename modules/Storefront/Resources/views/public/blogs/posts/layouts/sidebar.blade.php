@@ -53,8 +53,16 @@
 
                     <ul class="list-inline blog-post-meta d-flex">
                         <li class="d-flex align-items-center">
+                            <i class="las la-user"></i>
+                            @if ($recentBlogPost->user_name && $recentBlogPost->user_name !== 'Admin User')
+                                {{ $recentBlogPost->user_name }}
+                            @else
+                                Kayalar Manifatura
+                            @endif
+                        </li>
+                        <li class="d-flex align-items-center">
                             <i class="las la-calendar"></i>
-                            {{ $recentBlogPost->created_at->format('d M, Y') }}
+                            {{ $recentBlogPost->created_at->locale('tr_TR')->translatedFormat('d M, Y') }}
                         </li>
                     </ul>
                 </div>

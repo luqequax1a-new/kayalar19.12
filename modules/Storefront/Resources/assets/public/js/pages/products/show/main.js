@@ -1,4 +1,4 @@
-import { Manipulation, Pagination, Navigation, Thumbs } from "swiper/modules";
+import { Manipulation, Pagination, Navigation } from "swiper/modules";
 import md5 from "blueimp-md5";
 import Swiper from "swiper";
 import Drift from "drift-zoom";
@@ -7,6 +7,332 @@ import Errors from "../../../components/Errors";
 import "../../../components/ProductRating";
 import "../../../components/Pagination";
 import "../../../components/ProductCard";
+
+function initSizeChartModal() {
+    const trigger = document.querySelector('.size-chart-trigger');
+    if (!trigger) return;
+
+    const modalEl = document.getElementById('sizeChartModal');
+    if (!modalEl || typeof bootstrap === 'undefined') return;
+
+    const tabsEl = modalEl.querySelector('[data-size-chart-tabs]');
+    const bodyEl = modalEl.querySelector('[data-size-chart-modal-body]');
+
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+
+    const restoreFocusToTrigger = () => {
+        try {
+            const active = document.activeElement;
+            if (active && modalEl.contains(active) && typeof trigger.focus === 'function') {
+                trigger.focus();
+            }
+        } catch (_) {}
+    };
+
+    modalEl.addEventListener('hide.bs.modal', restoreFocusToTrigger);
+
+    const setLoading = () => {
+        if (bodyEl) {
+            bodyEl.innerHTML = `<div class="py-4 text-center"><div class="spinner-border" role="status" aria-label="loading"></div></div>`;
+        }
+    };
+
+    const setError = () => {
+        if (bodyEl) {
+            bodyEl.innerHTML = `<div class="alert alert-danger mb-0">${(FleetCart?.langs?.['storefront::storefront.something_went_wrong'] || 'Something went wrong')}</div>`;
+        }
+    };
+
+    const openImageLightbox = (src) => {
+        try {
+            if (!src || typeof GLightbox === 'undefined') return false;
+
+            const lightbox = GLightbox({
+                elements: [
+                    {
+                        href: src,
+                        type: 'image',
+                        title: '',
+                    },
+                ],
+            });
+
+            lightbox.open();
+            return true;
+        } catch (_) {
+            return false;
+        }
+    };
+
+    const setTabsVisible = (visible) => {
+        try {
+            if (!tabsEl) return;
+            tabsEl.style.display = visible ? '' : 'none';
+        } catch (_) {}
+    };
+
+    const clearTabs = () => {
+        try {
+            if (!tabsEl) return;
+            tabsEl.innerHTML = '';
+        } catch (_) {}
+    };
+
+    const renderTabs = (charts, activeId) => {
+        try {
+            if (!tabsEl) return;
+
+            const safeTitle = (t) => {
+                const v = (t || '').toString();
+                return v.length ? v : (FleetCart?.langs?.['size_chart::storefront.size_chart'] || 'Size Chart');
+            };
+
+            tabsEl.innerHTML = charts
+                .map((c) => {
+                    const isActive = String(c.id) === String(activeId);
+                    const typeLabel = c.type === 'image' ? 'IMG' : 'HTML';
+                    return `
+                        <button
+                            type="button"
+                            class="size-chart-tab${isActive ? ' is-active' : ''}"
+                            data-size-chart-tab
+                            data-chart-id="${String(c.id)}"
+                        >
+                            <span class="size-chart-tab-title">${safeTitle(c.title)}</span>
+                            <span class="size-chart-tab-type">${typeLabel}</span>
+                        </button>
+                    `;
+                })
+                .join('');
+        } catch (_) {}
+    };
+
+    const renderHtml = (html) => {
+        if (!bodyEl) return;
+        bodyEl.innerHTML = html || '';
+    };
+
+    const renderFromChart = (chart, charts) => {
+        try {
+            if (!chart) return false;
+
+            if (chart.type === 'image' && chart.image_url) {
+                modal.hide();
+                const opened = openImageLightbox(chart.image_url);
+                if (!opened) {
+                    setLoading();
+                    modal.show();
+                    setError();
+                }
+                return true;
+            }
+
+            if (chart.type === 'html' && chart.html) {
+                setTabsVisible(Array.isArray(charts) && charts.length > 1);
+                renderHtml(chart.html);
+                return true;
+            }
+
+            return false;
+        } catch (_) {
+            return false;
+        }
+    };
+
+    trigger.addEventListener('click', async (e) => {
+        e.preventDefault();
+
+        const url = trigger.getAttribute('data-size-chart-url');
+
+        clearTabs();
+        setTabsVisible(false);
+
+        if (!url || typeof axios === 'undefined') {
+            setLoading();
+            modal.show();
+            setError();
+            return;
+        }
+
+        try {
+            const { data } = await axios.get(url);
+
+            if (!data || !data.exists) {
+                setLoading();
+                modal.show();
+                setError();
+                return;
+            }
+
+            const charts = Array.isArray(data.charts) && data.charts.length ? data.charts : [data];
+
+            // Multiple charts: open modal with tabs; default to first HTML chart if possible.
+            if (charts.length > 1) {
+                setLoading();
+                modal.show();
+
+                const defaultChart = charts.find((c) => c.type === 'html' && c.html) || charts[0];
+                setTabsVisible(true);
+                renderTabs(charts, defaultChart?.id);
+
+                const ok = renderFromChart(defaultChart, charts);
+                if (!ok) {
+                    setError();
+                    return;
+                }
+
+                // Bind events (once per render)
+                if (tabsEl) {
+                    tabsEl.querySelectorAll('[data-size-chart-tab]').forEach((btn) => {
+                        btn.addEventListener('click', () => {
+                            try {
+                                const id = btn.getAttribute('data-chart-id');
+                                const chart = charts.find((c) => String(c.id) === String(id));
+                                if (!chart) return;
+
+                                // Update active
+                                tabsEl.querySelectorAll('[data-size-chart-tab]').forEach((b) => b.classList.remove('is-active'));
+                                btn.classList.add('is-active');
+
+                                const ok2 = renderFromChart(chart, charts);
+                                if (!ok2) {
+                                    setError();
+                                }
+                            } catch (_) {
+                                setError();
+                            }
+                        });
+                    });
+                }
+
+                return;
+            }
+
+            const first = charts[0];
+
+            if (first.type === 'image' && first.image_url) {
+                const opened = openImageLightbox(first.image_url);
+
+                // If lightbox can't open for any reason, fall back to modal with error.
+                if (!opened) {
+                    setLoading();
+                    modal.show();
+                    setError();
+                }
+
+                return;
+            }
+
+            if (first.type === 'html' && first.html) {
+                setLoading();
+                modal.show();
+
+                if (!bodyEl) return;
+                bodyEl.innerHTML = first.html;
+                return;
+            }
+
+            setLoading();
+            modal.show();
+            setError();
+        } catch (_) {
+            setLoading();
+            modal.show();
+            setError();
+        }
+    });
+}
+
+function getDefaultQty(product) {
+    const def = Number(product?.unit_default_qty);
+    if (def > 0) return def;
+
+    const min = Number(product?.unit_min);
+    if (min > 0) return min;
+
+    return 1;
+}
+
+initSizeChartModal();
+
+function isMobileGalleryViewport() {
+    try {
+        return window.innerWidth <= 990;
+    } catch (_) {
+        return false;
+    }
+}
+
+function setVideoControls(video, enabled) {
+    try {
+        // Mobile: controls should always be visible inside the grid.
+        if (isMobileGalleryViewport()) {
+            video.controls = true;
+            return;
+        }
+
+        video.controls = !!enabled;
+    } catch (_) {}
+}
+
+function setGalleryVideoOverlayGlyph(wrapper, glyph) {
+    try {
+        const el = wrapper.querySelector('.fc-video-play-icon');
+        if (!el) return;
+        el.textContent = glyph;
+    } catch (_) {}
+}
+
+function bindGalleryVideoOverlayState() {
+    try {
+        document.querySelectorAll('.gallery-preview-item--video').forEach((wrapper) => {
+            try {
+                if (wrapper.dataset.overlayBound === 'true') return;
+
+                const video = wrapper.querySelector('.product-main-media--video');
+                if (!video) return;
+
+                wrapper.dataset.overlayBound = 'true';
+
+                setGalleryVideoOverlayGlyph(wrapper, '▶');
+
+                // Initial state
+                const initiallyPlaying = (!video.paused && !video.ended);
+                wrapper.dataset.playing = initiallyPlaying ? 'true' : 'false';
+                setVideoControls(video, initiallyPlaying);
+
+                const sync = () => {
+                    try {
+                        const playing = (!video.paused && !video.ended);
+                        wrapper.dataset.playing = playing ? 'true' : 'false';
+                        setVideoControls(video, playing);
+                    } catch (_) {}
+                };
+
+                // If metadata loads after binding, ensure state is still correct
+                video.addEventListener('loadedmetadata', sync);
+                video.addEventListener('loadeddata', sync);
+
+                video.addEventListener('play', () => {
+                    wrapper.dataset.playing = 'true';
+                    setVideoControls(video, true);
+                });
+
+                video.addEventListener('pause', () => {
+                    wrapper.dataset.playing = 'false';
+                    setVideoControls(video, false);
+                    setGalleryVideoOverlayGlyph(wrapper, '▶');
+                });
+
+                video.addEventListener('ended', () => {
+                    wrapper.dataset.playing = 'false';
+                    setVideoControls(video, false);
+                    setGalleryVideoOverlayGlyph(wrapper, '▶');
+                });
+            } catch (_) {}
+        });
+    } catch (_) {}
+}
 
 // Global helper: product header'daki rating'e tıklayınca yorumlar sekmesine git.
 window.openReviewsTab = function openReviewsTab() {
@@ -38,19 +364,101 @@ function handleGalleryVideoTap(e) {
     const video = wrapper.querySelector('.product-main-media--video');
     if (!video) return;
 
-    e.preventDefault();
-    e.stopPropagation();
+    const isMobile = isMobileGalleryViewport();
 
+    const getClientPoint = () => {
+        try {
+            if (e.changedTouches && e.changedTouches[0]) {
+                return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+            }
+            if (typeof e.clientX === 'number' && typeof e.clientY === 'number') {
+                return { x: e.clientX, y: e.clientY };
+            }
+        } catch (_) {}
+        return null;
+    };
+
+    const isTapOnNativeControlsArea = () => {
+        if (!isMobile) return false;
+        try {
+            const p = getClientPoint();
+            if (!p) return false;
+            const rect = video.getBoundingClientRect();
+            // Roughly exclude bottom area where native controls live.
+            const controlBarHeight = 72;
+            const inX = p.x >= rect.left && p.x <= rect.right;
+            const inY = p.y >= (rect.bottom - controlBarHeight) && p.y <= rect.bottom;
+            return inX && inY;
+        } catch (_) {
+            return false;
+        }
+    };
+
+    // Only hijack clicks intended for the overlay (or the wrapper while paused).
+    // When playing, let native video controls handle interaction.
+    const clickedOverlay = !!e.target.closest('.fc-video-play-icon');
     const isPlaying = !video.paused && !video.ended;
+    if (!isMobile && isPlaying && !clickedOverlay) {
+        return;
+    }
+
+    // Mobile: do not interfere with taps on the native controls bar.
+    if (isMobile && isPlaying && isTapOnNativeControlsArea()) {
+        return;
+    }
+
+    if (!clickedOverlay && !isPlaying) {
+        // Allow tapping the video area to start playback when paused.
+        // If the click is coming from some other element, don't interfere.
+        const clickedVideo = e.target === video;
+        if (!clickedVideo && e.target !== wrapper) {
+            return;
+        }
+    }
+
+    // Don't aggressively block default behavior unless the tap is clearly meant for our toggle.
+    const shouldHijack = clickedOverlay || e.target === video || e.target === wrapper;
+    if (shouldHijack) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
 
     try {
         if (isPlaying) {
             video.pause();
             wrapper.dataset.playing = 'false';
+            setVideoControls(video, false);
+            setGalleryVideoOverlayGlyph(wrapper, '❚❚');
+            wrapper.dataset.flash = 'pause';
+            setTimeout(() => {
+                try {
+                    setGalleryVideoOverlayGlyph(wrapper, '▶');
+                    if (wrapper.dataset.flash === 'pause') delete wrapper.dataset.flash;
+                } catch (_) {}
+            }, 650);
         } else {
+            pauseAllGalleryVideos(wrapper);
             const p = video.play();
-            wrapper.dataset.playing = 'true';
-            if (p && typeof p.catch === 'function') p.catch(() => {});
+            wrapper.dataset.flash = 'play';
+            setTimeout(() => {
+                try {
+                    setGalleryVideoOverlayGlyph(wrapper, '▶');
+                    if (wrapper.dataset.flash === 'play') delete wrapper.dataset.flash;
+                } catch (_) {}
+            }, 650);
+            if (p && typeof p.then === 'function') {
+                p.then(() => {
+                    wrapper.dataset.playing = 'true';
+                    setVideoControls(video, true);
+                }).catch(() => {
+                    wrapper.dataset.playing = 'false';
+                    setVideoControls(video, false);
+                });
+            } else {
+                // Fallback
+                wrapper.dataset.playing = 'true';
+                setVideoControls(video, true);
+            }
 
             video.addEventListener('ended', () => {
                 wrapper.dataset.playing = 'false';
@@ -66,9 +474,62 @@ function handleGalleryVideoTap(e) {
     } catch (_) {}
 }
 
-// Desktop + mobile: ekrana dokunma/tıklama ile play/pause toggle
+function pauseAllGalleryVideos(exceptWrapper = null) {
+    try {
+        document.querySelectorAll('.gallery-preview-item--video .product-main-media--video').forEach((v) => {
+            try {
+                const w = v.closest('.gallery-preview-item--video');
+                if (exceptWrapper && w === exceptWrapper) return;
+                if (!v.paused) v.pause();
+                setVideoControls(v, false);
+                if (w) w.dataset.playing = 'false';
+            } catch (_) {}
+        });
+    } catch (_) {}
+}
+
+let __galleryTouch = { x: 0, y: 0, moved: false };
+document.addEventListener(
+    'touchstart',
+    (e) => {
+        try {
+            const t = e.touches && e.touches[0] ? e.touches[0] : null;
+            if (!t) return;
+            __galleryTouch.x = t.clientX;
+            __galleryTouch.y = t.clientY;
+            __galleryTouch.moved = false;
+        } catch (_) {}
+    },
+    { passive: true }
+);
+
+document.addEventListener(
+    'touchmove',
+    (e) => {
+        try {
+            const t = e.touches && e.touches[0] ? e.touches[0] : null;
+            if (!t) return;
+            const dx = Math.abs(t.clientX - __galleryTouch.x);
+            const dy = Math.abs(t.clientY - __galleryTouch.y);
+            if (dx > 10 || dy > 10) {
+                __galleryTouch.moved = true;
+            }
+        } catch (_) {}
+    },
+    { passive: true }
+);
+
+// Desktop: click ile play/pause toggle
 document.addEventListener('click', handleGalleryVideoTap, false);
-document.addEventListener('touchend', handleGalleryVideoTap, false);
+// Mobile: swipe sonrası yanlışlıkla tetiklenmesin diye touchend'de swipe/tap ayrımı yap
+document.addEventListener(
+    'touchend',
+    (e) => {
+        if (__galleryTouch.moved) return;
+        handleGalleryVideoTap(e);
+    },
+    { passive: false }
+);
 
 let galleryPreviewSlider;
 let galleryPreviewLightbox;
@@ -87,7 +548,8 @@ Alpine.data(
         showDescriptionContent: false,
         showMore: false,
         fetchingReviews: false,
-        reviews: {},
+        reviewsLoaded: false,
+        reviews: { data: [], total: 0 },
         reviewCount,
         avgRating,
         // Rating dağılımı (yorum istatistikleri)
@@ -101,14 +563,255 @@ Alpine.data(
         cartItemForm: {
             product_id: product.id,
             // Qty başlangıcı tamamen unit modülüne bağlı: önce unit_default_qty, sonra unit_min; yoksa 1
-            qty:
-                (Number(product.unit_default_qty) > 0
-                    ? Number(product.unit_default_qty)
-                    : (Number(product.unit_min) > 0
-                        ? Number(product.unit_min)
-                        : 1)),
+            qty: getDefaultQty(product),
             variations: {},
             options: {},
+        },
+
+        prefetchVariantMedia(variationIndex, valueIndex) {
+            try {
+                if (!this.hasAnyVariant) return;
+
+                const variation = this.product.variations?.[variationIndex];
+                const value = variation?.values?.[valueIndex];
+
+                if (!variation || !value) return;
+
+                const nextVariations = {
+                    ...(this.cartItemForm?.variations || {}),
+                    [variation.uid]: value.uid,
+                };
+
+                const selectedUids = Object.values(nextVariations)
+                    .filter(Boolean)
+                    .sort()
+                    .join(".");
+
+                const variant = this.product.variants?.find((v) => v && v.uids === selectedUids);
+
+                const urls = [];
+
+                const firstMedia = Array.isArray(variant?.media) ? variant.media.slice(0, 2) : [];
+                const fallbackMedia = Array.isArray(this.product?.media) ? this.product.media.slice(0, 1) : [];
+
+                [...firstMedia, ...fallbackMedia].forEach((m) => {
+                    if (!m) return;
+
+                    const main = m.detail_webp_url || m.detail_jpeg_url || m.grid_webp_url || m.grid_jpeg_url || m.path;
+                    const thumb = m.thumb_webp_url || m.thumb_jpeg_url || m.grid_webp_url || m.grid_jpeg_url || m.path;
+
+                    if (main) urls.push(main);
+                    if (thumb) urls.push(thumb);
+                });
+
+                const seen = (window.__fc_prefetched_images = window.__fc_prefetched_images || {});
+
+                urls.forEach((u) => {
+                    if (!u || seen[u]) return;
+                    seen[u] = true;
+                    const img = new Image();
+                    img.decoding = "async";
+                    img.src = u;
+                });
+            } catch (_) {}
+        },
+
+        prefetchPopularVariantMedia() {
+            try {
+                if (!this.hasAnyVariant) return;
+
+                const conn = navigator.connection;
+                if (conn && (conn.saveData || /2g/.test(conn.effectiveType || ""))) {
+                    return;
+                }
+
+                const variants = Array.isArray(this.product?.variants) ? this.product.variants : [];
+                if (!variants.length) return;
+
+                const seen = (window.__fc_prefetched_images = window.__fc_prefetched_images || {});
+
+                // Limit network impact: prefetch first image for first N variants
+                const maxVariants = 6;
+                const maxPerVariant = 1;
+
+                let totalQueued = 0;
+                const maxTotal = 8;
+
+                for (let i = 0; i < variants.length && i < maxVariants; i++) {
+                    const v = variants[i];
+                    const media = Array.isArray(v?.media) ? v.media : [];
+                    const first = media.slice(0, maxPerVariant);
+
+                    for (const m of first) {
+                        if (!m) continue;
+                        const url =
+                            m.detail_webp_url ||
+                            m.detail_jpeg_url ||
+                            m.grid_webp_url ||
+                            m.grid_jpeg_url ||
+                            m.path;
+
+                        if (!url || seen[url]) continue;
+                        seen[url] = true;
+
+                        const img = new Image();
+                        img.decoding = "async";
+                        img.src = url;
+
+                        totalQueued += 1;
+                        if (totalQueued >= maxTotal) {
+                            return;
+                        }
+                    }
+                }
+            } catch (_) {}
+        },
+
+        deferRelatedProducts() {
+            try {
+                if (this._relatedProductsRequested) {
+                    return;
+                }
+                this._relatedProductsRequested = true;
+
+                setTimeout(async () => {
+                    try {
+                        const base = (window.FleetCart && FleetCart.baseUrl) ? FleetCart.baseUrl : '';
+                        const res = await axios.get(`${base}/products/${this.product.id}/related`);
+                        const items = Array.isArray(res.data)
+                            ? res.data
+                            : Array.isArray(res.data?.data)
+                              ? res.data.data
+                              : [];
+
+                        const root = document.querySelector('[data-related-products]');
+                        if (!items.length) {
+                            if (root) root.classList.add('d-none');
+                            return;
+                        }
+
+                        if (root) root.classList.remove('d-none');
+
+                        const wrapper = document.querySelector('[data-related-products] .swiper-wrapper');
+                        if (!wrapper) return;
+
+                        const tpl = document.querySelector('[data-related-product-card-template]');
+                        const tplHtml = tpl ? tpl.innerHTML : '';
+                        if (!tplHtml) return;
+
+                        // remove skeletons
+                        wrapper.querySelectorAll('.swiper-slide-skeleton').forEach((el) => el.remove());
+                        wrapper.querySelectorAll('[data-related-products-placeholder]').forEach((el) => el.remove());
+
+                        items.forEach((p) => {
+                            const slide = document.createElement('div');
+                            slide.className = 'swiper-slide';
+                            const safeJson = JSON.stringify(p)
+                                .replace(/</g, "\\u003c")
+                                .replace(/>/g, "\\u003e")
+                                .replace(/&/g, "\\u0026")
+                                .replace(/'/g, "\\u0027");
+                            slide.innerHTML = tplHtml.replace('__PRODUCT__', safeJson);
+                            wrapper.appendChild(slide);
+
+                            try {
+                                if (window.Alpine && typeof window.Alpine.initTree === 'function') {
+                                    window.Alpine.initTree(slide);
+                                }
+                            } catch (_) {}
+                        });
+
+                        this.$nextTick(() => {
+                            try {
+                                this.initRelatedProductsSlider();
+                            } catch (_) {}
+                        });
+                    } catch (_) {}
+                }, 350);
+            } catch (_) {}
+        },
+
+        deferUpSellProducts() {
+            try {
+                if (this._upSellProductsRequested) {
+                    return;
+                }
+                this._upSellProductsRequested = true;
+
+                setTimeout(async () => {
+                    try {
+                        const base = (window.FleetCart && FleetCart.baseUrl) ? FleetCart.baseUrl : '';
+                        const res = await axios.get(`${base}/products/${this.product.id}/upsell`);
+                        const items = Array.isArray(res.data) ? res.data : [];
+
+                        if (!items.length) {
+                            const root = document.querySelector('[data-upsell-products]');
+                            if (root) root.classList.add('d-none');
+                            return;
+                        }
+
+                        const wrapper = document.querySelector('[data-upsell-products] .swiper-wrapper');
+                        if (!wrapper) return;
+
+                        wrapper.innerHTML = '';
+
+                        const tpl = document.querySelector('[data-upsell-product-card-template]');
+                        const tplHtml = tpl ? tpl.innerHTML : '';
+                        if (!tplHtml) return;
+
+                        // chunk by 5 to mimic server-side layout
+                        const chunkSize = 5;
+                        for (let i = 0; i < items.length; i += chunkSize) {
+                            const chunk = items.slice(i, i + chunkSize);
+                            const slide = document.createElement('div');
+                            slide.className = 'swiper-slide';
+                            slide.innerHTML = `<div class="vertical-products-slide">${chunk
+                                .map((p) => {
+                                    const safeJson = JSON.stringify(p)
+                                        .replace(/</g, "\\u003c")
+                                        .replace(/>/g, "\\u003e")
+                                        .replace(/&/g, "\\u0026")
+                                        .replace(/'/g, "\\u0027");
+                                    return tplHtml.replace('__PRODUCT__', safeJson);
+                                })
+                                .join('')}</div>`;
+                            wrapper.appendChild(slide);
+
+                            try {
+                                if (window.Alpine && typeof window.Alpine.initTree === 'function') {
+                                    window.Alpine.initTree(slide);
+                                }
+                            } catch (_) {}
+                        }
+
+                        this.$nextTick(() => {
+                            try {
+                                this.initUpSellProductsSlider();
+                            } catch (_) {}
+                        });
+                    } catch (_) {}
+                }, 450);
+            } catch (_) {}
+        },
+
+        initReviewsDefer() {
+            try {
+                const tabLink = document.querySelector('.product-details-tab a[href="#reviews"]');
+
+                if (!tabLink) {
+                    return;
+                }
+
+                tabLink.addEventListener(
+                    "shown.bs.tab",
+                    () => {
+                        if (!this.reviewsLoaded) {
+                            this.fetchReviews();
+                        }
+                    },
+                    { passive: true }
+                );
+            } catch (_) {}
         },
         errors: new Errors(),
 
@@ -134,13 +837,71 @@ Alpine.data(
         },
 
         get productUrl() {
-            let url = `/products/${this.product.slug}`;
+            const slugify = (input) => {
+                try {
+                    if (input === null || input === undefined) return "";
 
-            if (this.hasAnyVariant) {
-                url += `?variant=${this.item.uid}`;
+                    let str = String(input)
+                        .trim()
+                        .toLowerCase();
+
+                    str = str
+                        .replace(/ğ/g, "g")
+                        .replace(/ü/g, "u")
+                        .replace(/ş/g, "s")
+                        .replace(/ı/g, "i")
+                        .replace(/i̇/g, "i")
+                        .replace(/ö/g, "o")
+                        .replace(/ç/g, "c");
+
+                    try {
+                        str = str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                    } catch (_) {}
+
+                    str = str
+                        .replace(/[^a-z0-9\s-]/g, " ")
+                        .replace(/\s+/g, "-")
+                        .replace(/-+/g, "-")
+                        .replace(/^-|-$/g, "");
+
+                    return str;
+                } catch (_) {
+                    return "";
+                }
+            };
+
+            const base = `/products/${this.product.slug}`;
+
+            try {
+                if (!this.hasAnyVariant || !this.product || !Array.isArray(this.product.variations)) {
+                    return base;
+                }
+
+                const params = new URLSearchParams();
+
+                for (const variation of this.product.variations) {
+                    const variationUid = variation?.uid;
+                    const key = slugify(variation?.name);
+                    if (!variationUid || !key) continue;
+
+                    const selectedValueUid = this.cartItemForm?.variations?.[variationUid];
+                    if (!selectedValueUid) continue;
+
+                    const selectedValue = (variation?.values || []).find(
+                        (v) => String(v?.uid) === String(selectedValueUid)
+                    );
+
+                    const valueSlug = slugify(selectedValue?.label);
+                    if (!valueSlug) continue;
+
+                    params.set(key, valueSlug);
+                }
+
+                const qs = params.toString();
+                return qs ? `${base}?${qs}` : base;
+            } catch (_) {
+                return base;
             }
-
-            return url;
         },
 
         get hasAnyMedia() {
@@ -321,18 +1082,58 @@ Alpine.data(
 
             galleryPreviewSlider = this.initGalleryPreviewSlider();
             galleryPreviewLightbox = this.initGalleryPreviewLightbox();
+            
 
-            this.fetchReviews();
+            this.initReviewsDefer();
+            try {
+                const relatedRoot = document.querySelector('[data-related-products]');
+                const carousel = relatedRoot
+                    ? relatedRoot.querySelector('.related-products-carousel.swiper')
+                    : null;
+
+                // SSR carousel mode: init swiper when markup exists
+                if (carousel) {
+                    this.$nextTick(() => {
+                        try {
+                            this.initRelatedProductsSlider();
+                        } catch (_) {}
+                    });
+                } else {
+                    const relatedHasRealSlides = !!(relatedRoot && relatedRoot.querySelector('.swiper-slide') && !relatedRoot.querySelector('.swiper-slide-skeleton'));
+                    const shouldDeferRelated = !relatedRoot || relatedRoot.classList.contains('d-none') || !relatedHasRealSlides;
+                    if (shouldDeferRelated) {
+                        this.deferRelatedProducts();
+                    }
+                }
+            } catch (_) {}
+
+            try {
+                const upsellRoot = document.querySelector('[data-upsell-products]');
+                const upsellHasRealSlides = !!(upsellRoot && upsellRoot.querySelector('.swiper-slide') && !upsellRoot.querySelector('.swiper-slide-skeleton'));
+                const shouldDeferUpsell = !upsellRoot || upsellRoot.classList.contains('d-none') || !upsellHasRealSlides;
+                if (shouldDeferUpsell) {
+                    this.deferUpSellProducts();
+                }
+            } catch (_) {}
             this.setOldMediaLength();
             this.initGalleryPreviewZoom();
+            bindGalleryVideoOverlayState();
             this.setActiveVariationsValue();
             this.setDescriptionContentHeight();
             this.initUpSellProductsSlider();
-            this.initRelatedProductsSlider();
 
             // Yorum görselleri için lightbox başlat
             this.initReviewLightbox();
             this.updateBadgeVisibilityForActiveSlide();
+
+            try {
+                const run = () => this.prefetchPopularVariantMedia();
+                if ("requestIdleCallback" in window) {
+                    window.requestIdleCallback(run, { timeout: 1500 });
+                } else {
+                    setTimeout(run, 700);
+                }
+            } catch (_) {}
         },
 
         syncWishlist() {
@@ -351,7 +1152,7 @@ Alpine.data(
 
         initGalleryPreviewSlider() {
             const slider = new Swiper(".product-gallery-preview", {
-                modules: [Manipulation, Navigation, Thumbs],
+                modules: [Manipulation, Navigation, Pagination],
                 slidesPerView: 1,
                 // Masaüstünde oklarla, mobilde parmakla kaydırma
                 allowTouchMove: this.isMobileDevice(),
@@ -359,47 +1160,21 @@ Alpine.data(
                     nextEl: ".swiper-button-next",
                     prevEl: ".swiper-button-prev",
                 },
-                thumbs: {
-                    swiper: this.initGalleryThumbnailSlider(),
+                pagination: {
+                    el: ".product-gallery-preview .swiper-pagination",
+                    clickable: true,
                 },
             });
             slider.on("slideChange", () => {
+                pauseAllGalleryVideos(null);
                 this.updateBadgeVisibilityForActiveSlide();
             });
 
             return slider;
         },
 
-        initGalleryThumbnailSlider() {
-            return new Swiper(".product-gallery-thumbnail", {
-                modules: [Manipulation, Navigation],
-                slidesPerView: 4,
-                spaceBetween: 10,
-                watchSlidesProgress: true,
-                touchEventsTarget: "container",
-                navigation: {
-                    nextEl: ".swiper-button-next",
-                    prevEl: ".swiper-button-prev",
-                },
-                breakpoints: {
-                    450: {
-                        slidesPerView: 6,
-                    },
-                    576: {
-                        slidesPerView: 7,
-                    },
-                    992: {
-                        slidesPerView: 6,
-                    },
-                    1600: {
-                        slidesPerView: 7,
-                    },
-                },
-            });
-        },
-
         updateGallerySlider() {
-            if (!galleryPreviewSlider || !galleryPreviewSlider.thumbs || !galleryPreviewSlider.thumbs.swiper) {
+            if (!galleryPreviewSlider) {
                 return;
             }
 
@@ -421,16 +1196,12 @@ Alpine.data(
 
         addGallerySlides() {
             // Swiper yoksa devam etme
-            if (
-                !galleryPreviewSlider ||
-                !galleryPreviewSlider.thumbs ||
-                !galleryPreviewSlider.thumbs.swiper
-            ) {
+            if (!galleryPreviewSlider) {
                 return;
             }
 
             const galleryPreviewSlides = [];
-            const galleryThumbnailSlides = [];
+            
 
             const variantMedia = Array.isArray(this.item.media) ? this.item.media : [];
             const productMedia = Array.isArray(this.product.media) ? this.product.media : [];
@@ -441,40 +1212,29 @@ Alpine.data(
             const seen = new Set();
 
             allMedia.forEach((m) => {
-                if (!m) return;
+                const path = m?.path || m?.thumb || m?.jpeg || m?.url;
 
-                // Video'ları burada tamamen yok sayıyoruz
-                if (m.type === "video") {
-                    return;
-                }
-
-                const path = m.path;
                 if (!path) return;
-
                 if (seen.has(path)) return;
+
                 seen.add(path);
 
-                galleryPreviewSlides.unshift(
-                    this.galleryPreviewSlide(m)
-                );
-                galleryThumbnailSlides.unshift(
-                    this.galleryThumbnailSlide(m)
-                );
+                // Keep original ordering behavior (variant media should stay ahead)
+                galleryPreviewSlides.unshift(this.galleryPreviewSlide(m));
             });
 
-            galleryPreviewSlider.addSlide(0, galleryPreviewSlides);
-            galleryPreviewSlider.thumbs.swiper.addSlide(0, galleryThumbnailSlides);
+            if (!galleryPreviewSlides.length) {
+                this.addGalleryEmptySlide();
+                return;
+            }
 
+            galleryPreviewSlider.addSlide(0, galleryPreviewSlides);
+            galleryPreviewSlider.update();
             galleryPreviewSlider.slideTo(0);
-            galleryPreviewSlider.thumbs.swiper.slideTo(0);
         },
 
         appendVideoSlides() {
-            if (
-                !galleryPreviewSlider ||
-                !galleryPreviewSlider.thumbs ||
-                !galleryPreviewSlider.thumbs.swiper
-            ) {
+            if (!galleryPreviewSlider) {
                 return;
             }
 
@@ -501,19 +1261,10 @@ Alpine.data(
                         `${FleetCart.baseUrl}/build/assets/image-placeholder.png`;
 
                     const previewSlide = this.galleryPreviewVideoSlide(videoPath, poster);
-                    const thumbSlide = this.galleryThumbnailVideoSlide(poster);
-
                     const lastIndex = galleryPreviewSlider.slides.length;
-
                     galleryPreviewSlider.addSlide(lastIndex, previewSlide);
-                    galleryPreviewSlider.thumbs.swiper.addSlide(
-                        galleryPreviewSlider.thumbs.swiper.slides.length,
-                        thumbSlide
-                    );
                 });
-
             galleryPreviewSlider.update();
-            galleryPreviewSlider.thumbs.swiper.update();
         },
 
         addGalleryEmptySlide() {
@@ -527,24 +1278,20 @@ Alpine.data(
                 0,
                 this.galleryPreviewSlide(placeholderFile, true)
             );
-            galleryPreviewSlider.thumbs.swiper.addSlide(
-                0,
-                this.galleryThumbnailSlide(placeholderFile, true)
-            );
         },
 
         removeAllGallerySlides() {
-            if (!galleryPreviewSlider || !galleryPreviewSlider.thumbs || !galleryPreviewSlider.thumbs.swiper) {
+            if (!galleryPreviewSlider) {
                 return;
             }
 
             galleryPreviewSlider.removeAllSlides();
-            galleryPreviewSlider.thumbs.swiper.removeAllSlides();
         },
 
         addGalleryEventListeners() {
             this.$nextTick(() => {
                 this.initGalleryPreviewZoom();
+                bindGalleryVideoOverlayState();
                 galleryPreviewLightbox.reload();
             });
         },
@@ -574,58 +1321,8 @@ Alpine.data(
         },
 
         initGalleryPreviewZoom() {
-            // Mobilde Drift zoom'u tamamen devre dışı bırak;
-            // kullanıcı sadece yana kaydırarak görsel/video değiştirebilsin.
-            if (this.isMobileDevice()) {
-                this.destroyGalleryPreviewZoomInstances();
-
-                return;
-            }
-
-            this.initGalleryPreviewDesktopZoom();
-        },
-
-        initGalleryPreviewMobileZoom() {
-            this.destroyGalleryPreviewZoomInstances();
-
-            [
-                ...document.querySelectorAll(".gallery-preview-item > img"),
-            ].forEach((el) => {
-                galleryPreviewZoomInstances.push(
-                    new Drift(el, {
-                        namespace: "mobile-drift",
-                        inlinePane: true,
-                        inlineOffsetY: -50,
-                        passive: true,
-                    })
-                );
-            });
-        },
-
-        initGalleryPreviewDesktopZoom() {
-            this.destroyGalleryPreviewZoomInstances();
-
-            [
-                ...document.querySelectorAll(".gallery-preview-item > img"),
-            ].forEach((el) => {
-                galleryPreviewZoomInstances.push(
-                    new Drift(el, {
-                        inlinePane: false,
-                        hoverBoundingBox: true,
-                        boundingBoxContainer: document.body,
-                        paneContainer:
-                            document.querySelector(".product-gallery"),
-                    })
-                );
-            });
-        },
-
-        destroyGalleryPreviewZoomInstances() {
-            if (galleryPreviewZoomInstances.length !== 0) {
-                galleryPreviewZoomInstances.forEach((instance) => {
-                    instance.destroy();
-                });
-            }
+            // Disable Drift zoom entirely (all devices). Lightbox is used on click.
+            return;
         },
 
         initGalleryPreviewLightbox() {
@@ -641,7 +1338,7 @@ Alpine.data(
             }
         },
 
-        buildMainImageSources(file) {
+        buildPreviewImageSources(file) {
             if (!file) return { avif: null, webp: null, jpeg: `${FleetCart.baseUrl}/build/assets/image-placeholder.png`, zoom: `${FleetCart.baseUrl}/build/assets/image-placeholder.png` };
 
             const avif = file.detail_avif_url || file.grid_avif_url || null;
@@ -660,22 +1357,8 @@ Alpine.data(
             return { avif, webp, jpeg, zoom };
         },
 
-        buildThumbImageSources(file) {
-            if (!file) return { avif: null, webp: null, jpeg: `${FleetCart.baseUrl}/build/assets/image-placeholder.png` };
-
-            const avif = file.thumb_avif_url || file.grid_avif_url || null;
-            const webp = file.thumb_webp_url || file.grid_webp_url || null;
-            const jpeg =
-                file.thumb_jpeg_url ||
-                file.grid_jpeg_url ||
-                file.path ||
-                `${FleetCart.baseUrl}/build/assets/image-placeholder.png`;
-
-            return { avif, webp, jpeg };
-        },
-
         galleryPreviewSlide(file, isPlaceholder = false) {
-            const sources = this.buildMainImageSources(file);
+            const sources = this.buildPreviewImageSources(file);
             const imgClass = isPlaceholder ? "image-placeholder" : "";
 
             const avifSource = sources.avif
@@ -692,39 +1375,13 @@ Alpine.data(
                             <picture>
                                 ${avifSource}
                                 ${webpSource}
-                                <img src="${sources.jpeg}" data-zoom="${sources.zoom}" alt="${this.productName}" loading="lazy" decoding="async" class="${imgClass}">
-                            </picture>
-                        </div>
-
-                        <a href="${sources.zoom}" data-gallery="product-gallery-preview" class="gallery-view-icon glightbox">
-                            <i class="las la-search-plus"></i>
-                        </a>
-                    </div>
-                </div>
-            `;
-        },
-
-        galleryThumbnailSlide(file, isPlaceholder = false) {
-            const sources = this.buildThumbImageSources(file);
-            const imgClass = isPlaceholder ? "image-placeholder" : "";
-
-            const avifSource = sources.avif
-                ? `<source srcset="${sources.avif}" type="image/avif">`
-                : "";
-            const webpSource = sources.webp
-                ? `<source srcset="${sources.webp}" type="image/webp">`
-                : "";
-
-            return `
-                <div class="swiper-slide">
-                    <div class="gallery-thumbnail-slide">
-                        <div class="gallery-thumbnail-item">
-                            <picture>
-                                ${avifSource}
-                                ${webpSource}
                                 <img src="${sources.jpeg}" alt="${this.productName}" loading="lazy" decoding="async" class="${imgClass}">
                             </picture>
                         </div>
+
+                        <a href="${sources.jpeg}" data-gallery="product-gallery-preview" class="gallery-view-icon glightbox">
+                            <i class="las la-search-plus"></i>
+                        </a>
                     </div>
                 </div>
             `;
@@ -750,29 +1407,6 @@ Alpine.data(
                     </div>
                 </div>
             `;
-        },
-
-        galleryThumbnailVideoSlide(posterPath) {
-            return `
-                <div class="swiper-slide">
-                    <div class="gallery-thumbnail-slide">
-                        <div class="gallery-thumbnail-item gallery-thumbnail-item--video">
-                            <img src="${posterPath}" alt="${this.productName}">
-                            <span class="fc-video-play-icon">▶</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        },
-
-        galleryPreviewEmptySlide(filePath) {
-            const file = { path: filePath };
-            return this.galleryPreviewSlide(file, true);
-        },
-
-        galleryThumbnailEmptySlide(filePath) {
-            const file = { path: filePath };
-            return this.galleryThumbnailSlide(file, true);
         },
 
         productPriceWithOptionsPrice() {
@@ -947,9 +1581,6 @@ Alpine.data(
 
             if (variant !== undefined) {
                 this.item = { ...variant };
-
-                this.reduceToMaxQuantity();
-
                 return;
             }
 
@@ -963,23 +1594,124 @@ Alpine.data(
                 media: [],
                 base_image: [],
             };
-
-            this.cartItemForm.qty = 1;
         },
 
         setVariantSlug() {
-            const url = `${FleetCart.baseUrl.replace(/\/$/, "")}/products/${
-                this.product.slug
-            }?variant=${this.item.uid}`;
+            const slugify = (input) => {
+                try {
+                    if (input === null || input === undefined) return "";
 
-            window.history.replaceState({}, "", url);
+                    let str = String(input)
+                        .trim()
+                        .toLowerCase();
+
+                    // Turkish-safe transliteration (keep aligned with backend Str::slug output)
+                    str = str
+                        .replace(/ğ/g, "g")
+                        .replace(/ü/g, "u")
+                        .replace(/ş/g, "s")
+                        .replace(/ı/g, "i")
+                        .replace(/i̇/g, "i")
+                        .replace(/ö/g, "o")
+                        .replace(/ç/g, "c");
+
+                    // Strip diacritics where supported
+                    try {
+                        str = str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                    } catch (_) {}
+
+                    str = str
+                        .replace(/[^a-z0-9\s-]/g, " ")
+                        .replace(/\s+/g, "-")
+                        .replace(/-+/g, "-")
+                        .replace(/^-|-$/g, "");
+
+                    return str;
+                } catch (_) {
+                    return "";
+                }
+            };
+
+            try {
+                const current = new URL(window.location.href);
+
+                // Preserve query params but remove legacy variant param.
+                current.searchParams.delete("variant");
+
+                // Also remove readable variation params (?renk=kirmizi&beden=xl) to avoid conflicts.
+                try {
+                    if (this.product && Array.isArray(this.product.variations)) {
+                        for (const variation of this.product.variations) {
+                            const key = slugify(variation?.name);
+                            if (key) {
+                                current.searchParams.delete(key);
+                            }
+                        }
+                    }
+                } catch (_) {}
+
+                // Preserve locale prefix by reusing the existing pathname prefix up to /products/.
+                const pathname = current.pathname || "";
+                const productsMarker = "/products/";
+                const idx = pathname.lastIndexOf(productsMarker);
+                const prefix = idx >= 0 ? pathname.slice(0, idx + productsMarker.length) : productsMarker;
+
+                const baseSlug = this.product?.slug || "";
+
+                if (!baseSlug) {
+                    return;
+                }
+
+                // Keep pathname as base product URL and write readable variation params.
+                current.pathname = `${prefix}${baseSlug}`;
+
+                try {
+                    if (this.product && Array.isArray(this.product.variations)) {
+                        for (const variation of this.product.variations) {
+                            const variationUid = variation?.uid;
+                            const key = slugify(variation?.name);
+                            if (!variationUid || !key) {
+                                continue;
+                            }
+
+                            const selectedValueUid = this.cartItemForm?.variations?.[variationUid];
+                            if (!selectedValueUid) {
+                                continue;
+                            }
+
+                            const selectedValue = (variation?.values || []).find(
+                                (v) => String(v?.uid) === String(selectedValueUid)
+                            );
+
+                            const valueSlug = slugify(selectedValue?.label);
+                            if (!valueSlug) {
+                                continue;
+                            }
+
+                            current.searchParams.set(key, valueSlug);
+                        }
+                    }
+                } catch (_) {}
+
+                window.history.replaceState({}, "", current.toString());
+            } catch (_) {
+                // Fallback: if URL() isn't available for any reason, do nothing.
+            }
         },
 
         updateVariantDetails() {
             this.setOldMediaLength();
             this.setVariant();
+            this.resetQuantityToDefault();
+            this.reduceToMaxQuantity();
             this.setVariantSlug();
             this.updateGallerySlider();
+        },
+
+        resetQuantityToDefault() {
+            this.isEditingQty = false;
+            this.qtyInput = "";
+            this.updateQuantity(getDefaultQty(this.product));
         },
 
         updateSelectTypeOptionValue(optionId, event) {
@@ -1195,6 +1927,7 @@ Alpine.data(
                 .then((response) => {
                     this.$store.cart.updateCart(response.data);
                     this.$store.layout.openSidebarCart();
+                    this.resetQuantityToDefault();
                 })
                 .catch(({ response }) => {
                     if (response.status === 422) {
@@ -1233,6 +1966,10 @@ Alpine.data(
         },
 
         async fetchReviews() {
+            if (this.reviewsLoaded && this.currentPage === 1) {
+                return;
+            }
+
             this.fetchingReviews = true;
 
             try {
@@ -1241,6 +1978,7 @@ Alpine.data(
                 );
 
                 this.reviews = response.data;
+                this.reviewsLoaded = true;
                 this.initReviewLightbox();
             } catch (error) {
                 notify(error.response.data.message);
@@ -1389,33 +2127,65 @@ Alpine.data(
 
         hideRelatedProductsSkeleton() {
             const skeletons = document.querySelectorAll(
-                ".landscape-products .swiper-slide-skeleton"
+                "[data-related-products] .related-products-carousel .swiper-slide-skeleton"
             );
 
             skeletons.forEach((skeleton) => skeleton.remove());
         },
 
         initUpSellProductsSlider() {
-            new Swiper(this.$refs.upSellProducts, {
+            const container = this.$refs.upSellProducts;
+            if (!container) {
+                return;
+            }
+
+            const nextEl = container.querySelector('.swiper-button-next');
+            const prevEl = container.querySelector('.swiper-button-prev');
+
+            new Swiper(container, {
                 modules: [Navigation],
                 slidesPerView: 1,
                 navigation: {
-                    nextEl: ".swiper-button-next",
-                    prevEl: ".swiper-button-prev",
+                    nextEl,
+                    prevEl,
                 },
             });
         },
 
         initRelatedProductsSlider() {
-            this.hideRelatedProductsSkeleton();
+            try {
+                const root = document.querySelector('[data-related-products]');
+                if (!root || root.classList.contains('d-none')) {
+                    return;
+                }
+            } catch (_) {
+                return;
+            }
 
-            new Swiper(this.$refs.landscapeProducts, {
-                modules: [Navigation, Pagination],
+            const container = document.querySelector(
+                '[data-related-products] .related-products-carousel.swiper'
+            );
+            if (!container) {
+                return;
+            }
+
+            // Prevent double initialization which can break Alpine state (badges flicker/disappear)
+            if (container.classList.contains('swiper-initialized') || container.__swiperInstance) {
+                return;
+            }
+
+            this.hideRelatedProductsSkeleton();
+            const paginationEl = container.querySelector('.swiper-pagination');
+
+            container.__swiperInstance = new Swiper(container, {
+                modules: [Pagination],
                 slidesPerView: 2,
-                navigation: {
-                    nextEl: ".swiper-button-next",
-                    prevEl: ".swiper-button-prev",
-                },
+                pagination: paginationEl
+                    ? {
+                          el: paginationEl,
+                          clickable: true,
+                      }
+                    : undefined,
                 breakpoints: {
                     640: {
                         slidesPerView: 3,

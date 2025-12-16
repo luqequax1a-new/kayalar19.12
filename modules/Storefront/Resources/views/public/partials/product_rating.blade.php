@@ -2,20 +2,23 @@
     $serverReviewCount = null;
     if (isset($data)) {
         if (is_object($data)) {
-            $serverReviewCount = $data->reviews_count ?? ((isset($data->reviews) && is_countable($data->reviews)) ? $data->reviews->count() : 0);
+            $serverReviewCount = $data->reviews_count ?? 0;
         } elseif (is_array($data)) {
-            $serverReviewCount = $data['reviews_count'] ?? ((isset($data['reviews']) && is_countable($data['reviews'])) ? count($data['reviews']) : 0);
+            $serverReviewCount = $data['reviews_count'] ?? 0;
         }
     }
     $serverHasReviews = is_int($serverReviewCount) ? ($serverReviewCount > 0) : null;
 @endphp
 
 @php
-    $xDataParam = is_null($data ?? null)
-        ? 'product'
-        : (is_string($data ?? null) ? ($data ?? 'product') : json_encode($data));
+     $xDataParam = is_null($data ?? null)
+         ? 'product'
+         : (is_string($data ?? null)
+             ? ($data ?? 'product')
+             : json_encode($data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT));
 @endphp
-<div x-data='ProductRating({{ $xDataParam }})'>
+
+<div x-data="ProductRating({{ $xDataParam }})">
     <a
         class="product-rating {{ $serverHasReviews === null ? '' : ($serverHasReviews ? 'has-reviews' : 'no-reviews') }}"
         @if ($serverHasReviews === null)

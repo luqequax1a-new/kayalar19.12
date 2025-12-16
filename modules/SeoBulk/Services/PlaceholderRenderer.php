@@ -6,6 +6,7 @@ use Illuminate\Support\Str;
 use Modules\Product\Entities\Product;
 use Modules\Product\Entities\ProductVariant;
 use Modules\Category\Entities\Category;
+use Modules\DynamicCategory\Entities\DynamicCategory;
 
 class PlaceholderRenderer
 {
@@ -43,6 +44,18 @@ class PlaceholderRenderer
     {
         $raw = $this->applyPlaceholders($this->config['templates']['description'],$this->categoryMap($c));
         $raw = $raw ? Str::limit($raw,160,'') : null;
+        return $this->finalize($raw);
+    }
+
+    public function renderDynamicCategoryTitle(DynamicCategory $c): ?string
+    {
+        return $this->finalize($this->applyPlaceholders($this->config['templates']['title'], $this->dynamicCategoryMap($c)));
+    }
+
+    public function renderDynamicCategoryDescription(DynamicCategory $c): ?string
+    {
+        $raw = $this->applyPlaceholders($this->config['templates']['description'], $this->dynamicCategoryMap($c));
+        $raw = $raw ? Str::limit($raw, 160, '') : null;
         return $this->finalize($raw);
     }
 
@@ -101,6 +114,26 @@ class PlaceholderRenderer
             '%category.slug%' => $c->slug ?? '',
             '%category.description%' => $desc ?? '',
             '%category.parent%' => optional($c->parent)->name ?? '',
+        ];
+    }
+
+    private function dynamicCategoryMap(DynamicCategory $c): array
+    {
+        $desc = (string) ($c->meta_description ?? '');
+        if ($desc === '') {
+            $desc = (string) ($c->description ?? '');
+        }
+        $desc = $this->stripHtml($desc);
+
+        $shopName = setting('store_name', config('app.name'));
+
+        return [
+            '%shop.name%' => $shopName,
+            '%separator%' => $this->config['templates']['separator'] ?? ' - ',
+            '%category.name%' => $c->name ?? '',
+            '%category.slug%' => $c->slug ?? '',
+            '%category.description%' => $desc ?? '',
+            '%category.parent%' => '',
         ];
     }
 

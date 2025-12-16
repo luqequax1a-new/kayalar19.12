@@ -16,6 +16,12 @@
         {{ csrf_field() }}
         {{ method_field('put') }}
 
+        <input
+            type="hidden"
+            name="storefront_home_page_sections_order"
+            value="{{ is_array(setting('storefront_home_page_sections_order')) ? json_encode(setting('storefront_home_page_sections_order')) : setting('storefront_home_page_sections_order') }}"
+        >
+
         {!! $tabs->render(compact('settings')) !!}
     </form>
 @endsection

@@ -156,7 +156,9 @@ document.getElementById('cat-execute').addEventListener('click', async ()=>{
     payload['scope_categories'] = 'on';
     const res = await fetch('{{ route('admin.seo.bulk_meta.execute') }}', { method:'POST', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }, body: toParams(payload) });
     const data = await res.json();
-    const msg = (data.updated_categories > 0) ? (data.updated_categories+' Kategori Güncellendi') : '0 Kategori Güncellendi';
+    const catMsg = (data.updated_categories > 0) ? (data.updated_categories+' Kategori Güncellendi') : '0 Kategori Güncellendi';
+    const dynMsg = (data.updated_dynamic_categories > 0) ? (data.updated_dynamic_categories+' Dinamik Kategori Güncellendi') : '0 Dinamik Kategori Güncellendi';
+    const msg = catMsg + ' / ' + dynMsg;
     if (window.success) { window.success(msg); } else { alert(msg); }
     location.reload();
 });
@@ -164,7 +166,13 @@ document.getElementById('cat-execute').addEventListener('click', async ()=>{
 document.getElementById('prod-execute').addEventListener('click', async ()=>{
     const payload = collectForm('#product-form');
     const sel = (prodTree && prodTree.jstree) ? prodTree.jstree('get_selected') : [];
-    payload['categories[]'] = sel;
+    // Product bulk meta uses only real categories.
+    const catIds = (sel || [])
+        .map(String)
+        .filter((id)=> id.startsWith('c_') || /^\d+$/.test(id))
+        .map((id)=> id.startsWith('c_') ? id.slice(2) : id)
+        .filter((id)=> /^\d+$/.test(id));
+    payload['categories[]'] = catIds;
     payload['scope_products'] = 'on';
     const res = await fetch('{{ route('admin.seo.bulk_meta.execute') }}', { method:'POST', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }, body: toParams(payload) });
     const data = await res.json();

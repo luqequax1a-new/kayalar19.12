@@ -2,21 +2,21 @@
 
 return [
     'auth' => [
-        'remember_me' => 'Remember me',
+        'remember_me' => 'Beni hatırla',
     ],
     'users' => [
-        'first_name' => 'First Name',
-        'last_name' => 'Last Name',
-        'email' => 'Email',
-        'phone' => 'Phone',
-        'password' => 'Password',
-        'password_confirmation' => 'Confirm Password',
-        'roles' => 'Roles',
-        'activated' => 'Status',
-        'new_password' => 'New Password',
-        'confirm_new_password' => 'Confirm New Password',
+        'first_name' => 'Ad',
+        'last_name' => 'Soyad',
+        'email' => 'E-posta',
+        'phone' => 'Telefon',
+        'password' => 'Şifre',
+        'password_confirmation' => 'Şifreyi Onayla',
+        'roles' => 'Roller',
+        'activated' => 'Durum',
+        'new_password' => 'Yeni Şifre',
+        'confirm_new_password' => 'Yeni Şifreyi Onayla',
     ],
     'roles' => [
-        'name' => 'Name',
+        'name' => 'Ad',
     ],
 ];

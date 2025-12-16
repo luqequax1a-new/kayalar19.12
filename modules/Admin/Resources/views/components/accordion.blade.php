@@ -25,9 +25,17 @@
 
                         <div id="{{ $group }}" class="panel-collapse collapse {{ ($options['active'] ?? false) ? 'in' : '' }}">
                             <div class="panel-body">
-                                <ul class="accordion-tab nav nav-tabs">
+                                <ul class="accordion-tab nav nav-tabs" data-group="{{ $group }}">
                                     {{ $tabs->group($group)->navs() }}
                                 </ul>
+
+                                @if ($group === 'home_page_sections')
+                                    <div class="m-t-10 hide" data-home-page-sections-order-actions>
+                                        <button type="button" class="btn btn-primary btn-sm" data-save-home-page-sections-order>
+                                            Sıralamayı Kaydet
+                                        </button>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>

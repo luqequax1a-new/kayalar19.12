@@ -4,6 +4,7 @@ namespace Modules\Transaction\Admin;
 
 use Modules\Admin\Ui\AdminTable;
 use Illuminate\Http\JsonResponse;
+use Modules\Order\Entities\Order;
 
 class TransactionTable extends AdminTable
 {
@@ -25,8 +26,10 @@ class TransactionTable extends AdminTable
         return $this->newTable()
             ->addColumn('order_id', function ($transaction) {
                 $orderUrl = route('admin.orders.show', $transaction->order_id);
+                $order = Order::query()->select(['id', 'order_number'])->find($transaction->order_id);
+                $label = $order ? e($order->displayOrderNumber()) : e((string) $transaction->order_id);
 
-                return "<a href='{$orderUrl}'>{$transaction->order_id}</a>";
+                return "<a href='{$orderUrl}'>{$label}</a>";
             });
     }
 }

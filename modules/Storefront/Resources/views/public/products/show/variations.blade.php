@@ -28,8 +28,9 @@
                                 disabled: !isVariationValueEnabled('{{ $variation->uid }}', {{ $loop->parent->index }}, '{{ $value->uid }}')
 
                             }"
-                            @mouseenter="setVariationValueLabel({{ $loop->parent->index }}, {{ $loop->index }})"
+                            @mouseenter="prefetchVariantMedia({{ $loop->parent->index }}, {{ $loop->index }}); setVariationValueLabel({{ $loop->parent->index }}, {{ $loop->index }})"
                             @mouseleave="setActiveVariationValueLabel({{ $loop->parent->index }})"
+                            @touchstart.passive="prefetchVariantMedia({{ $loop->parent->index }}, {{ $loop->index }})"
                             @click="syncVariationValue(
                                 '{{ $variation->uid }}',
                                 {{ $loop->parent->index }},
@@ -40,9 +41,30 @@
                             @if ($variation->type === 'text')
                                 {{ $value->label }}
                             @elseif ($variation->type === 'color')
-                                <div style="background-color: {{ $value->color }};" role="img" aria-label="{{ $product->name }} {{ $value->label }}" title="{{ $product->name }} {{ $value->label }}"></div>
-                            @elseif ($variation->type === 'image')
-                                <img src="{{ $value->image->path }}" alt="{{ $product->name }} {{ $value->label }}">
+                                <div
+                                    style="background-color: {{ $value->color }};"
+                                    role="img"
+                                    aria-label="{{ $product->name }} {{ $value->label }}"
+                                    title="{{ $product->name }} {{ $value->label }}"
+                                ></div>
+                            @elseif ($variation->type === 'image' && $value->image)
+                                @php(
+                                    $imageThumb = $value->image->thumb_webp_url
+                                        ?? $value->image->thumb_avif_url
+                                        ?? $value->image->thumb_jpeg_url
+                                        ?? $value->image->grid_webp_url
+                                        ?? $value->image->grid_jpeg_url
+                                        ?? $value->image->path
+                                )
+                                <img
+                                    src="{{ $imageThumb }}"
+                                    alt="{{ $product->name }} {{ $value->label }}"
+                                    width="60"
+                                    height="60"
+                                    loading="{{ $loop->index < 6 ? 'eager' : 'lazy' }}"
+                                    fetchpriority="{{ $loop->index < 6 ? 'high' : 'auto' }}"
+                                    decoding="async"
+                                >
                             @endif
                         </li>
                     @endforeach

@@ -6,6 +6,7 @@
             show: isShowingStickyHeader
         }"
     >
+        @include('storefront::public.layouts.announcement_bar')
         <div class="container">
             <div class="d-flex flex-nowrap justify-content-between position-relative">
                 <div class="header-column-left align-items-center">

@@ -18,20 +18,21 @@ trait HasStock
             return FlashSale::remainingQty($this) > 0;
         }
         if ($this->hasAnyVariants()) {
-            $productWithStock = $this->variants
-                ->where(function ($query) {
-                    $query->where(
-                        [
-                            ['manage_stock', true],
-                            ['qty', '>', 0],
-                        ]);
-
-                    $query->orWhere('manage_stock', false);
-                })
+            $variantWithStock = $this->variants
                 ->where('in_stock', true)
-                ->first();
+                ->first(function ($variant) {
+                    try {
+                        if (! (bool) $variant->manage_stock) {
+                            return true;
+                        }
 
-            return (bool)$productWithStock;
+                        return (float) ($variant->qty ?? 0) > 0;
+                    } catch (\Throwable $e) {
+                        return false;
+                    }
+                });
+
+            return (bool) $variantWithStock;
         } else {
             if ($this->manage_stock && (float) $this->qty <= 0) {
                 return false;
@@ -47,6 +48,12 @@ trait HasStock
         $this->withoutEvents(function () {
             $this->update(['in_stock' => true]);
         });
+
+        try {
+            app(\Modules\Product\Listeners\SendBackInStockNotifications::class)->handle($this);
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
 

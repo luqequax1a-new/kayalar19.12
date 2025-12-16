@@ -138,6 +138,17 @@
             loading: fetchingProducts 
         }"
     >  
+        <template x-if="fetchingProducts">
+            <div class="search-result-skeleton">
+                <div class="search-result-skeleton-item"></div>
+                <div class="search-result-skeleton-item"></div>
+                <div class="search-result-skeleton-item"></div>
+                <div class="search-result-skeleton-item"></div>
+                <div class="search-result-skeleton-item"></div>
+                <div class="search-result-skeleton-item"></div>
+            </div>
+        </template>
+
         <template x-if="!emptyProducts && viewMode === 'grid'">
             @include('storefront::public.partials.products.grid')
         </template>
@@ -153,6 +164,8 @@
                 <h2>{{ trans('storefront::products.no_products_found') }}</h2>
             </div>
         </template>
+
+        <div x-ref="renderMoreTrigger"></div>
     </div>
 
     <template x-if="!emptyProducts">

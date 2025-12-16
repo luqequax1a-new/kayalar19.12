@@ -6,6 +6,10 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Foundation\Http\Events\RequestHandled;
 use Illuminate\Support\ServiceProvider;
 use Jackiedo\DotenvEditor\DotenvEditorServiceProvider;
 
@@ -38,6 +42,76 @@ class AppServiceProvider extends ServiceProvider
         }
 
         \Carbon\Carbon::setLocale('tr');
+
+        $profileParam = app('request')->query('__profile');
+        if ($profileParam === null) {
+            $profileParam = app('request')->query('profile');
+        }
+
+        $profileRequested = in_array($profileParam, ['1', 1, true, 'true', 'on', 'yes'], true);
+
+        $profilingAllowed = config('app.debug') || env('PROFILE_DB_QUERIES', false);
+
+        if ($profileRequested && $profilingAllowed) {
+            Log::channel('single')->info('PROFILE: enabled', [
+                'url' => app('request')->fullUrl(),
+            ]);
+
+            $queries = [];
+            DB::listen(function ($query) use (&$queries) {
+                $queries[] = [
+                    'sql' => $query->sql,
+                    'bindings' => $query->bindings,
+                    'time_ms' => (float) $query->time,
+                ];
+            });
+
+            Event::listen(RequestHandled::class, function ($event) use (&$queries) {
+                try {
+                    $total = count($queries);
+                    $slowest = collect($queries)
+                        ->sortByDesc('time_ms')
+                        ->take(5)
+                        ->values()
+                        ->all();
+
+                    $event->response->headers->set('X-Profile-DB-Total', (string) $total);
+                    $event->response->headers->set('X-Profile-DB-Slowest', substr(json_encode($slowest), 0, 900));
+                } catch (\Throwable $e) {
+                }
+            });
+
+            app()->terminating(function () use (&$queries) {
+                try {
+                    $total = count($queries);
+                    $slowest = collect($queries)
+                        ->sortByDesc('time_ms')
+                        ->take(15)
+                        ->values()
+                        ->all();
+
+                    Log::channel('single')->info('PROFILE: DB queries', [
+                        'total' => $total,
+                        'slowest_15' => $slowest,
+                    ]);
+
+                    @file_put_contents(
+                        base_path('profile-db.log'),
+                        json_encode([
+                            'ts' => now()->toDateTimeString(),
+                            'url' => app('request')->fullUrl(),
+                            'total' => $total,
+                            'slowest_15' => $slowest,
+                        ]) . PHP_EOL,
+                        FILE_APPEND
+                    );
+                } catch (\Throwable $e) {
+                    Log::channel('single')->warning('PROFILE: failed to summarize queries', [
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            });
+        }
     }
 
 

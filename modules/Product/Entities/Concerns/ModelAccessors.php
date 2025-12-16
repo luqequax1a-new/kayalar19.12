@@ -7,6 +7,7 @@ use Modules\Media\Entities\File;
 use Modules\FlashSale\Entities\FlashSale;
 use Illuminate\Database\Eloquent\Collection;
 use Modules\FlashSale\Entities\FlashSaleProduct;
+use Illuminate\Support\Facades\Cache;
 
 trait ModelAccessors
 {
@@ -25,7 +26,15 @@ trait ModelAccessors
     public function getFlashSaleEndDateAttribute()
     {
         if (FlashSale::contains($this)) {
-            return FlashSaleProduct::where('product_id', $this->id)->first()?->end_date;
+            $locale = function_exists('locale') ? locale() : app()->getLocale();
+
+            return Cache::store('file')->remember(
+                "storefront:product:{$this->id}:flash_sale_pivot:{$locale}:v1",
+                now()->addMinutes(10),
+                function () {
+                    return FlashSaleProduct::where('product_id', $this->id)->first();
+                }
+            )?->end_date;
         }
     }
 

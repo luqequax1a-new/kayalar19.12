@@ -15,12 +15,22 @@ return [
     'variants' => [
         'widths' => [
             'thumb' => 80,
+            'card' => 260,
+            'card_2x' => 520,
+            'card_3x' => 780,
             'grid' => 400,
             'detail' => 1000,
         ],
         'jpeg_quality' => 82,
         'webp_quality' => 78,
         'avif_quality' => 72,
+        'enable_avif' => true,
+    ],
+
+    'fast_listing' => [
+        'width' => 400,
+        'webp_quality' => 65,
+        'avif_quality' => 40,
         'enable_avif' => true,
     ],
 

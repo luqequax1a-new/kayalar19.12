@@ -51,6 +51,13 @@ class Tag extends Model
      */
     public static function list()
     {
+        try {
+            if (request()->is('admin/*')) {
+                return self::all()->sortBy('name')->pluck('name', 'id');
+            }
+        } catch (\Throwable $e) {
+        }
+
         return Cache::tags('tags')->rememberForever(md5('tags.list:' . locale()), function () {
             return self::all()->sortBy('name')->pluck('name', 'id');
         });
@@ -63,6 +70,22 @@ class Tag extends Model
      */
     public static function keyValuedList()
     {
+        try {
+            if (request()->is('admin/*')) {
+                return self::all()
+                    ->sortBy('name')
+                    ->pluck('name', 'id')
+                    ->map(function ($key, $value) {
+                        return [
+                            'name' => $key,
+                            'value' => $value,
+                        ];
+                    })
+                    ->values();
+            }
+        } catch (\Throwable $e) {
+        }
+
         return Cache::tags('tags')->rememberForever(md5('tags.key_valued_list:' . locale()), function () {
             return self::all()
                 ->sortBy('name')

@@ -1,20 +1,18 @@
-<div x-data="ProductCard(product)" class="vertical-product-card">
+@php
+     $xDataParam = is_null($data ?? null)
+         ? 'product'
+         : (is_string($data ?? null)
+             ? ($data ?? 'product')
+             : json_encode($data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT));
+ @endphp
+ <div x-data='ProductCard({{ $xDataParam }})' class="vertical-product-card">
     <a :href="productUrl" class="product-image">
-        <picture>
-            <template x-if="imageSources.avif">
-                <source :srcset="imageSources.avif" type="image/avif">
-            </template>
-            <template x-if="imageSources.webp">
-                <source :srcset="imageSources.webp" type="image/webp">
-            </template>
-            <img
-                :src="imageSources.fallback"
-                :alt="productName"
-                loading="lazy"
-                width="400"
-                height="400"
-            />
-        </picture>
+        <img
+            :src="baseImage"
+            :class="{ 'image-placeholder': !hasBaseImage }"
+            :alt="productName"
+            loading="lazy"
+        />
 
         <div class="product-image-layer"></div>
     </a>
@@ -24,7 +22,9 @@
             <span x-text="productName"></span>
         </a>
 
-        @include('storefront::public.partials.product_rating')
+        <template x-if="hasVisibleRating">
+            @include('storefront::public.partials.product_rating', ['data' => $data ?? null])
+        </template>
         
         <div class="product-price" x-html="productPrice"></div>
     </div>

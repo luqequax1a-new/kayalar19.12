@@ -12,6 +12,7 @@ use Modules\Core\Http\Middleware\Authorization;
 use Modules\Core\Http\Middleware\GuestMiddleware;
 use Modules\Core\Http\Middleware\AdminMiddleware;
 use Modules\Setting\Repositories\SettingRepository;
+use Modules\Setting\Services\SettingsCacheService;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 use Mcamara\LaravelLocalization\Middleware\LocaleSessionRedirect;
 use Mcamara\LaravelLocalization\Middleware\LaravelLocalizationRoutes;
@@ -99,7 +100,9 @@ class CoreServiceProvider extends ServiceProvider
     private function registerSetting()
     {
         $this->app->singleton('setting', function () {
-            return new SettingRepository(Setting::allCached());
+            $settings = app(SettingsCacheService::class)->all(locale());
+
+            return new SettingRepository($settings);
         });
     }
 

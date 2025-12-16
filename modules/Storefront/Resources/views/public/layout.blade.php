@@ -7,6 +7,8 @@
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
 
+        @stack('lcp_preload')
+
         <title>
             @hasSection('title')
                 @yield('title')
@@ -85,11 +87,14 @@
     >
         <div x-data="App" class="wrapper">
             @include('storefront::public.layouts.top_nav')
+            @include('storefront::public.layouts.header_custom_text')
             @include('storefront::public.layouts.header')
             @include('storefront::public.layouts.navigation')
             @include('storefront::public.layouts.breadcrumb')
 
-            @yield('content')
+            <main role="main">
+                @yield('content')
+            </main>
 
             @include('storefront::public.home.sections.newsletter_subscription')
             @include('storefront::public.layouts.footer')
@@ -110,13 +115,6 @@
 
             @include('storefront::public.layouts.alert')
             @include('storefront::public.layouts.newsletter_popup')
-            @php
-                try {
-                    $activePopup = app(\Modules\Popup\Services\PopupMatcher::class)->matchForRequest(request());
-                } catch (\Throwable $e) {
-                    $activePopup = null;
-                }
-            @endphp
             @includeIf('popup::public.layouts.popup')
             @include('storefront::public.layouts.cookie_bar')
             @include('storefront::public.layouts.scroll_to_top')

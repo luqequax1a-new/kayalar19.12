@@ -10,6 +10,8 @@ use Illuminate\Support\Collection;
 use Modules\Product\Entities\Product;
 use Spatie\SchemaOrg\ItemAvailability;
 use Modules\Shipping\Services\SmartShippingCalculator;
+use Illuminate\Support\Facades\Cache;
+use Modules\SizeChart\Services\SizeChartResolver;
 
 class ProductShowPageComposer
 {
@@ -24,13 +26,56 @@ class ProductShowPageComposer
     {
         $product = $view->getData()['product'];
 
-        $view->with([
-            'features' => Feature::all(),
-            'banner' => Banner::getProductPageBanner(),
-            'productSchemaMarkup' => $this->schemaMarkup($product),
+        $sizeChartData = [
+            'hasSizeChart' => false,
+            'sizeChartEndpoint' => null,
+        ];
+
+        try {
+            $resolver = app(SizeChartResolver::class);
+            $sizeChart = $resolver->resolveForProduct($product);
+
+            if (!is_null($sizeChart)) {
+                $sizeChartData['hasSizeChart'] = true;
+                $sizeChartData['sizeChartEndpoint'] = route('size_charts.product.show', ['productId' => $product->id]);
+            }
+        } catch (\Throwable $e) {
+            // Ignore
+        }
+
+        $variantId = null;
+        try {
+            $variantId = optional($product->variant)->id;
+        } catch (\Throwable $e) {
+            $variantId = null;
+        }
+
+        $locale = null;
+        try {
+            $locale = locale();
+        } catch (\Throwable $e) {
+            $locale = null;
+        }
+
+        $schemaCacheKey = 'storefront:product_schema_script:' . $product->id . ':' . ($variantId ?: 0) . ':' . ($locale ?: '');
+        $breadcrumbSchemaCacheKey = 'storefront:breadcrumb_schema_script:' . $product->id . ':' . ($variantId ?: 0) . ':' . ($locale ?: '');
+
+        $view->with(array_merge([
+            'features' => Cache::rememberForever('storefront_product_page_features', function () {
+                return Feature::all();
+            }),
+            'banner' => Cache::rememberForever('storefront_product_page_banner', function () {
+                return Banner::getProductPageBanner();
+            }),
+            // Pre-render and cache the Schema.org script to reduce TTFB.
+            'productSchemaMarkupScript' => Cache::remember($schemaCacheKey, now()->addMinutes(30), function () use ($product) {
+                return $this->schemaMarkup($product)->toScript();
+            }),
             'categoryBreadcrumb' => $this->getSeoCategoryBreadcrumb($product),
-            'breadcrumbSchemaMarkup' => $this->breadcrumbSchema($product),
-        ]);
+            'breadcrumbSchemaMarkupScript' => Cache::remember($breadcrumbSchemaCacheKey, now()->addMinutes(30), function () use ($product) {
+                return $this->breadcrumbSchema($product)->toScript();
+            }),
+        ], $sizeChartData));
     }
 
 
@@ -93,16 +138,10 @@ class ProductShowPageComposer
         } catch (\Throwable $e) {
         }
 
-        $reviewsCount = $product->reviews()->count();
+        $reviewStats = $this->reviewStats($product);
 
-        if ($reviewsCount > 0) {
-            $schema->aggregateRating($this->aggregateRatingSchema($product));
-
-            $reviews = $this->reviewsSchema($product);
-
-            if (! empty($reviews)) {
-                $schema->review($reviews);
-            }
+        if (($reviewStats['count'] ?? 0) > 0) {
+            $schema->aggregateRating($this->aggregateRatingSchema($reviewStats));
         }
 
         return $schema;
@@ -123,21 +162,25 @@ class ProductShowPageComposer
     }
 
 
-    private function aggregateRatingSchema(Product $product)
+    private function aggregateRatingSchema(array $reviewStats)
     {
         return Schema::aggregateRating()
-            ->ratingValue($product->reviews()->avg('rating'))
-            ->ratingCount($product->reviews()->count());
+            ->ratingValue((float) ($reviewStats['avg'] ?? 0))
+            ->ratingCount((int) ($reviewStats['count'] ?? 0));
     }
 
 
     private function reviewsSchema(Product $product): array
     {
         try {
-            $reviews = $product->reviews()
-                ->latest()
-                ->take(50)
-                ->get();
+            $cacheKey = 'storefront:product_schema_reviews:' . $product->id;
+
+            $reviews = Cache::remember($cacheKey, now()->addMinutes(10), function () use ($product) {
+                return $product->reviews()
+                    ->latest()
+                    ->take(50)
+                    ->get();
+            });
 
             if ($reviews->isEmpty()) {
                 return [];
@@ -408,12 +451,9 @@ class ProductShowPageComposer
                 return null;
             }
 
-            $trail = collect();
-            while ($category) {
-                $trail->prepend($category);
-                $category = $category->parent_id ? \Modules\Category\Entities\Category::withoutGlobalScope('active')->find($category->parent_id) : null;
-            }
+            $trail = $this->categoryTrail($category);
             $names = $trail->map(function ($cat) { return (string) $cat->name; })->all();
+
             return implode(' > ', $names);
         } catch (\Throwable $e) {
             return null;
@@ -429,12 +469,10 @@ class ProductShowPageComposer
             return '';
         }
 
-        $trail = collect();
-
-        while ($category) {
-            $trail->prepend($category);
-            $category = $category->parent_id ? \Modules\Category\Entities\Category::withoutGlobalScope('active')->find($category->parent_id) : null;
-        }
+        $cacheKey = 'storefront:product_category_breadcrumb:' . $product->id . ':' . locale();
+        $trail = Cache::remember($cacheKey, now()->addMinutes(30), function () use ($category) {
+            return $this->categoryTrail($category);
+        });
 
         return $trail->map(function ($cat) {
             return "<li><a href='" . $cat->url() . "'>" . e($cat->name) . "</a></li>";
@@ -458,12 +496,7 @@ class ProductShowPageComposer
         $category = $product->seoCategory();
 
         if ($category) {
-            $trail = collect();
-
-            while ($category) {
-                $trail->prepend($category);
-                $category = $category->parent_id ? \Modules\Category\Entities\Category::withoutGlobalScope('active')->find($category->parent_id) : null;
-            }
+            $trail = $this->categoryTrail($category);
 
             foreach ($trail as $cat) {
                 $items[] = Schema::listItem()
@@ -485,5 +518,83 @@ class ProductShowPageComposer
             );
 
         return Schema::breadcrumbList()->itemListElement($items);
+    }
+
+
+    private function reviewStats(Product $product): array
+    {
+        if (($product->reviews_count ?? null) !== null || ($product->reviews_avg_rating ?? null) !== null) {
+            return [
+                'count' => (int) ($product->reviews_count ?? 0),
+                'avg' => (float) ($product->reviews_avg_rating ?? 0),
+            ];
+        }
+
+        $cacheKey = 'storefront:product_review_stats:' . $product->id;
+
+        return Cache::remember($cacheKey, now()->addMinutes(10), function () use ($product) {
+            $row = $product->reviews()
+                ->selectRaw('count(*) as count')
+                ->selectRaw('avg(rating) as avg')
+                ->first();
+
+            return [
+                'count' => (int) ($row->count ?? 0),
+                'avg' => (float) ($row->avg ?? 0),
+            ];
+        });
+    }
+
+
+    private function categoryTrail($category)
+    {
+        try {
+            $levels = 0;
+            $frontier = collect([(int) $category->id]);
+            $all = collect();
+
+            while ($frontier->isNotEmpty() && $levels++ < 10) {
+                $chunk = \Modules\Category\Entities\Category::withoutGlobalScope('active')
+                    ->whereIn('id', $frontier->all())
+                    ->get();
+
+                if ($chunk->isEmpty()) {
+                    break;
+                }
+
+                $all = $all->merge($chunk);
+
+                $parentIds = $chunk
+                    ->pluck('parent_id')
+                    ->filter()
+                    ->map(fn ($id) => (int) $id)
+                    ->unique()
+                    ->values();
+
+                $frontier = $parentIds->diff($all->pluck('id')->map(fn ($id) => (int) $id))->values();
+            }
+
+            if ($all->isEmpty()) {
+                return collect();
+            }
+
+            $map = $all->keyBy('id');
+            $trail = collect();
+            $cursorId = (int) $category->id;
+
+            while ($cursorId && $trail->count() < 20) {
+                $node = $map->get($cursorId);
+                if (!$node) {
+                    break;
+                }
+
+                $trail->prepend($node);
+                $cursorId = $node->parent_id ? (int) $node->parent_id : 0;
+            }
+
+            return $trail;
+        } catch (\Throwable $e) {
+            return collect();
+        }
     }
 }

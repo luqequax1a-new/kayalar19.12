@@ -2,13 +2,14 @@
     position: absolute;
     left: 0;
     right: 0;
-    top: 58px;
+    top: 54px;
     bottom: 102px;
-    margin: 0px 20px;
-    padding: 10px 15px;
-    border: 1px solid #e2e8f0;
-    border-radius: var(--radius-default);
+    margin: 0;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 0;
     overflow-x: hidden;
+    overflow-y: auto;
 
     &::-webkit-scrollbar {
         width: 3px;
@@ -218,14 +219,14 @@
 
 @media screen and (max-width: 991px) {
     .sidebar-cart-middle {
-        top: 52px;
+        top: 50px;
     }
 }
 
 @media screen and (max-width: 380px) {
     .sidebar-cart-middle {
-        margin: 0 15px;
-        padding: 6px 13px;
+        margin: 0;
+        padding: 6px 16px;
     }
 
     .sidebar-cart-item {

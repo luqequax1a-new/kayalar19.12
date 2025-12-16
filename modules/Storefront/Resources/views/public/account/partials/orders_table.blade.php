@@ -16,10 +16,10 @@
         @foreach ($orders as $order)
             <tr>
                 <td>
-                    {{ $order->id }}
+                    {{ $order->displayOrderNumber() }}
                 </td>
                 <td>
-                    {{ $order->created_at->toFormattedDateString() }}
+                    {{ $order->created_at->format('d.m.Y') }}
                 </td>
                 <td>
                     <span class="badge {{ order_status_badge_class($order->status) }}">

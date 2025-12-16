@@ -150,6 +150,9 @@ class CategoryProductController
                 'categoryBanner' => optional($dynamicCategory->image)->path,
                 'categoryMetaTitle' => $dynamicCategory->meta_title ?: $dynamicCategory->name,
                 'categoryMetaDescription' => $dynamicCategory->meta_description,
+                'initialProducts' => null,
+                'initialAttributes' => null,
+                'initialCategoryData' => null,
             ]);
         }
 
@@ -162,12 +165,17 @@ class CategoryProductController
                 return $this->searchProducts($model, $productFilter);
             }
 
+            $payload = $this->buildListingPayload($model, $productFilter);
+
             return view('storefront::public.products.index', [
                 'category' => $category,
                 'categoryName' => $category->name,
                 'categoryBanner' => $category->banner->path,
                 'categoryMetaTitle' => $category->meta_title,
                 'categoryMetaDescription' => $category->meta_description,
+                'initialProducts' => $payload['products'] ?? null,
+                'initialAttributes' => $payload['attributes'] ?? null,
+                'initialCategoryData' => $payload['category'] ?? null,
             ]);
         }
 
@@ -176,6 +184,10 @@ class CategoryProductController
             return $this->searchProducts($model, $productFilter);
         }
 
-        return view('storefront::public.products.index');
+        return view('storefront::public.products.index', [
+            'initialProducts' => null,
+            'initialAttributes' => null,
+            'initialCategoryData' => null,
+        ]);
     }
 }

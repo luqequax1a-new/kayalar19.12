@@ -8,6 +8,26 @@ import "./components/CustomPageSelect";
 import "../../../components/ProductCard";
 import "../../../components/Pagination";
 
+if (import.meta && import.meta.env && import.meta.env.DEV) {
+    try {
+        new PerformanceObserver((list) => {
+            const entries = list.getEntries();
+            const last = entries && entries.length ? entries[entries.length - 1] : null;
+            const el = last && last.element ? last.element : null;
+            if (el && el.tagName === "IMG") {
+                console.log(
+                    "[LCP]",
+                    `${Math.round(last.startTime)}ms`,
+                    el.currentSrc || el.src,
+                    el
+                );
+            } else if (last) {
+                console.log("[LCP]", `${Math.round(last.startTime)}ms`, last.element);
+            }
+        }).observe({ type: "largest-contentful-paint", buffered: true });
+    } catch (e) {}
+}
+
 function updatePageTitle(selectedCategory) {
     const baseTitle = (window.FleetcartSEO && window.FleetcartSEO.baseTitle) || document.title;
     if (!selectedCategory) {
@@ -37,12 +57,17 @@ const {
     initialPage,
     initialPerPage,
     initialViewMode,
+    initialProducts,
+    initialAttributes,
+    initialCategoryData,
 } = FleetCart.data;
 
 Alpine.data("ProductIndex", () => ({
     fetchingProducts: false,
-    products: { data: [] },
-    attributeFilters: [],
+    products: initialProducts || { data: [] },
+    renderLimit: 12,
+    observer: null,
+    attributeFilters: Array.isArray(initialAttributes) ? initialAttributes : [],
     initialBrandName,
     initialTagName,
     brandBanner: initialBrandBanner,
@@ -72,6 +97,11 @@ Alpine.data("ProductIndex", () => ({
         return this.products.data.length === 0;
     },
 
+    get visibleProducts() {
+        const data = Array.isArray(this.products?.data) ? this.products.data : [];
+        return data.slice(0, this.renderLimit);
+    },
+
     get totalPage() {
         return Math.ceil(this.products.total / this.queryParams.perPage);
     },
@@ -89,6 +119,9 @@ Alpine.data("ProductIndex", () => ({
     },
 
     init() {
+        const hasSsrProducts =
+            this.products && Array.isArray(this.products?.data) && this.products.data.length > 0;
+
         if (this.queryParams.query && this.queryParams.category) {
             const url = new URL(window.location.href);
             url.pathname = "/products";
@@ -118,8 +151,64 @@ Alpine.data("ProductIndex", () => ({
             }
         }
         this.initPriceFilter();
-        this.fetchProducts();
+
+        if (!hasSsrProducts) {
+            this.fetchProducts();
+        } else {
+            if (initialCategoryData) {
+                if (typeof initialCategoryData.description_html !== "undefined") {
+                    this.categoryDescriptionHtml = initialCategoryData.description_html || "";
+                }
+                if (Array.isArray(initialCategoryData.faq_items)) {
+                    this.categoryFaqItems = initialCategoryData.faq_items;
+                }
+                if (typeof initialCategoryData.name !== "undefined" && initialCategoryData.name) {
+                    this.categoryName = initialCategoryData.name;
+                }
+                if (typeof initialCategoryData.slug !== "undefined" && initialCategoryData.slug) {
+                    this.categorySlug = initialCategoryData.slug;
+                }
+            }
+        }
+        this.initInfiniteRender();
         this.initLatestProductsSlider();
+    },
+
+    initInfiniteRender() {
+        try {
+            if (this.observer) {
+                this.observer.disconnect();
+            }
+
+            if (typeof window.IntersectionObserver !== "function") {
+                return;
+            }
+
+            this.observer = new IntersectionObserver(
+                (entries) => {
+                    const entry = entries && entries[0] ? entries[0] : null;
+                    if (!entry || !entry.isIntersecting) {
+                        return;
+                    }
+
+                    if (this.fetchingProducts) {
+                        return;
+                    }
+
+                    const total = Array.isArray(this.products?.data) ? this.products.data.length : 0;
+                    if (this.renderLimit >= total) {
+                        return;
+                    }
+
+                    this.renderLimit = Math.min(total, this.renderLimit + 12);
+                },
+                { root: null, rootMargin: "400px 0px", threshold: 0 }
+            );
+
+            if (this.$refs?.renderMoreTrigger) {
+                this.observer.observe(this.$refs.renderMoreTrigger);
+            }
+        } catch (e) {}
     },
 
     uid() {
@@ -243,6 +332,7 @@ Alpine.data("ProductIndex", () => ({
 
     async fetchProducts(options = { updateAttributeFilters: true }) {
         this.fetchingProducts = true;
+        this.renderLimit = 12;
 
         try {
             const response = await axios.get(`/products`, {
@@ -251,8 +341,11 @@ Alpine.data("ProductIndex", () => ({
                 },
             });
 
-            this.products = response.data.products;
-            this.preloadFirstProductImage();
+            const products = response.data.products;
+
+            const data = Array.isArray(products?.data) ? products.data : [];
+            const rawData = data.map((p) => (typeof Alpine.raw === "function" ? Alpine.raw(p) : p));
+            this.products = { ...products, data: rawData };
 
             if (options.updateAttributeFilters) {
                 this.attributeFilters = response.data.attributes;
@@ -281,23 +374,6 @@ Alpine.data("ProductIndex", () => ({
         } finally {
             this.fetchingProducts = false;
         }
-    },
-
-    preloadFirstProductImage() {
-        const first = Array.isArray(this.products?.data) ? this.products.data[0] : null;
-        const base = first?.base_image || null;
-        if (!base) return;
-        const href = base.grid_avif_url || base.grid_webp_url || base.grid_jpeg_url || base.path;
-        if (!href) return;
-        if (document.querySelector(`link[rel="preload"][as="image"][href="${href}"]`)) return;
-        const link = document.createElement("link");
-        link.rel = "preload";
-        link.as = "image";
-        link.href = href;
-        link.fetchPriority = "high";
-        link.setAttribute("imagesrcset", href);
-        link.setAttribute("imagesizes", "(min-width: 768px) 400px, 50vw");
-        document.head.appendChild(link);
     },
 
     initLatestProductsSlider() {

@@ -30,10 +30,31 @@ class RouteServiceProvider extends ServiceProvider
         foreach ($this->app['modules']->allEnabled() as $module) {
             $this->groupRoutes("Modules\\{$module->getName()}\\Http\\Controllers", function () use ($module) {
                 $this->mapAdminRoutes("{$module->getPath()}/Routes/admin.php");
-                $this->mapPublicRoutes("{$module->getPath()}/Routes/public.php");
+                if ($module->getName() !== 'ProductFeeds') {
+                    $this->mapPublicRoutes("{$module->getPath()}/Routes/public.php");
+                }
                 $this->mapApiRoutes("{$module->getPath()}/Routes/api.php");
             });
+
+            if ($module->getName() === 'ProductFeeds') {
+                $this->mapProductFeedsPublicRoutesWithoutLocalization("{$module->getPath()}/Routes/public.php");
+            }
         }
+    }
+
+
+    private function mapProductFeedsPublicRoutesWithoutLocalization(string $path): void
+    {
+        if (! file_exists($path)) {
+            return;
+        }
+
+        Route::group([
+            'namespace' => 'Modules\\ProductFeeds\\Http\\Controllers',
+            'middleware' => ['web'],
+        ], function () use ($path) {
+            require_once $path;
+        });
     }
 
 

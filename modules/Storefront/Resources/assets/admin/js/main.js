@@ -1,3 +1,5 @@
+import tinyMce from "@admin/js/wysiwyg";
+
 window.admin.removeSubmitButtonOffsetOn([
     "#logo",
     "#footer",
@@ -81,9 +83,11 @@ $(".product-type").on("change", (e) => {
     }
 
     if (
+        e.currentTarget.value === "all_products" ||
         e.currentTarget.value === "latest_products" ||
         e.currentTarget.value === "recently_viewed_products" ||
-        e.currentTarget.value === "category_products"
+        e.currentTarget.value === "category_products" ||
+        e.currentTarget.value === "tag_products"
     ) {
         productsLimit.removeClass("hide");
     }
@@ -94,6 +98,105 @@ $(".product-type").on("change", (e) => {
 });
 
 $(function () {
+    // Init WYSIWYG editor for any textarea rendered via Form::wysiwyg (e.g. Html Blog)
+    tinyMce();
+
+    $("#storefront-settings-edit-form").on(
+        "change",
+        'input[type="checkbox"]',
+        (e) => {
+            const input = e.currentTarget;
+            const name = input.getAttribute("name");
+
+            if (!name) {
+                return;
+            }
+
+            const dot = $(
+                `.home-section-status-dot[data-enabled-key="${name}"]`
+            );
+
+            if (!dot.length) {
+                return;
+            }
+
+            dot.toggleClass("is-active", input.checked);
+            dot.toggleClass("is-inactive", !input.checked);
+        }
+    );
+
+    const homePageSectionsTabList = $(
+        '.accordion-tab[data-group="home_page_sections"]'
+    );
+
+    if (homePageSectionsTabList.length && window.Sortable) {
+        let orderInput = $(
+            'input[name="storefront_home_page_sections_order"]'
+        );
+
+        if (!orderInput.length) {
+            return;
+        }
+
+        const serializeOrder = () => {
+            const tabNames = homePageSectionsTabList
+                .find('a[data-toggle="tab"]')
+                .map((_, a) => $(a).attr("href").replace("#", ""))
+                .get();
+
+            orderInput.val(JSON.stringify(tabNames));
+        };
+
+        const orderActions = homePageSectionsTabList
+            .closest(".panel-body")
+            .find("[data-home-page-sections-order-actions]");
+
+        const showOrderActions = () => {
+            if (orderActions.length) {
+                orderActions.removeClass("hide");
+            }
+        };
+
+        // Initialize input with current UI order (ensures backend gets a value on save)
+        serializeOrder();
+
+        $("#storefront-settings-edit-form").on("submit", () => {
+            serializeOrder();
+        });
+
+        $(document).on("click", "[data-save-home-page-sections-order]", () => {
+            if (!window.axios) {
+                return;
+            }
+
+            serializeOrder();
+
+            let order = [];
+
+            try {
+                order = JSON.parse(orderInput.val() || "[]");
+            } catch (e) {
+                order = [];
+            }
+
+            window.axios
+                .put("storefront/home-page-sections/order", { order })
+                .then(() => {
+                    if (orderActions.length) {
+                        orderActions.addClass("hide");
+                    }
+                });
+        });
+
+        window.Sortable.create(homePageSectionsTabList.get(0), {
+            animation: 150,
+            onEnd: () => {
+                serializeOrder();
+                showOrderActions();
+            },
+        });
+    }
+
     if ($("#logo").hasClass("active")) {
         $("#logo")
             .parent()

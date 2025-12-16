@@ -27,7 +27,27 @@ class ProductRepository
 
     public static function findBySlug($slug)
     {
-        return Product::with(['variations', 'variations.values', 'variations.values.files', 'variants', 'variants.files', 'categories', 'tags', 'attributes.attribute.attributeSet', 'options', 'files', 'reviews'])
+        return Product::withCount('reviews')
+            ->withAvg('reviews', 'rating')
+            ->with([
+                'meta',
+                'brand',
+                'primaryCategory',
+                'saleUnit',
+                'productMedia' => function ($q) {
+                    $q->active()->orderBy('position');
+                },
+                'variations',
+                'variations.values',
+                'variations.values.files',
+                'variants',
+                'variants.files',
+                'categories',
+                'tags',
+                'attributes.attribute.attributeSet',
+                'options',
+                'files',
+            ])
             ->where('slug', $slug)
             ->firstOrFail();
     }

@@ -2,11 +2,13 @@
 
 return [
     'canceled' => 'Canceled',
-    'completed' => 'Completed',
+    'completed' => 'Teslim Edildi',
     'on_hold' => 'On Hold',
-    'pending' => 'Pending',
+    'on_the_way' => 'Yolda',
+    'out_for_delivery' => 'Dağıtımda',
+    'pending' => 'Sipariş Onaylandı',
     'pending_payment' => 'Pending Payment',
     'processing' => 'Processing',
     'refunded' => 'Refunded',
-    'shipped' => 'Shipped',
+    'shipped' => 'Kargoya Verildi',
 ];

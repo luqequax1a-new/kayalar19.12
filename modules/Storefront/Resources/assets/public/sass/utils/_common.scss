@@ -68,6 +68,7 @@
 
 .tab-products-header {
     border-bottom: 1px solid var(--border-color-lite);
+    padding-bottom: 18px;
 }
 
 .vertical-products {
@@ -799,6 +800,33 @@
         border-radius: var(--radius-default);
         transform: scale(1);
         transition: 800ms ease;
+    }
+}
+
+// Override: disable hover animation/zoom for three-column banners only
+.banner-wrap.three-column-banner,
+.banner-wrap.three-column-full-width-banner {
+    .banner {
+        &:before,
+        &:after {
+            display: none;
+        }
+
+        &:hover {
+            &:before,
+            &:after {
+                animation: none;
+                opacity: 0;
+            }
+
+            > img {
+                transform: none;
+            }
+        }
+
+        > img {
+            transition: none;
+        }
     }
 }
 

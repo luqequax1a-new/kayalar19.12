@@ -10,6 +10,8 @@ self.addEventListener("install", (event) => {
 
     event.waitUntil(
         caches.open(staticCacheName).then((cache) => {
+            // NOTE: /build/manifest.json is Vite's build manifest (asset mapping), NOT the PWA manifest.
+            // The PWA manifest is served as /manifest.json from public/manifest.json.
             fetch("/build/manifest.json")
                 .then((response) => {
                     return response.json();
@@ -72,6 +74,26 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
     const req = event.request;
 
+    // Hard exclude: never intercept /storage/media/* so the initiator is NOT serviceworker.js
+    // IMPORTANT: Do not call respondWith for these.
+    try {
+        const url = new URL(req.url);
+        if (url.origin === self.location.origin && url.pathname.startsWith("/storage/media/")) {
+            return;
+        }
+    } catch (_) {}
+
+    // Do not intercept product listing API requests.
+    // Ensures /products is fetched directly from network (no SW cache), improving perceived speed.
+    try {
+        const url = new URL(req.url);
+
+        if (url.origin === self.location.origin && url.pathname === "/products") {
+            event.respondWith(fetch(req));
+            return;
+        }
+    } catch (_) {}
+
     // Only use offline fallback for navigation (HTML page requests)
     if (req.mode === "navigate") {
         event.respondWith(
@@ -99,4 +121,4 @@ self.addEventListener("fetch", (event) => {
     );
 });
 
-const pwaVersion = 1765197462;
+const pwaVersion = 1765567626;

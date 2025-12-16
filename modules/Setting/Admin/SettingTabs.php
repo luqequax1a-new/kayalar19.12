@@ -196,7 +196,13 @@ class SettingTabs extends Tabs
     {
         $currencyRateExchangeServices = ['' => trans('setting::settings.form.select_service')];
 
-        $currencyRateExchangeServices += trans('currency::services');
+        $services = trans('currency::services');
+
+        if (! is_array($services)) {
+            $services = [];
+        }
+
+        $currencyRateExchangeServices += $services;
 
         return $currencyRateExchangeServices;
     }
@@ -221,7 +227,13 @@ class SettingTabs extends Tabs
     {
         $smsServices = ['' => trans('setting::settings.form.select_service')];
 
-        return $smsServices += trans('sms::services');
+        $services = trans('sms::services');
+
+        if (! is_array($services)) {
+            $services = [];
+        }
+
+        return $smsServices += $services;
     }
 
 
@@ -242,7 +254,13 @@ class SettingTabs extends Tabs
 
     private function getMailEncryptionProtocols()
     {
-        return ['' => trans('admin::admin.form.please_select')] + trans('setting::settings.form.mail_encryption_protocols');
+        $protocols = trans('setting::settings.form.mail_encryption_protocols');
+
+        if (! is_array($protocols)) {
+            $protocols = [];
+        }
+
+        return ['' => trans('admin::admin.form.please_select')] + $protocols;
     }
 
 

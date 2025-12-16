@@ -4,7 +4,6 @@ namespace Modules\Popup\Services;
 
 use Illuminate\Http\Request;
 use Modules\Popup\Entities\Popup;
-use Illuminate\Support\Facades\Log;
 
 class PopupMatcher
 {
@@ -18,32 +17,15 @@ class PopupMatcher
 
         $popups = $query->get();
 
-        Log::info('[POPUP] matchForRequest.start', [
-            'path' => $path,
-            'device' => $device,
-            'total_active_for_device' => $popups->count(),
-        ]);
-
         $matched = $popups->filter(function (Popup $popup) use ($path) {
             return $this->matchesTarget($popup, $path);
         });
 
         if ($matched->isEmpty()) {
-            Log::info('[POPUP] matchForRequest.none_matched', [
-                'path' => $path,
-                'device' => $device,
-            ]);
             return null;
         }
 
         $selected = $matched->sortByDesc('id')->first();
-
-        Log::info('[POPUP] matchForRequest.selected', [
-            'path' => $path,
-            'device' => $device,
-            'matched_ids' => $matched->pluck('id')->values()->all(),
-            'selected_id' => $selected?->id,
-        ]);
 
         return $selected;
     }

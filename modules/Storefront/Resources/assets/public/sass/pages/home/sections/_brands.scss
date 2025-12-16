@@ -1,11 +1,13 @@
 .top-brands-wrap {
-    margin-top: 50px;
+    margin-top: 40px;
 }
 
 .top-brands {
     border: 1px solid var(--border-color-lite);
-    border-radius: var(--radius-default);
-    padding: 25px 50px;
+    border-radius: 12px;
+    padding: 18px 40px;
+    background: #ffffff;
+    box-shadow: none;
     white-space: nowrap;
     position: relative;
 
@@ -13,7 +15,7 @@
     &:after {
         content: "";
         display: block;
-        width: 50px;
+        width: 40px;
         height: 100%;
         background: var(--color-white);
         position: absolute;
@@ -32,7 +34,7 @@
         transition: var(--transition-150);
         height: 25px;
         width: 25px;
-        background: var(--color-primary-alpha-30);
+        background: var(--color-primary-alpha-20);
         border-radius: 50%;
         top: 50%;
         bottom: 0;
@@ -85,25 +87,27 @@
 
     .top-brand-item {
         height: 60px !important;
-        border-radius: var(--radius-default);
+        border-radius: 999px;
+
+        > img {
+            max-height: 70%;
+            max-width: 80%;
+            transition: transform 0.16s ease, opacity 0.16s ease;
+            opacity: 0.9;
+        }
 
         &:hover {
             > img {
-                transform: scale(1.1);
+                transform: scale(1.03);
+                opacity: 1;
             }
-        }
-
-        > img {
-            max-height: 100%;
-            max-width: 100%;
-            transition: var(--transition-200);
         }
     }
 }
 
 @media screen and (max-width: 991px) {
     .top-brands {
-        padding: 15px 40px;
+        padding: 16px 32px;
 
         &::before,
         &::after {
@@ -114,7 +118,7 @@
 
 @media screen and (max-width: 767px) {
     .top-brands {
-        padding: 15px 30px;
+        padding: 14px 22px;
 
         &::before,
         &::after {

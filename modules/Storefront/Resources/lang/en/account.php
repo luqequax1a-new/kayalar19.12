@@ -42,6 +42,8 @@ return [
         'date' => 'Date:',
         'shipping_method' => 'Shipping Method:',
         'payment_method' => 'Payment Method:',
+        'items_ordered' => 'Items Ordered',
+        'order_totals' => 'Order Totals',
         'copy' => 'Copy',
         'open_link' => 'Open Link',
         'copied_to_clipboard' => 'Copied to clipboard',

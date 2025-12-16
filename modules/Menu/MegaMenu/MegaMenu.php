@@ -18,12 +18,13 @@ class MegaMenu
 
     public function menus()
     {
-        return Cache::tags(['mega_menu', 'menu_items', 'pages', 'categories'])
-            ->rememberForever(md5("mega_menu.{$this->menuId}:" . locale()), function () {
-                return $this->getMenus()->map(function ($menu) {
-                    return new Menu($menu);
-                });
+        $key = 'storefront:globals:' . locale() . ':mega_menu:' . $this->menuId . ':v1';
+
+        return Cache::store('file')->remember($key, now()->addMinutes(10), function () {
+            return $this->getMenus()->map(function ($menu) {
+                return new Menu($menu);
             });
+        });
     }
 
 

@@ -243,6 +243,9 @@
         FleetCart.data['initialPage'] = {{ addslashes(request('page', 1)) }};
         FleetCart.data['initialPerPage'] = {{ addslashes(request('perPage', 20)) }};
         FleetCart.data['initialViewMode'] = '{{ addslashes(request('viewMode', 'grid')) }}';
+        FleetCart.data['initialProducts'] = @json($initialProducts ?? null);
+        FleetCart.data['initialAttributes'] = @json($initialAttributes ?? null);
+        FleetCart.data['initialCategoryData'] = @json($initialCategoryData ?? null);
         FleetCart.langs['storefront::products.showing_results'] = '{{ trans("storefront::products.showing_results") }}';
     </script>
 

@@ -20,6 +20,8 @@ class OrderStatusController
     {
         $this->adjustStock($order);
 
+        request()->attributes->set('order_status_change_source', 'admin');
+
         $order->transitionTo(request('status'));
 
         $message = trans('order::messages.status_updated');

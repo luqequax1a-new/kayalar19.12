@@ -1,0 +1,29 @@
+.html-blog-section {
+    padding: 40px 0;
+
+    > .container {
+        max-width: none;
+        width: 100%;
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+}
+
+.html-blog-content {
+    font-size: 14px;
+}
+
+@media screen and (min-width: 992px) {
+    .html-blog-section {
+        > .container {
+            padding-left: 32px;
+            padding-right: 32px;
+        }
+    }
+}
+
+@media screen and (max-width: 767px) {
+    .html-blog-section {
+        padding: 30px 0;
+    }
+}

@@ -94,13 +94,35 @@ class Page extends Model implements Sitemapable
 
     public function toSitemapTag(): Url|string|array
     {
+        if (! is_string($this->slug) || trim($this->slug) === '') {
+            return [];
+        }
+
+        $url = $this->url();
+
+        if (! is_string($url) || trim($url) === '' || trim($url) === '#') {
+            return [];
+        }
+
         $changefreq = setting('support.sitemap.pages_changefreq', Url::CHANGE_FREQUENCY_WEEKLY);
         $priority = (float) setting('support.sitemap.pages_priority', 0.5);
 
-        return Url::create($this->slug)
-            ->setLastModificationDate(Carbon::create($this->updated_at))
+        $tag = Url::create($url)
             ->setChangeFrequency($changefreq)
             ->setPriority($priority);
+
+        if (! empty($this->updated_at)) {
+            try {
+                $tag->setLastModificationDate(
+                    $this->updated_at instanceof \DateTimeInterface
+                        ? $this->updated_at
+                        : Carbon::create($this->updated_at)
+                );
+            } catch (\Throwable $e) {
+            }
+        }
+
+        return $tag;
     }
 
 }

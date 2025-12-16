@@ -6,6 +6,7 @@ use Illuminate\Http\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Contracts\View\View;
 use Modules\Product\Entities\Product;
+use Modules\Product\Listeners\SendBackInStockNotifications;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Foundation\Application;
 use Modules\Admin\Traits\HasCrudActions;
@@ -354,6 +355,18 @@ class ProductController
 
         $entity->refresh();
 
+        $entity->setRelation('variants', $entity->variants()->withoutGlobalScope('active')->get());
+
+        $isInStockNow = (bool) $entity->isInStock();
+
+        if (! $wasInStock && $isInStockNow) {
+            try {
+                app(SendBackInStockNotifications::class)->handle($entity);
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+
         return response()->json([
             'success' => true,
         ], 200);
@@ -450,6 +463,10 @@ class ProductController
     {
         $entity = $this->getEntity($id);
 
+        $entity->setRelation('variants', $entity->variants()->withoutGlobalScope('active')->get());
+
+        $wasInStock = (bool) $entity->isInStock();
+
         $payload = request()->all();
         $allowDecimal = ($entity->saleUnit && (bool) $entity->saleUnit->is_decimal_stock);
 
@@ -459,7 +476,13 @@ class ProductController
                 $qty = is_numeric($qty) ? (int) floor((float) $qty) : 0;
             }
             $entity->withoutEvents(function () use ($entity, $qty) {
-                $entity->update(['qty' => $qty]);
+                $update = ['qty' => $qty];
+
+                if (is_numeric($qty) && (float) $qty > 0) {
+                    $update['in_stock'] = 1;
+                }
+
+                $entity->update($update);
             });
         }
 
@@ -469,7 +492,12 @@ class ProductController
                 if ($variant) {
                     $update = [];
                     if (isset($attrs['qty'])) {
-                        $update['qty'] = $allowDecimal ? $attrs['qty'] : (is_numeric($attrs['qty']) ? (int) floor((float) $attrs['qty']) : 0);
+                        $vQty = $allowDecimal ? $attrs['qty'] : (is_numeric($attrs['qty']) ? (int) floor((float) $attrs['qty']) : 0);
+                        $update['qty'] = $vQty;
+
+                        if (is_numeric($vQty) && (float) $vQty > 0 && ! array_key_exists('in_stock', $attrs)) {
+                            $update['in_stock'] = 1;
+                        }
                     }
                     if (isset($attrs['in_stock'])) $update['in_stock'] = $attrs['in_stock'] ? 1 : 0;
                     if (isset($attrs['manage_stock'])) $update['manage_stock'] = $attrs['manage_stock'] ? 1 : 0;
@@ -484,6 +512,18 @@ class ProductController
         }
 
         $entity->refresh();
+
+        $entity->setRelation('variants', $entity->variants()->withoutGlobalScope('active')->get());
+
+        $isInStockNow = (bool) $entity->isInStock();
+
+        if (! $wasInStock && $isInStockNow) {
+            try {
+                app(SendBackInStockNotifications::class)->handle($entity);
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
 
         return response()->json([
             'success' => true,

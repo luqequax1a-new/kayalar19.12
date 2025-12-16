@@ -78,8 +78,45 @@ class Banner
     }
 
 
+    public static function getThreeColumnBanners2()
+    {
+        return [
+            'banner_1' => self::findByName('storefront_three_column_banners_2_1'),
+            'banner_2' => self::findByName('storefront_three_column_banners_2_2'),
+            'banner_3' => self::findByName('storefront_three_column_banners_2_3'),
+        ];
+    }
+
+
     public static function getOneColumnBanner()
     {
         return self::findByName('storefront_one_column_banner');
+    }
+
+
+    public static function getCategoryGridBanners()
+    {
+        return [
+            'banner_1' => self::findByName('storefront_category_grid_banners_1'),
+            'banner_2' => self::findByName('storefront_category_grid_banners_2'),
+            'banner_3' => self::findByName('storefront_category_grid_banners_3'),
+            'banner_4' => self::findByName('storefront_category_grid_banners_4'),
+            'banner_5' => self::findByName('storefront_category_grid_banners_5'),
+            'banner_6' => self::findByName('storefront_category_grid_banners_6'),
+            'banner_7' => self::findByName('storefront_category_grid_banners_7'),
+            'banner_8' => self::findByName('storefront_category_grid_banners_8'),
+            'banner_9' => self::findByName('storefront_category_grid_banners_9'),
+            'banner_10' => self::findByName('storefront_category_grid_banners_10'),
+            'banner_11' => self::findByName('storefront_category_grid_banners_11'),
+            'banner_12' => self::findByName('storefront_category_grid_banners_12'),
+            'banner_13' => self::findByName('storefront_category_grid_banners_13'),
+            'banner_14' => self::findByName('storefront_category_grid_banners_14'),
+            'banner_15' => self::findByName('storefront_category_grid_banners_15'),
+            'banner_16' => self::findByName('storefront_category_grid_banners_16'),
+            'banner_17' => self::findByName('storefront_category_grid_banners_17'),
+            'banner_18' => self::findByName('storefront_category_grid_banners_18'),
+            'banner_19' => self::findByName('storefront_category_grid_banners_19'),
+            'banner_20' => self::findByName('storefront_category_grid_banners_20'),
+        ];
     }
 }

@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Cache;
 use Modules\Setting\Events\SettingSaved;
 use Modules\Support\Eloquent\Translatable;
 use Illuminate\Database\Eloquent\Collection;
+use Modules\Setting\Services\SettingsCacheService;
 
 class Setting extends Model
 {
@@ -59,11 +60,7 @@ class Setting extends Model
      */
     public static function allCached()
     {
-        return Cache::rememberForever(md5('settings.all:' . locale()), function () {
-            return self::all()->mapWithKeys(function ($setting) {
-                return [$setting->key => $setting->value];
-            });
-        });
+        return app(SettingsCacheService::class)->all(locale());
     }
 
 
@@ -90,7 +87,7 @@ class Setting extends Model
      */
     public static function get($key, $default = null)
     {
-        return static::where('key', $key)->first()->value ?? $default;
+        return app(SettingsCacheService::class)->get($key, $default, locale());
     }
 
 

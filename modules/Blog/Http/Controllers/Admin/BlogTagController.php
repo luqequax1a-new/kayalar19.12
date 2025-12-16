@@ -38,4 +38,34 @@ class BlogTagController extends Controller
      * @var array
      */
     protected $validation = SaveBlogTagRequest::class;
+
+
+    public function store()
+    {
+        $this->disableSearchSyncing();
+
+        $entity = $this->getModel()->create(
+            $this->getRequest('store')->except(array_keys(request()->query()))
+        );
+
+        $this->searchable($entity);
+
+        $message = trans('admin::messages.resource_created', ['resource' => $this->getLabel()]);
+
+        if (request()->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'id' => $entity->id,
+                'name' => $entity->name,
+            ], 200);
+        }
+
+        if (method_exists($this, 'redirectTo')) {
+            return $this->redirectTo($entity);
+        }
+
+        return redirect()->route("{$this->getRoutePrefix()}.index")
+            ->withSuccess($message);
+    }
 }

@@ -25,9 +25,20 @@ class Order extends Model
 {
     use SoftDeletes;
 
+    protected static function booted(): void
+    {
+        static::saving(function (self $order) {
+            if (empty($order->order_number)) {
+                $order->order_number = $order->generateOrderNumber();
+            }
+        });
+    }
+
     const CANCELED = 'canceled';
     const COMPLETED = 'completed';
     const ON_HOLD = 'on_hold';
+    const ON_THE_WAY = 'on_the_way';
+    const OUT_FOR_DELIVERY = 'out_for_delivery';
     const PENDING = 'pending';
     const PENDING_PAYMENT = 'pending_payment';
     const PROCESSING = 'processing';
@@ -51,6 +62,32 @@ class Order extends Model
         'end_date' => 'datetime',
         'deleted_at' => 'datetime',
     ];
+
+
+    public function displayOrderNumber(): string
+    {
+        return (string) ($this->order_number ?: $this->id);
+    }
+
+
+    private function generateOrderNumber(): string
+    {
+        for ($i = 0; $i < 20; $i++) {
+            $candidate = 'KYM_' . (string) random_int(10000, 99999);
+
+            $exists = self::query()
+                ->where('order_number', $candidate)
+                ->when($this->exists, fn ($q) => $q->where('id', '!=', $this->id))
+                ->exists();
+
+            if (!$exists) {
+                return $candidate;
+            }
+        }
+
+        // Extremely unlikely fallback, but guarantees uniqueness.
+        return 'KYM_' . (string) $this->getKey() . '_' . (string) time();
+    }
 
 
     public static function totalSales()
@@ -383,8 +420,21 @@ class Order extends Model
         if ($status === $this->status) {
             return;
         }
+        $fromStatus = $this->status;
+
+        $source = null;
+        $context = null;
+        try {
+            $req = request();
+            if ($req) {
+                $source = $req->attributes->get('order_status_change_source');
+                $context = $req->attributes->get('order_status_change_context');
+            }
+        } catch (\Throwable $e) {
+        }
+
         $this->update(['status' => $status]);
-        event(new \Modules\Order\Events\OrderStatusChanged($this));
+        event(new \Modules\Order\Events\OrderStatusChanged($this, $fromStatus, $status, is_string($source) ? $source : null, is_array($context) ? $context : null));
     }
     
     private function formatState($name)

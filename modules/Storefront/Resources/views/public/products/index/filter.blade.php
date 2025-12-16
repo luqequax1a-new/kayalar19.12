@@ -39,6 +39,10 @@
                 </form>
             </div>
         </div>
+
+        <template x-if="fetchingProducts && (!attributeFilters || attributeFilters.length === 0)">
+            <div class="filters-skeleton"></div>
+        </template>
         
         <template x-for="attribute in attributeFilters" :key="attribute.id">
             <div class="filter-section">

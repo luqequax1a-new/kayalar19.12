@@ -2,6 +2,8 @@
 @import "../../../utils/common/_custom-page-content";
 @import "../layouts/_blog-right-sidebar";
 
+@import "../../home/sections/_faq";
+
 .blog-post-wrap {
     margin-top: 50px;
 }
@@ -14,7 +16,7 @@
 
         .image-holder {
             position: relative;
-            padding-bottom: 38%;
+            padding-bottom: 56.25%; // 16:9 oranı
             overflow: hidden;
 
             > img {
@@ -218,7 +220,7 @@
     .blog-post-content {
         .blog-post-featured-image {
             .image-holder {
-                padding-bottom: 38%;
+                padding-bottom: 65%;
             }
         }
     }

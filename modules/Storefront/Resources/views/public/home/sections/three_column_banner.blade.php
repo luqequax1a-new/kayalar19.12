@@ -18,9 +18,9 @@
                             ?? null
                     )
                     @php(
-                        $banner1Jpeg = $threeColumnBanners['banner_1']->image->detail_jpeg_url
+                        $banner1Jpeg = $threeColumnBanners['banner_1']->image->path
+                            ?? $threeColumnBanners['banner_1']->image->detail_jpeg_url
                             ?? $threeColumnBanners['banner_1']->image->grid_jpeg_url
-                            ?? $threeColumnBanners['banner_1']->image->path
                     )
 
                     <picture>
@@ -54,9 +54,9 @@
                             ?? null
                     )
                     @php(
-                        $banner2Jpeg = $threeColumnBanners['banner_2']->image->detail_jpeg_url
+                        $banner2Jpeg = $threeColumnBanners['banner_2']->image->path
+                            ?? $threeColumnBanners['banner_2']->image->detail_jpeg_url
                             ?? $threeColumnBanners['banner_2']->image->grid_jpeg_url
-                            ?? $threeColumnBanners['banner_2']->image->path
                     )
 
                     <picture>
@@ -90,9 +90,9 @@
                             ?? null
                     )
                     @php(
-                        $banner3Jpeg = $threeColumnBanners['banner_3']->image->detail_jpeg_url
+                        $banner3Jpeg = $threeColumnBanners['banner_3']->image->path
+                            ?? $threeColumnBanners['banner_3']->image->detail_jpeg_url
                             ?? $threeColumnBanners['banner_3']->image->grid_jpeg_url
-                            ?? $threeColumnBanners['banner_3']->image->path
                     )
 
                     <picture>

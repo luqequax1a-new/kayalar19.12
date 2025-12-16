@@ -1,29 +1,41 @@
 @import "../../../utils/common/blog-card";
 
 .blog-posts-wrap {
-    margin-top: 44px;
+    margin-top: 60px;
+    margin-bottom: 40px;
 
     .swiper {
-        padding-top: 20px;
+        padding-top: 22px;
+        padding-bottom: 8px;
     }
 
     .blog-posts-header {
         display: flex;
         justify-content: space-between;
+        align-items: center;
         border-bottom: 1px solid var(--border-color-lite);
+        margin-bottom: 4px;
 
         .section-title {
-            font-size: 18px;
-            line-height: 24px;
+            font-size: 20px;
+            line-height: 26px;
             padding-bottom: 14px;
         }
 
         .view-all {
-            margin-top: 2px;
+            margin-top: 0;
+            padding: 6px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--border-color-lite);
+            font-size: 13px;
             color: var(--color-gray);
+            text-decoration: none;
+            transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 
             &:hover {
-                color: var(--color-primary);
+                color: #ffffff;
+                background-color: var(--color-primary);
+                border-color: var(--color-primary);
             }
         }
     }

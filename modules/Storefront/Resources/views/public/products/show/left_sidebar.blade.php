@@ -1,38 +1,17 @@
 <aside class="left-sidebar">
-    @if ($upSellProducts->isNotEmpty())
-        <div class="vertical-products">
+    @if (!empty($upSellProducts) && $upSellProducts->isNotEmpty())
+        <div class="vertical-products" data-upsell-products>
             <div class="vertical-products-header">
                 <div class="section-title">{{ trans('storefront::product.you_might_also_like') }}</div>
             </div>
 
             <div class="vertical-products-slider swiper" x-ref="upSellProducts">
                 <div x-cloak class="swiper-wrapper">
-                    @foreach ($upSellProducts->chunk(5) as $upSellProductChunks)
+                    @foreach ($upSellProducts->chunk(5) as $chunk)
                         <div class="swiper-slide">
                             <div class="vertical-products-slide">
-                                @foreach ($upSellProductChunks as $upSellProduct)
-                                    <div x-data="ProductCard({{ $upSellProduct }})" class="vertical-product-card">
-                                        <a :href="productUrl" class="product-image">
-                                            <img
-                                                :src="baseImage"
-                                                :class="{ 'image-placeholder': !hasBaseImage }"
-                                                :alt="productName"
-                                                loading="lazy"
-                                            />
-
-                                            <div class="product-image-layer"></div>
-                                        </a>
-
-                                        <div class="product-info">
-                                            <a :href="productUrl" class="product-name">
-                                                <span x-text="productName"></span>
-                                            </a>
-
-                                            @include('storefront::public.partials.product_rating', ['data' => $upSellProduct])
-                                        
-                                            <div class="product-price" x-html="productPrice"></div>
-                                        </div>
-                                    </div>
+                                @foreach ($chunk as $p)
+                                    @include('storefront::public.partials.vertical_products', ['data' => $p])
                                 @endforeach
                             </div>
                         </div>

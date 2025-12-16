@@ -42,27 +42,26 @@ class Review extends Model
 
     public static function countAndAvgRating(Product $product)
     {
-        $stats = self::select(DB::raw('count(*) as count, avg(rating) as avg_rating'))
+        $row = self::query()
             ->where('product_id', $product->id)
+            ->selectRaw('count(*) as count')
+            ->selectRaw('avg(rating) as avg_rating')
+            ->selectRaw('sum(case when rating = 5 then 1 else 0 end) as count_5')
+            ->selectRaw('sum(case when rating = 4 then 1 else 0 end) as count_4')
+            ->selectRaw('sum(case when rating = 3 then 1 else 0 end) as count_3')
+            ->selectRaw('sum(case when rating = 2 then 1 else 0 end) as count_2')
+            ->selectRaw('sum(case when rating = 1 then 1 else 0 end) as count_1')
             ->first();
 
-        $dist = self::where('product_id', $product->id)
-            ->select(
-                DB::raw('sum(case when rating = 5 then 1 else 0 end) as count_5'),
-                DB::raw('sum(case when rating = 4 then 1 else 0 end) as count_4'),
-                DB::raw('sum(case when rating = 3 then 1 else 0 end) as count_3'),
-                DB::raw('sum(case when rating = 2 then 1 else 0 end) as count_2'),
-                DB::raw('sum(case when rating = 1 then 1 else 0 end) as count_1')
-            )
-            ->first();
-
-        $stats->count_5 = (int) ($dist->count_5 ?? 0);
-        $stats->count_4 = (int) ($dist->count_4 ?? 0);
-        $stats->count_3 = (int) ($dist->count_3 ?? 0);
-        $stats->count_2 = (int) ($dist->count_2 ?? 0);
-        $stats->count_1 = (int) ($dist->count_1 ?? 0);
-
-        return $stats;
+        return (object) [
+            'count' => (int) ($row->count ?? 0),
+            'avg_rating' => (float) ($row->avg_rating ?? 0),
+            'count_5' => (int) ($row->count_5 ?? 0),
+            'count_4' => (int) ($row->count_4 ?? 0),
+            'count_3' => (int) ($row->count_3 ?? 0),
+            'count_2' => (int) ($row->count_2 ?? 0),
+            'count_1' => (int) ($row->count_1 ?? 0),
+        ];
     }
 
 

@@ -6,10 +6,16 @@
     <div class="box-body">
         <div class="form-group">
             <label for="tags" class="control-label text-left">
-                {{ trans('blog::attributes.posts.tags') }}
+                Tag
             </label>
-            
-            <select name="tags" id="tags" class="selectize" multiple x-model="form.tags">
+
+            <select
+                name="tags[]"
+                id="tags"
+                class="selectize-tags"
+                multiple
+                x-model="form.tags"
+            >
                 @foreach ($blogTags as $id => $label)
                     <option value="{{ $id }}">{{ $label }}</option>
                 @endforeach

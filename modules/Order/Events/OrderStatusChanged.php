@@ -16,6 +16,14 @@ class OrderStatusChanged
      */
     public $order;
 
+    public $fromStatus;
+
+    public $toStatus;
+
+    public $source;
+
+    public $context;
+
 
     /**
      * Create a new event instance.
@@ -24,8 +32,12 @@ class OrderStatusChanged
      *
      * @return void
      */
-    public function __construct(Order $order)
+    public function __construct(Order $order, ?string $fromStatus = null, ?string $toStatus = null, ?string $source = null, ?array $context = null)
     {
         $this->order = $order;
+        $this->fromStatus = $fromStatus;
+        $this->toStatus = $toStatus;
+        $this->source = $source;
+        $this->context = $context;
     }
 }

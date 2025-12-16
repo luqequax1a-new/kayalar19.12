@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Modules\Brand\Entities\Brand;
 use Modules\Category\Entities\Category;
+use Modules\DynamicCategory\Entities\DynamicCategory;
 use Modules\Product\Entities\Product;
 use Modules\Attribute\Entities\Attribute;
 use Modules\SeoBulk\Jobs\BulkSeoMetaJob;
@@ -27,11 +28,12 @@ class BulkMetaController extends Controller
     public function execute(Request $request)
     {
         $config = $this->normalizeConfig($request);
-        [$productIds,$categoryIds] = $this->collectTargets($config);
+        [$productIds,$categoryIds,$dynamicCategoryIds] = $this->collectTargets($config);
         $renderer = new PlaceholderRenderer($config);
         $locale = $config['locale'];
         $overwrite = (bool) ($config['seo_filters']['overwrite'] ?? false);
         $updatedProducts = 0; $updatedCategories = 0;
+        $updatedDynamicCategories = 0;
 
         if (!empty($productIds)) {
             $products = Product::query()->withoutGlobalScope('active')
@@ -67,8 +69,34 @@ class BulkMetaController extends Controller
                 $data = [];
                 if ($applyTitle) $data['meta_title'] = $title;
                 if ($applyDesc) $data['meta_description'] = $desc;
-                if (!empty($data)) { $c->withoutEvents(function() use ($c,$data){ $c->update($data); }); $updatedCategories++; }
+                if (!empty($data)) {
+                    $c->withoutEvents(function () use ($c, $data) {
+                        $c->update($data);
+                    });
+                    $c->clearEntityTaggedCache();
+                    $updatedCategories++;
+                }
                 
+            }
+        }
+
+        if (!empty($dynamicCategoryIds)) {
+            $dyn = DynamicCategory::query()->withoutGlobalScope('active')->whereIn('id', $dynamicCategoryIds)->get();
+            foreach ($dyn as $dc) {
+                $title = $renderer->renderDynamicCategoryTitle($dc);
+                $desc = $renderer->renderDynamicCategoryDescription($dc);
+                $curTitle = $dc->meta_title;
+                $curDesc = $dc->meta_description;
+                $applyTitle = $title && ($overwrite || !$curTitle);
+                $applyDesc = $desc && ($overwrite || !$curDesc);
+                $data = [];
+                if ($applyTitle) $data['meta_title'] = $title;
+                if ($applyDesc) $data['meta_description'] = $desc;
+                if (!empty($data)) {
+                    $dc->withoutEvents(function() use ($dc,$data){ $dc->update($data); });
+                    $dc->clearEntityTaggedCache();
+                    $updatedDynamicCategories++;
+                }
             }
         }
 
@@ -76,7 +104,8 @@ class BulkMetaController extends Controller
             'queued'=>false,
             'updated_products'=>$updatedProducts,
             'updated_categories'=>$updatedCategories,
-            'total'=>($updatedProducts+$updatedCategories),
+            'updated_dynamic_categories'=>$updatedDynamicCategories,
+            'total'=>($updatedProducts+$updatedCategories+$updatedDynamicCategories),
         ]);
     }
 
@@ -167,10 +196,32 @@ class BulkMetaController extends Controller
         $productIds = $config['scope_products'] ? $pQuery->pluck('id')->all() : [];
 
         $categoryIds = [];
+        $dynamicCategoryIds = [];
         if ($config['scope_categories'] && !empty($config['selected_categories'])) {
+            $raw = (array) $config['selected_categories'];
+            $catIds = [];
+            $dynIds = [];
+            foreach ($raw as $v) {
+                $s = is_string($v) ? $v : (string) $v;
+                if (preg_match('/^c_(\d+)$/', $s, $m)) {
+                    $catIds[] = (int) $m[1];
+                    continue;
+                }
+                if (preg_match('/^d_(\d+)$/', $s, $m)) {
+                    $dynIds[] = (int) $m[1];
+                    continue;
+                }
+                if (is_numeric($s)) {
+                    $catIds[] = (int) $s;
+                }
+            }
+
             $cQuery = Category::query()->withoutGlobalScope('active')->select('id');
-            $ids = (array) $config['selected_categories'];
-            $cQuery->whereIn('id',$ids);
+            if (!empty($catIds)) {
+                $cQuery->whereIn('id', $catIds);
+            } else {
+                $cQuery->whereRaw('1=0');
+            }
             if ($config['seo_filters']['empty_title']) {
                 $cQuery->where(function($qq){$qq->whereNull('meta_title')->orWhere('meta_title','');});
             }
@@ -178,8 +229,22 @@ class BulkMetaController extends Controller
                 $cQuery->where(function($qq){$qq->whereNull('meta_description')->orWhere('meta_description','');});
             }
             $categoryIds = $cQuery->pluck('id')->all();
+
+            $dQuery = DynamicCategory::query()->withoutGlobalScope('active')->select('id');
+            if (!empty($dynIds)) {
+                $dQuery->whereIn('id', $dynIds);
+            } else {
+                $dQuery->whereRaw('1=0');
+            }
+            if ($config['seo_filters']['empty_title']) {
+                $dQuery->where(function($qq){$qq->whereNull('meta_title')->orWhere('meta_title','');});
+            }
+            if ($config['seo_filters']['empty_description']) {
+                $dQuery->where(function($qq){$qq->whereNull('meta_description')->orWhere('meta_description','');});
+            }
+            $dynamicCategoryIds = $dQuery->pluck('id')->all();
         }
-        return [$productIds,$categoryIds];
+        return [$productIds,$categoryIds,$dynamicCategoryIds];
     }
 
     

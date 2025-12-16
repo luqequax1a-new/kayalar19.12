@@ -42,6 +42,82 @@
             display: none;
         }
     }
+
+    &.carousel-products-wrap {
+        .grid-products-wrap-inner {
+            overflow: visible;
+        }
+
+        .carousel-products {
+            position: relative;
+
+            .swiper-button-prev,
+            .swiper-button-next {
+                z-index: 5;
+                top: 92px;
+                transform: translateY(-50%);
+                width: 36px;
+                height: 36px;
+                border-radius: 6px;
+                background: var(--color-primary);
+                border: none;
+                box-shadow: none;
+                color: #ffffff;
+                opacity: 0.9;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0;
+                line-height: 0;
+            }
+
+            .swiper-button-next {
+                right: 12px;
+            }
+
+            .swiper-button-prev {
+                left: 12px;
+            }
+
+            .swiper-button-prev::after,
+            .swiper-button-next::after {
+                content: '';
+                display: none;
+            }
+
+            .swiper-button-prev svg,
+            .swiper-button-next svg {
+                display: block;
+                margin: 0;
+                flex: 0 0 auto;
+                pointer-events: none;
+            }
+
+            .swiper-button-prev:hover,
+            .swiper-button-next:hover {
+                opacity: 1;
+            }
+
+            .swiper-button-prev.swiper-button-disabled,
+            .swiper-button-next.swiper-button-disabled {
+                opacity: 0.35;
+            }
+
+            @media (min-width: 576px) {
+                .swiper-button-prev,
+                .swiper-button-next {
+                    top: 112px;
+                }
+            }
+
+            @media (min-width: 992px) {
+                .swiper-button-prev,
+                .swiper-button-next {
+                    top: 132px;
+                }
+            }
+        }
+    }
 }
 
 .grid-products {
@@ -370,6 +446,12 @@
             &::-webkit-scrollbar-thumb:hover {
                 background: transparent;
             }
+        }
+    }
+
+    .carousel-products-wrap {
+        .tab-products-header {
+            display: block;
         }
     }
 }

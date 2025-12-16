@@ -22,10 +22,17 @@ class UrlRedirectMiddleware
             return $next($request);
         }
 
-        $redirect = UrlRedirect::query()
-            ->where('is_active', true)
-            ->where('source_path', $canonical)
-            ->first();
+        $attrKey = 'url_redirect.lookup:' . $canonical;
+        if ($request->attributes->has($attrKey)) {
+            $redirect = $request->attributes->get($attrKey);
+        } else {
+            $redirect = UrlRedirect::query()
+                ->where('is_active', true)
+                ->where('source_path', $canonical)
+                ->first();
+
+            $request->attributes->set($attrKey, $redirect);
+        }
 
         if ($redirect && $redirect->target_url) {
             if ($redirect->target_url === $path) {

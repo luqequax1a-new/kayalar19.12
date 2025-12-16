@@ -1,6 +1,6 @@
 @if (setting('reviews_enabled'))
     <div id="reviews" class="tab-pane reviews">
-        <div class="rating-top-trendy m-b-15" x-show="reviewCount > 0">
+        <div class="rating-top-trendy m-b-15" x-show="reviewCount > 0" style="min-height: 120px;">
             <div class="rating-summary-trendy justify-content-center">
                 <div class="avg" x-text="Number(avgRating).toFixed(1)"></div>
                 <div class="review-stars" :style="{ '--star-color': getRatingColor(avgRating) }">
@@ -27,7 +27,12 @@
         <div class="row">
             <div class="col-xl-9 col-lg-12">
                 <div class="d-flex justify-content-between align-items-center m-b-15"></div>
-                <div class="user-review-wrap" :class="{ loading: fetchingReviews }">
+                <div class="user-review-wrap" :class="{ loading: fetchingReviews }" style="min-height: 120px;">
+                    <template x-if="!reviewsLoaded && totalReviews > 0">
+                        <div class="empty-message">
+                            <span>{{ trans('storefront::product.loading') }}</span>
+                        </div>
+                    </template>
                     <template x-if="emptyReviews">
                         <div class="empty-message">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" preserveAspectRatio="xMidYMid meet">
@@ -39,7 +44,7 @@
                             <span>{{ trans('storefront::product.be_the_first_one_to_review_this_product') }}</span>
                         </div>
                     </template>
-                    <template x-if="!emptyReviews">
+                    <template x-if="reviewsLoaded && !emptyReviews">
                         <template x-for="(review, index) in reviews.data" :key="index">
                             <div class="user-review">
                                 <div class="user-review-header d-flex justify-content-between align-items-center">
@@ -86,7 +91,7 @@
                         </template>
                     </template>
                 </div>
-                <template x-if="totalReviews > 5">
+                <template x-if="reviewsLoaded && totalReviews > 5">
                     @include('storefront::public.partials.pagination')
                 </template>
             </div>

@@ -3,6 +3,7 @@
 namespace Modules\Product\Providers;
 
 use Modules\Product\Entities\Product;
+use Modules\Product\Entities\ProductVariant;
 use Modules\Product\Events\ProductViewed;
 use Modules\Product\Listeners\StoreSearchTerm;
 use Modules\Product\Events\ShowingProductList;
@@ -10,6 +11,7 @@ use Modules\Product\Listeners\SaveProductVariants;
 use Modules\Product\Listeners\AddToRecentlyViewed;
 use Modules\Product\Listeners\IncrementProductView;
 use Modules\Product\Listeners\SaveProductVariations;
+use Modules\Product\Listeners\SendBackInStockNotifications;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
@@ -41,5 +43,8 @@ class EventServiceProvider extends ServiceProvider
 
         Product::saved(SaveProductVariations::class);
         Product::saved(SaveProductVariants::class);
+
+        Product::saved(SendBackInStockNotifications::class);
+        ProductVariant::saved(SendBackInStockNotifications::class);
     }
 }

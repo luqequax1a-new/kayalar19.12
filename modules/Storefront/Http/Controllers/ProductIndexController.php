@@ -23,8 +23,44 @@ class ProductIndexController
         $type = setting("{$settingPrefix}_product_type", 'custom_products');
         $limit = setting("{$settingPrefix}_products_limit");
 
+        if ($type === 'all_products') {
+            return Product::forCard()
+                ->with([
+                    'variants',
+                    'variations',
+                    'tags',
+                    'tags.tagBadges' => function ($query) {
+                        $query->active();
+                    },
+                ])
+                ->when(!is_null($limit), function ($q) use ($limit) {
+                    $q->limit($limit);
+                })
+                ->get()
+                ->flatMap(function (Product $product) {
+                    $tagBadges = $product->badgeVisualsFor('listing')->map(function ($badge) {
+                        return [
+                            'name' => $badge->name,
+                            'image_url' => $badge->image_url,
+                            'listing_position' => $badge->listing_position,
+                            'detail_position' => $badge->detail_position,
+                            'priority' => $badge->priority,
+                        ];
+                    })->values();
+
+                    $base = $product->clean();
+                    $base['tag_badges'] = $tagBadges;
+
+                    return collect([$base]);
+                });
+        }
+
         if ($type === 'category_products') {
             return $this->categoryProducts($settingPrefix, $limit);
+        }
+
+        if ($type === 'tag_products') {
+            return $this->tagProducts($settingPrefix, $limit);
         }
 
         if ($type === 'recently_viewed_products') {
@@ -89,6 +125,67 @@ class ProductIndexController
                     'path' => media_variant_url($product->base_image, 400)
                 ];
                 $base['tag_badges'] = $tagBadges;
+                return collect([$base]);
+            });
+    }
+
+
+    private function tagProducts($settingPrefix, $limit)
+    {
+        $tagIds = (array) setting("{$settingPrefix}_tags", []);
+
+        return Product::forCard()
+            ->with([
+                'variants',
+                'variations',
+                'tags',
+                'tags.tagBadges' => function ($query) {
+                    $query->active();
+                },
+            ])
+            ->whereHas('tags', function ($q) use ($tagIds) {
+                $q->whereIn('tags.id', array_filter($tagIds));
+            })
+            ->when(!is_null($limit), function ($q) use ($limit) {
+                $q->limit($limit);
+            })
+            ->get()
+            ->flatMap(function (Product $product) {
+                $tagBadges = $product->badgeVisualsFor('listing')->map(function ($badge) {
+                    return [
+                        'name' => $badge->name,
+                        'image_url' => $badge->image_url,
+                        'listing_position' => $badge->listing_position,
+                        'detail_position' => $badge->detail_position,
+                        'priority' => $badge->priority,
+                    ];
+                })->values();
+                $variantLabel = optional($product->variations->first())->name;
+                if ($product->list_variants_separately) {
+                    $variants = $product->variants()->orderBy('position')->get();
+                    $actives = $variants->filter(function ($v) {
+                        return (bool) ($v->is_active ?? false);
+                    });
+
+                    if ($actives->isNotEmpty()) {
+                        return $actives->map(function ($variant) use ($product, $tagBadges, $variantLabel) {
+                            $p = $product->clean();
+                            $p['variant_attribute_label'] = $variantLabel;
+                            $p['name'] = $product->name;
+                            $p['variant'] = $variant->toArray();
+                            $p['url'] = $variant->url() ?? $product->url();
+                            $p['base_image'] = ($variant->base_image ?? $product->base_image);
+                            $p['formatted_price'] = $variant->formatted_price ?? $product->formatted_price;
+                            $p['formatted_price_range'] = null;
+                            $p['tag_badges'] = $tagBadges;
+                            return $p;
+                        });
+                    }
+                }
+                $base = $product->clean();
+                $base['variant_attribute_label'] = $variantLabel;
+                $base['tag_badges'] = $tagBadges;
+
                 return collect([$base]);
             });
     }

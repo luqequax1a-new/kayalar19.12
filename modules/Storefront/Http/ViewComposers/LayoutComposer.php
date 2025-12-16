@@ -112,8 +112,14 @@ class LayoutComposer
 
     private function getMedia($fileId)
     {
-        return Cache::rememberForever(md5("files.{$fileId}"), function () use ($fileId) {
-            return File::findOrNew($fileId);
+        $id = (int) ($fileId ?? 0);
+
+        if ($id <= 0) {
+            return new File();
+        }
+
+        return Cache::rememberForever(md5("files.{$id}"), function () use ($id) {
+            return File::findOrNew($id);
         });
     }
 
@@ -172,10 +178,11 @@ class LayoutComposer
 
     private function getFooterMenu($menuId)
     {
-        return Cache::tags(['menu_items', 'categories', 'pages', 'settings'])
-            ->rememberForever(md5("storefront_footer_menu.{$menuId}:" . locale()), function () use ($menuId) {
-                return Menu::for($menuId);
-            });
+        $key = 'storefront:globals:' . locale() . ':footer_menu:' . $menuId . ':v1';
+
+        return Cache::store('file')->remember($key, now()->addMinutes(10), function () use ($menuId) {
+            return Menu::for($menuId);
+        });
     }
 
 

@@ -1,12 +1,18 @@
 .product-search-left {
     width: 263px;
     min-width: 263px;
+    min-height: 600px;
     margin: -6px 30px 0 0;
+    contain: layout paint;
 
     .section-title {
         margin-bottom: 24px;
         padding-bottom: 13px;
         border-bottom: 1px solid var(--border-color-lite);
+    }
+
+    .product-filter-content {
+        min-height: 520px;
     }
 
     .vertical-products { 
@@ -30,6 +36,7 @@
     .product-search-left {
         width: 100%;
         min-width: 0;
+        min-height: 0;
         margin: 0;
 
         .vertical-products {

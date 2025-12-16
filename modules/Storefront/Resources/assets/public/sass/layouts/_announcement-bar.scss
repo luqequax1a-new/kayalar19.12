@@ -1,0 +1,123 @@
+.announcement-bar {
+    background: var(--announcement-bg, #111827);
+    color: var(--announcement-color, #ffffff);
+    font-size: var(--announcement-font-size, 13px);
+    font-weight: var(--announcement-font-weight, 500);
+    line-height: 1.2;
+    width: 100%;
+    max-width: none;
+}
+
+.marquee-container {
+    background: var(--announcement-bg, #111827);
+    color: var(--announcement-color, #ffffff);
+    width: 100%;
+}
+
+.marquee-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 34px;
+    overflow: hidden;
+    padding: 0;
+    padding-block: 6px;
+    width: 100%;
+}
+
+.marquee-textcontainer {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    white-space: nowrap;
+    will-change: transform;
+    animation: announcement-marquee var(--announcement-speed, 22s) linear infinite;
+    letter-spacing: 0.2px;
+}
+
+.marquee-item {
+    display: inline-block;
+    white-space: nowrap;
+    padding: 0 var(--announcement-gap, 25px);
+}
+
+.marquee-container[data-direction='rtl'] .marquee-textcontainer {
+    animation-direction: reverse;
+}
+
+@keyframes announcement-marquee {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+.announcement-bar__sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@media screen and (max-width: 767px) {
+    .marquee-wrapper {
+        min-height: 32px;
+        padding: 0;
+        padding-block: 5px;
+    }
+
+    .announcement-bar {
+        font-size: 12px;
+    }
+
+    .marquee-item {
+        padding: 0 var(--announcement-gap, 18px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .marquee-textcontainer {
+        animation: none;
+        transform: none;
+    }
+
+    .marquee-wrapper {
+        overflow: auto;
+    }
+}
+
+@media screen and (max-width: 767px) {
+    .announcement-bar--hide-mobile {
+        display: none;
+    }
+}
+
+@media screen and (min-width: 768px) and (max-width: 991px) {
+    .announcement-bar--hide-tablet {
+        display: none;
+    }
+}
+
+@media screen and (min-width: 992px) {
+    .announcement-bar--hide-desktop {
+        display: none;
+    }
+}
+
+.announcement-bar--hide-desktop {
+    display: none;
+}
+
+@media screen and (max-width: 991px) {
+    .announcement-bar--hide-desktop {
+        display: block;
+    }
+}

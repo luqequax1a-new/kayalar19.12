@@ -36,7 +36,17 @@ Alpine.data("postEdit", ({ formData = {}, meta = {}, tags = [] }) => ({
         textEditor = this.initTinyMce();
         tagsSelect = this.initTagsSelectize();
 
-        tagsSelect[0].selectize.setValue(tags.map((tag) => tag.id));
+        const tagIds = Array.isArray(tags)
+            ? (tags.length && typeof tags[0] === "object"
+                ? tags.map((tag) => tag.id)
+                : tags)
+            : [];
+
+        if (tagsSelect && tagsSelect.length && tagIds.length) {
+            tagsSelect[0].selectize.setValue(tagIds.map((id) => String(id)));
+        }
+
+        this.initRelatedProductsSelectize();
     },
 
     initTinyMce() {
@@ -52,11 +62,76 @@ Alpine.data("postEdit", ({ formData = {}, meta = {}, tags = [] }) => ({
         });
     },
 
-    initTagsSelectize() {
-        return $(".selectize").selectize({
+    initRelatedProductsSelectize() {
+        const relatedSelect = $("#blog-related-products-select");
+
+        if (!relatedSelect.length) {
+            return;
+        }
+
+        const preselected = relatedSelect.data("selected") || [];
+
+        const selectizeInstance = relatedSelect.selectize({
             plugins: ["remove_button"],
             delimiter: ",",
             persist: false,
+            create: (input) => {
+                // Sadece sayısal ID girişine izin ver; aksi halde yoksay.
+                const numeric = parseInt(input, 10);
+
+                if (Number.isNaN(numeric)) {
+                    return false;
+                }
+
+                return { value: numeric, text: numeric };
+            },
+        })[0].selectize;
+
+        if (preselected.length) {
+            selectizeInstance.setValue(preselected.map((id) => String(id)));
+        }
+    },
+
+    initTagsSelectize() {
+        return $(".selectize-tags").selectize({
+            plugins: ["remove_button"],
+            delimiter: ",",
+            persist: true,
+            create: (input, callback) => {
+                const trimmed = (input || "").trim();
+
+                if (!trimmed) {
+                    return callback();
+                }
+
+                // Eğer aynı isimde mevcut bir tag varsa, onu kullan.
+                const existingOption = $("#tags option").filter((_, el) => {
+                    return el.text.toLowerCase() === trimmed.toLowerCase();
+                }).first();
+
+                if (existingOption.length) {
+                    return callback({
+                        value: existingOption.val(),
+                        text: existingOption.text(),
+                    });
+                }
+
+                axios
+                    .post("/blog/tags", { name: trimmed })
+                    .then(({ data }) => {
+                        if (!data || !data.id) {
+                            callback();
+
+                            return;
+                        }
+
+                        // Yeni tag'i select'e ekle ve seç.
+                        callback({ value: String(data.id), text: trimmed });
+                    })
+                    .catch(() => {
+                        callback();
+                    });
+            },
             onChange: (values) => {
                 this.form.tags = values;
             },
@@ -89,13 +164,15 @@ Alpine.data("postEdit", ({ formData = {}, meta = {}, tags = [] }) => ({
             return errorKeys.includes(element.name);
         });
 
-        if (firstErrorField.classList.contains("wysiwyg")) {
+        if (firstErrorField && firstErrorField.classList.contains("wysiwyg")) {
             textEditor.get(firstErrorField.getAttribute("name")).focus();
 
             return;
         }
 
-        firstErrorField.focus();
+        if (firstErrorField) {
+            firstErrorField.focus();
+        }
     },
 
     handleSubmit({ submissionType }) {
@@ -114,6 +191,35 @@ Alpine.data("postEdit", ({ formData = {}, meta = {}, tags = [] }) => ({
             tags,
         } = this.form;
 
+        // Get FAQ data from DOM
+        const faqs = [];
+        const faqInputs = document.querySelectorAll('[name^="faqs"]');
+        const faqIndexMap = {};
+        
+        faqInputs.forEach(input => {
+            const match = input.name.match(/faqs\[(\d+)\]\[(question|answer)\]/);
+            if (match) {
+                const index = parseInt(match[1]);
+                const field = match[2];
+                
+                if (!faqIndexMap[index]) {
+                    faqIndexMap[index] = {};
+                }
+                
+                faqIndexMap[index][field] = input.value;
+            }
+        });
+        
+        // Convert to array and filter out empty items
+        Object.values(faqIndexMap).forEach(faq => {
+            if (faq.question || faq.answer) {
+                faqs.push({
+                    question: faq.question || '',
+                    answer: faq.answer || ''
+                });
+            }
+        });
+
         axios
             .put(
                 `/blog/posts/${this.form.id}`,
@@ -126,6 +232,7 @@ Alpine.data("postEdit", ({ formData = {}, meta = {}, tags = [] }) => ({
                     publish_status,
                     blog_category_id,
                     tags,
+                    faqs,
                     files: {
                         featured_image: featured_image.id
                             ? [featured_image.id]

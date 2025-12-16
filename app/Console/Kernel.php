@@ -16,6 +16,7 @@ class Kernel extends ConsoleKernel
         Commands\ScaffoldModuleCommand::class,
         Commands\ScaffoldEntityCommand::class,
         Commands\ManualInstallCommand::class,
+        Commands\NormalizeMediaPathsCommand::class,
         \Modules\Order\Console\BackfillOrderProductsSnapshots::class,
         \Modules\ProductFeeds\Console\RefreshFeedCommand::class,
     ];

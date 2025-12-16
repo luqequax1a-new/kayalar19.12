@@ -27,6 +27,9 @@ class OrderTable extends AdminTable
     public function make()
     {
         return $this->newTable()
+            ->editColumn('id', function ($order) {
+                return $order->displayOrderNumber();
+            })
             ->addColumn('customer_name', function ($order) {
                 return $order->customer_full_name;
             })
@@ -46,7 +49,8 @@ class OrderTable extends AdminTable
             })
             ->addColumn('actions', function ($order) {
                 $url = route('admin.orders.show', $order->id);
-                return "<a href='{$url}' class='action-edit' title='Düzenle' data-toggle='tooltip' aria-label='Edit'>
+                $orderNo = e($order->displayOrderNumber());
+                return "<a href='{$url}' class='action-edit' title='Düzenle ({$orderNo})' data-toggle='tooltip' aria-label='Edit'>
                         <svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none'>
                             <path d='M4 20H20' stroke='#292D32' stroke-width='1.5' stroke-linecap='round'/>
                             <path d='M16.44 3.56006L20.44 7.56006' stroke='#292D32' stroke-width='1.5' stroke-linecap='round'/>

@@ -4,13 +4,15 @@ namespace Modules\Product\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Pagination\LengthAwarePaginator;
- 
+use Modules\Media\Jobs\GenerateResponsiveImagesForMedia;
+
 use Illuminate\Support\Facades\DB;
 use Modules\Product\Entities\Product;
 use Modules\Category\Entities\Category;
 use Modules\Attribute\Entities\Attribute;
 use Modules\Product\Filters\ProductFilter;
 use Modules\Product\Events\ShowingProductList;
+use Modules\Tag\Entities\TagBadge;
 
 trait ProductSearch
 {
@@ -23,6 +25,14 @@ trait ProductSearch
      * @return JsonResponse
      */
     public function searchProducts(Product $model, ProductFilter $productFilter)
+    {
+        $payload = $this->buildListingPayload($model, $productFilter);
+
+        return response()->json($payload);
+    }
+
+
+    protected function buildListingPayload(Product $model, ProductFilter $productFilter): array
     {
         $productIds = [];
 
@@ -42,119 +52,159 @@ trait ProductSearch
         }
 
         if (request()->filled('category')) {
-            $productIds = (clone $query)->select('products.id')->resetOrders()->pluck('id');
+            $productIds = (clone $query)->select('products.id')->resetOrders();
         }
 
-        {
-            $perPage = (int) request('perPage', 30);
-            $page = max(1, (int) request('page', 1));
+        $perPage = (int) request('perPage', 30);
+        $page = max(1, (int) request('page', 1));
 
-            $all = (clone $query)->get();
-            $all->load([
-                'variants' => function ($q) {
-                    $q->orderBy('position');
-                },
-                'variations',
-                'tags',
-                'tags.tagBadges' => function ($q) {
-                    $q->active();
-                },
-            ]);
+        $listingQuery = clone $query;
 
-            $items = $all->flatMap(function (Product $product) {
-                $tagBadges = $product->badgeVisualsFor('listing')->map(function ($badge) {
-                    return [
-                        'name' => $badge->name,
-                        'image_url' => $badge->image_url,
-                        'listing_position' => $badge->listing_position,
-                        'detail_position' => $badge->detail_position,
-                        'priority' => $badge->priority,
-                    ];
-                })->values();
-                $variantLabel = optional($product->variations->first())->name;
-                if ($product->list_variants_separately) {
-                    $variants = $product->variants()->orderBy('position')->get();
-                    $actives = $variants->filter(function ($v) {
-                        return (bool) ($v->is_active ?? false);
-                    });
+        $eagerLoads = method_exists($listingQuery, 'getEagerLoads') ? $listingQuery->getEagerLoads() : [];
+        unset($eagerLoads['reviews']);
+        $listingQuery->setEagerLoads($eagerLoads);
 
-                    if ($actives->isNotEmpty()) {
-                        return $actives->map(function ($variant) use ($product, $tagBadges, $variantLabel) {
-                            $p = $product->clean();
-                            $p['variant_attribute_label'] = $variantLabel;
-                            $p['name'] = $product->name;
-                            $p['variant'] = $variant->toArray();
-                            $p['url'] = $variant->url() ?? $product->url();
-                            $p['base_image'] = ($variant->base_image ?? $product->base_image);
-                            $p['base_image_thumb'] = [
-                                'path' => media_variant_url(($variant->base_image ?? $product->base_image), 400)
-                            ];
-                            $p['variant']['base_image_thumb'] = [
-                                'path' => media_variant_url(($variant->base_image ?? $product->base_image), 80)
-                            ];
-                            $p['formatted_price'] = $variant->formatted_price ?? $product->formatted_price;
-                            $p['formatted_price_range'] = null;
-                            $p['reviews_count'] = $product->reviews_count ?? ($product->relationLoaded('reviews') ? $product->reviews->count() : 0);
-                            $p['rating_percent'] = $product->rating_percent;
-                            $p['tag_badges'] = $tagBadges;
-                            return $p;
-                        });
-                    }
+        $listingQuery->withAvg('reviews', 'rating');
+
+        $listingQuery->with([
+            'files' => function ($q) {
+                $q->select(['files.id', 'files.disk', 'files.path'])
+                    ->wherePivot('zone', 'base_image');
+            },
+            'variants' => function ($q) {
+                $q->where('is_active', true)
+                    ->orderBy('position')
+                    ->addSelect([
+                        'id',
+                        'product_id',
+                        'uid',
+                        'name',
+                        'position',
+                        'price',
+                        'special_price',
+                        'special_price_type',
+                        'special_price_start',
+                        'special_price_end',
+                        'selling_price',
+                        'manage_stock',
+                        'qty',
+                        'in_stock',
+                        'is_active',
+                        'is_default',
+                    ]);
+            },
+            'variations' => function ($q) {
+                $q->without(['values'])
+                    ->select(['variations.id', 'variations.uid', 'variations.type', 'variations.is_global', 'variations.position'])
+                    ->with(['translations:id,variation_id,locale,name']);
+            },
+            'tags' => function ($q) {
+                $q->select(['tags.id']);
+            },
+        ]);
+
+        $paginator = $listingQuery->paginate($perPage, ['*'], 'page', $page);
+
+        $products = $paginator->getCollection();
+
+        try {
+            $first = $products->first();
+
+            $baseImage = $first ? ($first->base_image ?? null) : null;
+
+            if ($baseImage && isset($baseImage->id)) {
+                $fastWebp = data_get($first, 'base_image.fast_webp_url');
+                $fastAvif = data_get($first, 'base_image.fast_avif_url');
+
+                if (!$fastWebp && !$fastAvif) {
+                    GenerateResponsiveImagesForMedia::dispatch((int) $baseImage->id)->afterResponse();
                 }
+            }
+        } catch (\Throwable $e) {
+        }
+
+        $allTagIds = $products
+            ->flatMap(function (Product $p) {
+                return $p->relationLoaded('tags') ? $p->tags->pluck('id') : collect();
+            })
+            ->filter()
+            ->unique()
+            ->values();
+
+        $badgesByTagId = collect();
+
+        if ($allTagIds->isNotEmpty()) {
+            $badgesByTagId = TagBadge::query()
+                ->active()
+                ->where('show_on_listing', true)
+                ->whereIn('tag_id', $allTagIds)
+                ->orderByDesc('priority')
+                ->get()
+                ->groupBy('tag_id');
+        }
+
+        $paginator->setCollection(
+            $products->map(function (Product $product) use ($badgesByTagId) {
+                $tagIds = $product->relationLoaded('tags') ? $product->tags->pluck('id')->all() : [];
+                $tagBadges = collect($tagIds)
+                    ->flatMap(function ($tagId) use ($badgesByTagId) {
+                        return $badgesByTagId->get($tagId, collect());
+                    })
+                    ->unique('id')
+                    ->map(function ($badge) {
+                        return [
+                            'name' => $badge->name,
+                            'image_url' => $badge->image_url,
+                            'listing_position' => $badge->listing_position,
+                            'detail_position' => $badge->detail_position,
+                            'priority' => $badge->priority,
+                        ];
+                    })
+                    ->values();
+
+                $variantLabel = optional($product->variations->first())->name;
 
                 $base = $product->clean();
                 $base['variant_attribute_label'] = $variantLabel;
-                $base['reviews_count'] = $product->reviews_count ?? ($product->relationLoaded('reviews') ? $product->reviews->count() : 0);
-                $base['rating_percent'] = $product->rating_percent;
                 $base['base_image_thumb'] = [
                     'path' => media_variant_url($product->base_image, 400)
                 ];
                 $base['tag_badges'] = $tagBadges;
 
-                return collect([$base]);
-            })->values();
+                $avg = (float) ($product->reviews_avg_rating ?? 0);
+                $base['rating_percent'] = $avg > 0 ? ($avg / 5) * 100 : 0;
 
-            $total = $items->count();
-            $sliced = $items->forPage($page, $perPage)->values();
-            $paginator = new LengthAwarePaginator(
-                $sliced,
-                $total,
-                $perPage,
-                $page,
-                [
-                    'path' => request()->url(),
-                    'query' => request()->query(),
-                ]
-            );
+                return $base;
+            })
+        );
 
-            event(new ShowingProductList($paginator));
+        event(new ShowingProductList($paginator));
 
-            $categoryData = [
-                'name' => null,
-                'slug' => null,
-                'description_html' => '',
-                'faq_items' => [],
-            ];
+        $categoryData = [
+            'name' => null,
+            'slug' => null,
+            'description_html' => '',
+            'faq_items' => [],
+        ];
 
-            if (request()->filled('category')) {
-                $category = Category::where('slug', request('category'))->first();
+        if (request()->filled('category')) {
+            $category = Category::where('slug', request('category'))->first();
 
-                if ($category && $category->exists) {
-                    $faqItems = is_array($category->faq_items) ? $category->faq_items : [];
+            if ($category && $category->exists) {
+                $faqItems = is_array($category->faq_items) ? $category->faq_items : [];
 
-                    $categoryData['name'] = $category->name;
-                    $categoryData['slug'] = $category->slug;
-                    $categoryData['description_html'] = $category->description ?? '';
-                    $categoryData['faq_items'] = $faqItems;
-                }
+                $categoryData['name'] = $category->name;
+                $categoryData['slug'] = $category->slug;
+                $categoryData['description_html'] = $category->description ?? '';
+                $categoryData['faq_items'] = $faqItems;
             }
-
-            return response()->json([
-                'products' => $paginator,
-                'attributes' => $this->getAttributes($productIds),
-                'category' => $categoryData,
-            ]);
         }
+
+        return [
+            'products' => $paginator,
+            'attributes' => $this->getAttributes($productIds),
+            'category' => $categoryData,
+        ];
     }
 
 
@@ -183,6 +233,8 @@ trait ProductSearch
 
     private function getProductsCategoryIds($productIds)
     {
+        // $productIds can be an array/collection OR a subquery builder.
+        // DB::table()->whereIn supports subquery builders.
         return DB::table('product_categories')
             ->whereIn('product_id', $productIds)
             ->distinct()

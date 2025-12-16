@@ -7,6 +7,7 @@ use Modules\Admin\Ui\AdminTable;
 use Modules\Support\Eloquent\Model;
 use Modules\Product\Entities\Product;
 use Modules\Support\Eloquent\Translatable;
+use Illuminate\Support\Facades\Cache;
 
 class FlashSale extends Model
 {
@@ -49,7 +50,15 @@ class FlashSale extends Model
     {
         self::$active = function () use ($id) {
             return once(function () use ($id) {
-                return self::withEligibleProducts()->where('id', $id)->firstOrNew([]);
+                $locale = function_exists('locale') ? locale() : app()->getLocale();
+
+                return Cache::store('file')->remember(
+                    "storefront:globals:{$locale}:flash_sale:campaign:{$id}:v1",
+                    now()->addMinutes(10),
+                    function () use ($id) {
+                        return self::withEligibleProducts()->where('id', $id)->firstOrNew([]);
+                    }
+                );
             });
         };
     }

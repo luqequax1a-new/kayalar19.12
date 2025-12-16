@@ -67,9 +67,27 @@ class BlogCategory extends Model implements Sitemapable
         $changefreq = setting('support.sitemap.blog_categories_changefreq', Url::CHANGE_FREQUENCY_WEEKLY);
         $priority = (float) setting('support.sitemap.blog_categories_priority', 0.5);
 
-        return Url::create($this->url())
-            ->setLastModificationDate(Carbon::create($this->updated_at))
+        $url = $this->url();
+
+        if (! is_string($url) || trim($url) === '' || trim($url) === '#') {
+            return [];
+        }
+
+        $tag = Url::create($url)
             ->setChangeFrequency($changefreq)
             ->setPriority($priority);
+
+        if (! empty($this->updated_at)) {
+            try {
+                $tag->setLastModificationDate(
+                    $this->updated_at instanceof \DateTimeInterface
+                        ? $this->updated_at
+                        : Carbon::create($this->updated_at)
+                );
+            } catch (\Throwable $e) {
+            }
+        }
+
+        return $tag;
     }
 }

@@ -14,6 +14,21 @@ class SaveStorefrontRequest extends Request
      */
     private $shouldCheck = [
         'storefront_footer_tags',
+        'storefront_carousel_section_tags',
+        'storefront_home_page_sections_order',
+        'storefront_home_marquee_enabled',
+        'storefront_announcement_bar_enabled',
+        'storefront_announcement_bar_show_mobile',
+        'storefront_announcement_bar_show_tablet',
+        'storefront_announcement_bar_show_desktop',
+        'storefront_carousel_section_show_dots',
+        'storefront_carousel_section_show_arrows',
+        'storefront_carousel_section_2_show_dots',
+        'storefront_carousel_section_2_show_arrows',
+        'storefront_header_custom_text_enabled',
+        'storefront_header_custom_text_show_mobile',
+        'storefront_header_custom_text_show_tablet',
+        'storefront_header_custom_text_show_desktop',
         'storefront_featured_categories_section_category_1_products',
         'storefront_featured_categories_section_category_2_products',
         'storefront_featured_categories_section_category_3_products',
@@ -48,7 +63,25 @@ class SaveStorefrontRequest extends Request
     {
         foreach ($this->shouldCheck as $attribute) {
             if (!$this->has($attribute)) {
-                $this->merge([$attribute => null]);
+                if (in_array($attribute, [
+                    'storefront_home_marquee_enabled',
+                    'storefront_announcement_bar_enabled',
+                    'storefront_announcement_bar_show_mobile',
+                    'storefront_announcement_bar_show_tablet',
+                    'storefront_announcement_bar_show_desktop',
+                    'storefront_carousel_section_show_dots',
+                    'storefront_carousel_section_show_arrows',
+                    'storefront_carousel_section_2_show_dots',
+                    'storefront_carousel_section_2_show_arrows',
+                    'storefront_header_custom_text_enabled',
+                    'storefront_header_custom_text_show_mobile',
+                    'storefront_header_custom_text_show_tablet',
+                    'storefront_header_custom_text_show_desktop',
+                ], true)) {
+                    $this->merge([$attribute => 0]);
+                } else {
+                    $this->merge([$attribute => null]);
+                }
             }
         }
 

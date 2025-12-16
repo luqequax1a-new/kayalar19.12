@@ -23,6 +23,9 @@ class SaveBlogPostRequest extends Request
             'title' => 'required',
             'description' => 'required',
             'publish_status' => 'required',
+            'faqs' => 'nullable|array',
+            'faqs.*.question' => 'nullable|string',
+            'faqs.*.answer' => 'nullable|string',
         ];
     }
 

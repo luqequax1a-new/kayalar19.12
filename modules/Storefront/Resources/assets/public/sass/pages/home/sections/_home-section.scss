@@ -110,8 +110,28 @@
             background-color: rgba(0, 0, 0, 0.04);
 
             img {
+                width: 100%;
                 height: 100%;
+                display: block;
                 object-fit: cover;
+            }
+
+            // Slider yanındaki banner'larda global .banner hover animasyonunu kapat
+            &:before,
+            &:after {
+                display: none;
+            }
+
+            &:hover {
+                &:before,
+                &:after {
+                    animation: none;
+                    opacity: 0;
+                }
+
+                img {
+                    transform: none;
+                }
             }
         }
     }

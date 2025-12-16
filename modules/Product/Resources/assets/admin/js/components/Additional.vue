@@ -25,7 +25,7 @@
                     rows="6"
                     cols="10"
                     id="short-description"
-                    class="form-control"
+                    class="form-control wysiwyg"
                     v-model="form.short_description"
                 ></textarea>
 
@@ -115,12 +115,39 @@
 </template>
 
 <script setup>
+import { onMounted } from "vue";
 import { useForm } from "../composables/useForm";
 import { useConfigs } from "../composables/useConfigs";
 import { useProductMethods } from "../composables/useProductMethods";
 import flatPickr from "vue-flatpickr-component";
+import tinyMCE from "@admin/js/wysiwyg";
 
 const { form, errors } = useForm();
 const { flatPickrConfig } = useConfigs();
 const { removeDatePickerValue } = useProductMethods();
+
+function initShortDescriptionEditor() {
+    try {
+        if (window.tinymce?.get("short-description")) {
+            window.tinymce.get("short-description").remove();
+        }
+    } catch (_) {}
+
+    tinyMCE({
+        selector: "#short-description",
+        height: 200,
+        setup: (editor) => {
+            editor.on("change", () => {
+                editor.save();
+                editor.getElement().dispatchEvent(new Event("input"));
+
+                errors.clear("short_description");
+            });
+        },
+    });
+}
+
+onMounted(() => {
+    initShortDescriptionEditor();
+});
 </script>

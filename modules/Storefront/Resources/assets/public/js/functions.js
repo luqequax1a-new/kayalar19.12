@@ -11,17 +11,29 @@ export function trans(langKey, replace = {}) {
     return line;
 }
 
+let _currencyFormatter = null;
+let _currencyFormatterKey = null;
+
 export function formatCurrency(amount) {
-    const formatted = new Intl.NumberFormat(FleetCart.locale.replace("_", "-"), {
-        ...(FleetCart.locale === "ar" && {
-            numberingSystem: "arab",
-        }),
-        style: "currency",
-        currency: FleetCart.currency,
-        currencyDisplay: "symbol",
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-    }).format(amount);
+    const locale = FleetCart.locale.replace("_", "-");
+    const currency = FleetCart.currency;
+    const key = `${locale}|${currency}`;
+
+    if (!_currencyFormatter || _currencyFormatterKey !== key) {
+        _currencyFormatterKey = key;
+        _currencyFormatter = new Intl.NumberFormat(locale, {
+            ...(FleetCart.locale === "ar" && {
+                numberingSystem: "arab",
+            }),
+            style: "currency",
+            currency,
+            currencyDisplay: "symbol",
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        });
+    }
+
+    const formatted = _currencyFormatter.format(amount);
 
     return formatted.replace("TRY", "₺");
 }

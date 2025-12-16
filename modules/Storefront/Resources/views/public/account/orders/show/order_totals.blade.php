@@ -1,52 +1,58 @@
 <div class="order-details-bottom">
-    <ul class="list-inline order-summary-list">
-        <li>
-            <label>{{ trans('storefront::account.view_order.subtotal') }}</label>
+    <div class="order-details-card order-totals-card">
+        <h4 class="m-b-0">{{ trans('storefront::account.view_order.order_totals') }}</h4>
 
-            <span>
-                {{ $order->sub_total->convert($order->currency, $order->currency_rate)->format($order->currency) }}
-            </span>
-        </li>
+        <div class="order-summary">
+            <ul class="list-inline order-summary-list">
+                <li>
+                    <label>{{ trans('storefront::account.view_order.subtotal') }}</label>
 
-        @if ($order->hasShippingMethod())
-            <li>
-                <label>{{ $order->shipping_method }}</label>
+                    <span>
+                        {{ $order->sub_total->convert($order->currency, $order->currency_rate)->format($order->currency) }}
+                    </span>
+                </li>
 
-                <span>
-                    {{ $order->shipping_cost->convert($order->currency, $order->currency_rate)->format($order->currency) }}
+                @if ($order->hasShippingMethod())
+                    <li>
+                        <label>{{ $order->shipping_method }}</label>
+
+                        <span>
+                            {{ $order->shipping_cost->convert($order->currency, $order->currency_rate)->format($order->currency) }}
+                        </span>
+                    </li>
+                @endif
+
+                @foreach ($order->taxes as $tax)
+                    <li>
+                        <label>{{ $tax->name }}</label>
+
+                        <span>
+                            {{ $tax->order_tax->amount->convert($order->currency, $order->currency_rate)->format($order->currency) }}
+                        </span>
+                    </li>
+                @endforeach
+
+                @if ($order->hasCoupon())
+                    <li>
+                        <label>
+                            {{ trans('storefront::account.view_order.coupon') }}
+                            <span class="coupon-code">({{ $order->coupon->code }})</span>
+                        </label>
+
+                        <span>
+                            -{{ $order->discount->convert($order->currency, $order->currency_rate)->format($order->currency) }}
+                        </span>
+                    </li>
+                @endif
+            </ul>
+
+            <div class="order-summary-total">
+                <label>{{ trans('storefront::account.view_order.total') }}</label>
+
+                <span class="total-price">
+                    {{ $order->total->convert($order->currency, $order->currency_rate)->format($order->currency) }}
                 </span>
-            </li>
-        @endif
-
-        @foreach ($order->taxes as $tax)
-            <li>
-                <label>{{ $tax->name }}</label>
-
-                <span>
-                    {{ $tax->order_tax->amount->convert($order->currency, $order->currency_rate)->format($order->currency) }}
-                </span>
-            </li>
-        @endforeach
-
-        @if ($order->hasCoupon())
-            <li>
-                <label>
-                    {{ trans('storefront::account.view_order.coupon') }}
-                    <span class="coupon-code">({{ $order->coupon->code }})</span>
-                </label>
-
-                <span>
-                    -{{ $order->discount->convert($order->currency, $order->currency_rate)->format($order->currency) }}
-                </span>
-            </li>
-        @endif
-    </ul>
-
-    <div class="order-summary-total">
-        <label>{{ trans('storefront::account.view_order.total') }}</label>
-
-        <span class="total-price">
-            {{ $order->total->convert($order->currency, $order->currency_rate)->format($order->currency) }}
-        </span>
+            </div>
+        </div>
     </div>
 </div>

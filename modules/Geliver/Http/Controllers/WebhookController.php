@@ -4,6 +4,7 @@ namespace Modules\Geliver\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Modules\Order\Entities\Order;
 
@@ -13,19 +14,12 @@ class WebhookController
     {
         \Log::info('Geliver webhook hit', [
             'ip' => $request->ip(),
-            'payload' => $request->all(),
-            'raw' => $request->getContent(),
-            'headers' => $request->headers->all(),
-        ]);
-        \Log::info('GELIVER_WEBHOOK_HIT', [
             'path' => $request->path(),
-            'payload' => $request->all(),
-            'headers' => $request->headers->all(),
+            'content_type' => $request->header('Content-Type'),
         ]);
         $secret = config('services.geliver.webhook_secret') ?: setting('geliver_webhook_secret');
         \Log::info('Geliver webhook secret check', [
             'configured_secret' => $secret ? 'SET' : 'EMPTY',
-            'provided' => $request->header('X-Geliver-Secret') ?: $request->query('secret'),
         ]);
         if ($secret) {
             $provided = $request->header('X-Geliver-Secret') ?: $request->query('secret');
@@ -55,9 +49,21 @@ class WebhookController
             }
         }
         \Log::info('GELIVER_PAYLOAD_DECODED', [
-            'keys' => is_array($payload) ? array_keys($payload) : [],
             'has_id' => isset($payload['id']) || isset($payload['shipmentID']) || isset($payload['data']['id']) || isset($payload['data']['shipmentID']) || isset($payload['shipment']['id']) || isset($payload['shipment']['shipmentID']),
-            'has_status' => isset($payload['status']) || isset($payload['statusCode']) || isset($payload['data']['status']) || isset($payload['data']['statusCode']) || isset($payload['shipment']['status']) || isset($payload['shipment']['statusCode']),
+            'has_status' => isset($payload['trackingSubStatusCode'])
+                || isset($payload['trackingStatusCode'])
+                || isset($payload['trackingStatus']['trackingSubStatusCode'])
+                || isset($payload['trackingStatus']['trackingStatusCode'])
+                || isset($payload['data']['trackingStatus']['trackingSubStatusCode'])
+                || isset($payload['data']['trackingStatus']['trackingStatusCode'])
+                || isset($payload['shipment']['trackingStatus']['trackingSubStatusCode'])
+                || isset($payload['shipment']['trackingStatus']['trackingStatusCode'])
+                || isset($payload['status'])
+                || isset($payload['statusCode'])
+                || isset($payload['data']['status'])
+                || isset($payload['data']['statusCode'])
+                || isset($payload['shipment']['status'])
+                || isset($payload['shipment']['statusCode']),
         ]);
         $shipmentId = $payload['id']
             ?? ($payload['shipmentID'] ?? null)
@@ -65,12 +71,51 @@ class WebhookController
             ?? ($payload['data']['shipmentID'] ?? null)
             ?? ($payload['shipment']['id'] ?? null)
             ?? ($payload['shipment']['shipmentID'] ?? null);
-        $payloadStatus = $payload['status']
-            ?? ($payload['statusCode'] ?? null)
-            ?? ($payload['data']['status'] ?? null)
-            ?? ($payload['data']['statusCode'] ?? null)
-            ?? ($payload['shipment']['status'] ?? null)
-            ?? ($payload['shipment']['statusCode'] ?? null);
+        $payloadStatus = null;
+        $statusSource = null;
+        if (isset($payload['trackingSubStatusCode'])) {
+            $payloadStatus = $payload['trackingSubStatusCode'];
+            $statusSource = 'trackingSubStatusCode';
+        } elseif (null !== data_get($payload, 'trackingStatus.trackingSubStatusCode')) {
+            $payloadStatus = data_get($payload, 'trackingStatus.trackingSubStatusCode');
+            $statusSource = 'trackingStatus.trackingSubStatusCode';
+        } elseif (null !== data_get($payload, 'data.trackingStatus.trackingSubStatusCode')) {
+            $payloadStatus = data_get($payload, 'data.trackingStatus.trackingSubStatusCode');
+            $statusSource = 'data.trackingStatus.trackingSubStatusCode';
+        } elseif (null !== data_get($payload, 'shipment.trackingStatus.trackingSubStatusCode')) {
+            $payloadStatus = data_get($payload, 'shipment.trackingStatus.trackingSubStatusCode');
+            $statusSource = 'shipment.trackingStatus.trackingSubStatusCode';
+        } elseif (isset($payload['trackingStatusCode'])) {
+            $payloadStatus = $payload['trackingStatusCode'];
+            $statusSource = 'trackingStatusCode';
+        } elseif (null !== data_get($payload, 'trackingStatus.trackingStatusCode')) {
+            $payloadStatus = data_get($payload, 'trackingStatus.trackingStatusCode');
+            $statusSource = 'trackingStatus.trackingStatusCode';
+        } elseif (null !== data_get($payload, 'data.trackingStatus.trackingStatusCode')) {
+            $payloadStatus = data_get($payload, 'data.trackingStatus.trackingStatusCode');
+            $statusSource = 'data.trackingStatus.trackingStatusCode';
+        } elseif (null !== data_get($payload, 'shipment.trackingStatus.trackingStatusCode')) {
+            $payloadStatus = data_get($payload, 'shipment.trackingStatus.trackingStatusCode');
+            $statusSource = 'shipment.trackingStatus.trackingStatusCode';
+        } elseif (isset($payload['status'])) {
+            $payloadStatus = $payload['status'];
+            $statusSource = 'status';
+        } elseif (isset($payload['statusCode'])) {
+            $payloadStatus = $payload['statusCode'];
+            $statusSource = 'statusCode';
+        } elseif (null !== data_get($payload, 'data.status')) {
+            $payloadStatus = data_get($payload, 'data.status');
+            $statusSource = 'data.status';
+        } elseif (null !== data_get($payload, 'data.statusCode')) {
+            $payloadStatus = data_get($payload, 'data.statusCode');
+            $statusSource = 'data.statusCode';
+        } elseif (null !== data_get($payload, 'shipment.status')) {
+            $payloadStatus = data_get($payload, 'shipment.status');
+            $statusSource = 'shipment.status';
+        } elseif (null !== data_get($payload, 'shipment.statusCode')) {
+            $payloadStatus = data_get($payload, 'shipment.statusCode');
+            $statusSource = 'shipment.statusCode';
+        }
         if (!$shipmentId || !$payloadStatus) {
             return response()->json(['message' => 'invalid payload'], 400);
         }
@@ -91,12 +136,12 @@ class WebhookController
                 'order_id' => $order->id,
                 'shipment_id' => $shipmentId,
                 'status' => $payloadStatus,
+                'status_source' => $statusSource,
             ]);
         }
         \Log::info('GELIVER_STATUS_UPDATE_CANDIDATE', [
             'status' => $payloadStatus,
             'shipment_id' => $shipmentId,
-            'order_number' => $payload['order']['orderNumber'] ?? ($payload['data']['order']['orderNumber'] ?? ($payload['orderNumber'] ?? null)),
             'order_found' => (bool) $order,
         ]);
 
@@ -117,6 +162,18 @@ class WebhookController
         $carrierName = data_get($payload, 'carrier')
             ?? data_get($payload, 'carrierName')
             ?? data_get($payload, 'carrier.name')
+            ?? data_get($payload, 'providerName')
+            ?? data_get($payload, 'providerCode')
+            ?? data_get($payload, 'trackingStatus.providerName')
+            ?? data_get($payload, 'trackingStatus.providerCode')
+            ?? data_get($payload, 'data.providerName')
+            ?? data_get($payload, 'data.providerCode')
+            ?? data_get($payload, 'data.trackingStatus.providerName')
+            ?? data_get($payload, 'data.trackingStatus.providerCode')
+            ?? data_get($payload, 'shipment.providerName')
+            ?? data_get($payload, 'shipment.providerCode')
+            ?? data_get($payload, 'shipment.trackingStatus.providerName')
+            ?? data_get($payload, 'shipment.trackingStatus.providerCode')
             ?? data_get($payload, 'shipment.carrier')
             ?? data_get($payload, 'shipment.carrierName')
             ?? data_get($payload, 'shipment.carrier.name')
@@ -159,13 +216,148 @@ class WebhookController
             $updatePayload['tracking_reference'] = (string) $trackingUrl;
         }
 
+        if (!isset($updatePayload['tracking_reference'])) {
+            $existingRef = isset($order->tracking_reference) ? trim((string) $order->tracking_reference) : '';
+            if ($existingRef === '') {
+                if ($trackingNumber) {
+                    $updatePayload['tracking_reference'] = (string) $trackingNumber;
+                }
+            }
+        }
+
         $map = config('geliver.status_map');
         $finals = config('geliver.final_statuses');
         $statusKey = is_string($payloadStatus) ? $payloadStatus : (string) $payloadStatus;
-        $mapLower = [];
-        foreach ($map as $k => $v) { $mapLower[mb_strtolower((string)$k, 'UTF-8')] = $v; }
-        $statusKeyLower = mb_strtolower($statusKey, 'UTF-8');
-        $newStatus = $map[$statusKey] ?? ($mapLower[$statusKeyLower] ?? null);
+
+        $statusKeyNorm = $this->normalizeStatusKey($statusKey);
+
+        $packageAcceptedNorms = [
+            'packageaccepted',
+            'kabuledildi',
+        ];
+        $onTheWayNorms = [
+            'deliveryscheduled',
+            'yolda',
+            'ontheway',
+            'intheway',
+        ];
+        $outForDeliveryNorms = [
+            'outfordelivery',
+            'dagitimda',
+        ];
+        $deliveredNorms = [
+            'delivered',
+            'teslimedildi',
+        ];
+        $inTransitNorms = [
+            'yolda',
+            'intheway',
+            'ontheway',
+            'intransit',
+            'outfordelivery',
+            'readytoship',
+            'packageaccepted',
+            'shipped',
+        ];
+
+        $newStatus = null;
+
+        if (in_array($statusKeyNorm, $deliveredNorms, true)) {
+            $shouldComplete = false;
+            $minAgeSeconds = (int) (config('geliver.delivered_min_age_seconds') ?? 0);
+            $remoteOk = false;
+            $remoteNorm = '';
+            $prevStatusNorm = $this->normalizeStatusKey((string) ($order->geliver_last_status ?? ''));
+            $prevAt = $order->geliver_last_status_at ? Carbon::parse($order->geliver_last_status_at) : null;
+            $prevAge = $prevAt ? $prevAt->diffInSeconds(now()) : null;
+            if ($shipmentId) {
+                try {
+                    $svc = app(\Modules\Geliver\Services\GeliverService::class);
+                    $remote = $svc->fetchShipmentById((string) $shipmentId);
+                    if (is_array($remote)) {
+                        $remoteStatus = $this->extractStatusKey($remote);
+                        $remoteNorm = $remoteStatus ? $this->normalizeStatusKey($remoteStatus) : '';
+                        $remoteOk = $remoteNorm !== '';
+                        if ($remoteNorm !== '') {
+                            if (in_array($remoteNorm, $deliveredNorms, true)) {
+                                if ($minAgeSeconds <= 0) {
+                                    $shouldComplete = true;
+                                } elseif (
+                                    in_array($prevStatusNorm, $deliveredNorms, true)
+                                    && $prevAge !== null
+                                    && $prevAge >= $minAgeSeconds
+                                ) {
+                                    $shouldComplete = true;
+                                }
+                            }
+                        }
+                    }
+                } catch (\Throwable $e) {
+                }
+            }
+            if (!$remoteOk) {
+                if ($minAgeSeconds <= 0) {
+                    $shouldComplete = true;
+                } elseif (
+                    in_array($prevStatusNorm, $deliveredNorms, true)
+                    && $prevAge !== null
+                    && $prevAge >= $minAgeSeconds
+                ) {
+                    $shouldComplete = true;
+                }
+            }
+
+            Log::info('Geliver delivered decision', [
+                'shipment_id' => $shipmentId,
+                'status_raw' => $payloadStatus,
+                'remote_ok' => $remoteOk,
+                'remote_status_norm' => $remoteNorm,
+                'prev_status_norm' => $prevStatusNorm,
+                'age_since_last_status_at' => $prevAge,
+                'min_age_seconds' => $minAgeSeconds,
+                'order_status_before' => $order->status,
+                'should_complete' => $shouldComplete,
+            ]);
+
+            $newStatus = $shouldComplete ? \Modules\Order\Entities\Order::COMPLETED : \Modules\Order\Entities\Order::SHIPPED;
+        } elseif (in_array($statusKeyNorm, $outForDeliveryNorms, true)) {
+            $newStatus = \Modules\Order\Entities\Order::OUT_FOR_DELIVERY;
+        } elseif (in_array($statusKeyNorm, $onTheWayNorms, true)) {
+            $newStatus = \Modules\Order\Entities\Order::ON_THE_WAY;
+        } elseif (in_array($statusKeyNorm, $packageAcceptedNorms, true)) {
+            $newStatus = \Modules\Order\Entities\Order::SHIPPED;
+        } elseif (in_array($statusKeyNorm, $inTransitNorms, true)) {
+            $newStatus = \Modules\Order\Entities\Order::SHIPPED;
+        }
+
+        if ($newStatus === null) {
+            $newStatus = $map[$statusKey] ?? null;
+        }
+
+        if ($newStatus === null) {
+            $statusKeyLower = mb_strtolower($statusKey, 'UTF-8');
+            $mapLower = [];
+            foreach ($map as $k => $v) {
+                $mapLower[mb_strtolower((string) $k, 'UTF-8')] = $v;
+            }
+            $newStatus = $mapLower[$statusKeyLower] ?? null;
+        }
+
+        if ($newStatus === null) {
+            $mapNorm = [];
+            foreach ($map as $k => $v) {
+                $mapNorm[$this->normalizeStatusKey((string) $k)] = $v;
+            }
+            $newStatus = $mapNorm[$statusKeyNorm] ?? null;
+        }
+        Log::info('Geliver webhook status resolved', [
+            'shipment_id' => $shipmentId,
+            'status_raw' => $payloadStatus,
+            'status_norm' => $statusKeyNorm,
+            'new_status' => $newStatus,
+            'order_id' => $order->id,
+            'order_status_before' => $order->status,
+        ]);
         // tracking bilgilerini önce yaz ki email eventinde mevcut olsun
         $order->update($updatePayload);
 
@@ -176,8 +368,19 @@ class WebhookController
         }
 
         if (in_array($order->status, $finals, true) && !in_array($newStatus, $finals, true)) {
-            return response()->json(['message' => 'final status preserved'], 200);
+            if ($order->status === \Modules\Order\Entities\Order::COMPLETED && $newStatus === \Modules\Order\Entities\Order::SHIPPED && in_array($statusKeyNorm, $inTransitNorms, true)) {
+                // allow correcting an order that was mistakenly marked completed
+            } else {
+                return response()->json(['message' => 'final status preserved'], 200);
+            }
         }
+
+        $request->attributes->set('order_status_change_source', 'geliver_webhook');
+        $request->attributes->set('order_status_change_context', [
+            'shipment_id' => $shipmentId,
+            'status_raw' => $payloadStatus,
+            'status_norm' => $statusKeyNorm,
+        ]);
 
         $order->transitionTo($newStatus);
         \Log::info('Geliver webhook status transitioned', [
@@ -193,5 +396,28 @@ class WebhookController
         ]);
 
         return response()->json(['message' => 'ok'], 200);
+    }
+
+    private function normalizeStatusKey(string $value): string
+    {
+        $v = trim($value);
+        $v = mb_strtolower($v, 'UTF-8');
+        $v = preg_replace('/[^\p{L}\p{N}]+/u', '', $v);
+        return $v ?? '';
+    }
+
+    private function extractStatusKey(array $payload): ?string
+    {
+        $v = data_get($payload, 'trackingSubStatusCode')
+            ?? data_get($payload, 'trackingStatus.trackingSubStatusCode')
+            ?? data_get($payload, 'trackingStatus.trackingStatusCode')
+            ?? data_get($payload, 'trackingStatusCode')
+            ?? data_get($payload, 'status')
+            ?? data_get($payload, 'statusCode')
+            ?? data_get($payload, 'shipment.status')
+            ?? data_get($payload, 'shipment.statusCode')
+            ?? data_get($payload, 'data.status')
+            ?? data_get($payload, 'data.statusCode');
+        return $v !== null ? (string) $v : null;
     }
 }

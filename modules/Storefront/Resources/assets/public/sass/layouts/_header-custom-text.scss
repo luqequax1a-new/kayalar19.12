@@ -1,0 +1,37 @@
+.header-custom-text {
+    background: var(--header-custom-text-bg, #ffffff);
+    color: var(--header-custom-text-color, #111827);
+    font-size: var(--header-custom-text-font-size, 14px);
+    line-height: 1.35;
+    width: 100%;
+}
+
+.header-custom-text__inner {
+    padding: 10px 16px;
+    text-align: center;
+}
+
+@media screen and (max-width: 767px) {
+    .header-custom-text__inner {
+        padding: 8px 12px;
+        font-size: inherit;
+    }
+}
+
+@media screen and (max-width: 767px) {
+    .header-custom-text--hide-mobile {
+        display: none;
+    }
+}
+
+@media screen and (min-width: 768px) and (max-width: 991px) {
+    .header-custom-text--hide-tablet {
+        display: none;
+    }
+}
+
+@media screen and (min-width: 992px) {
+    .header-custom-text--hide-desktop {
+        display: none;
+    }
+}

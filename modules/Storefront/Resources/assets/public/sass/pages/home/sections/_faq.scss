@@ -1,0 +1,121 @@
+.faq-section {
+    padding: 70px 0 50px;
+    background-color: #ffffff;
+}
+
+.faq-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 0 8px;
+}
+
+.faq-header {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.faq-title {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.faq-subtitle {
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.faq-content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+    gap: 24px;
+}
+
+.faq-intro {
+    font-size: 14px;
+    color: #4b5563;
+    line-height: 1.6;
+}
+
+.faq-accordion {
+    border-radius: 0;
+    border-top: 1px solid #e5e7eb;
+    border-bottom: 1px solid #e5e7eb;
+    background-color: transparent;
+    overflow: hidden;
+}
+
+.faq-item + .faq-item {
+    border-top: 1px solid #e5e7eb;
+}
+
+.faq-question {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 0;
+    cursor: pointer;
+    font-weight: 500;
+    list-style: none;
+}
+
+.faq-question::-webkit-details-marker {
+    display: none;
+}
+
+.faq-toggle-icon {
+    position: relative;
+    width: 18px;
+    height: 18px;
+}
+
+.faq-toggle-icon .line {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 14px;
+    height: 2px;
+    background-color: #111827;
+    border-radius: 999px;
+    transform: translate(-50%, -50%);
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.faq-toggle-icon .line-2 {
+    transform: translate(-50%, -50%) rotate(90deg);
+}
+
+.faq-item[open] .faq-toggle-icon .line-2 {
+    opacity: 0;
+}
+
+/* Açıldığında ekstra gri bir blok oluşmasın diye arka plan rengini kaldırıyoruz */
+.faq-item[open] .faq-question {
+    background-color: transparent;
+}
+
+.faq-answer {
+    padding: 0 0 14px;
+    font-size: 14px;
+    color: #4b5563;
+}
+
+@media screen and (max-width: 767px) {
+    .faq-section {
+        padding: 36px 0;
+    }
+
+    .faq-inner {
+        max-width: 100%;
+        padding: 0 12px;
+    }
+
+    .faq-title {
+        font-size: 20px;
+    }
+
+    .faq-content {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 18px;
+    }
+}

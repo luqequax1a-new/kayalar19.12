@@ -178,10 +178,26 @@ class CartUpsellService
         $item = $variant ?: $product;
 
         if ($item->selling_price instanceof Money) {
-            return $item->selling_price->amount();
+            $amount = $item->selling_price->amount();
+
+            return is_numeric($amount) ? (float) $amount : 0.0;
         }
 
-        return (float) $item->selling_price;
+        if ($item->selling_price === null) {
+            if ($item->price instanceof Money) {
+                $amount = $item->price->amount();
+
+                return is_numeric($amount) ? (float) $amount : 0.0;
+            }
+
+            if ($item->price === null) {
+                return 0.0;
+            }
+
+            return is_numeric($item->price) ? (float) $item->price : 0.0;
+        }
+
+        return is_numeric($item->selling_price) ? (float) $item->selling_price : 0.0;
     }
 
     protected function applyDiscount(float $original, string $type, float $value): float

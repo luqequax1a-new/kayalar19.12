@@ -21,6 +21,8 @@ return [
             'description' => 'Description',
             'short_description' => 'Short Description',
             'featured_image' => 'Featured Image',
+            'related_products' => 'İlgili Ürünler',
+            'related_products_help' => 'Bu yazıyla ilişkili ürünleri seçin. Bu seçimler yalnızca SEO amaçlı kullanılır; blog sayfasında ayrı bir ürün listesi gösterilmez.',
         ],
     ],
     'blog_category' => [

@@ -3,6 +3,7 @@
     margin-bottom: 20px;
     align-items: center;
     justify-content: space-between;
+    contain: layout paint;
 
     .content-left {
         > h4 {
@@ -321,6 +322,8 @@
 
 .search-result-middle {
     position: relative;
+    min-height: 900px;
+    contain: layout paint;
 
     &.empty {
         display: flex;
@@ -335,6 +338,18 @@
             height: 40px;
             width: 40px;
         }
+    }
+
+    .search-result-skeleton {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 20px;
+    }
+
+    .search-result-skeleton-item {
+        height: 360px;
+        border-radius: var(--radius-default);
+        background: var(--color-white-lite);
     }
 
     .empty-message {
@@ -406,8 +421,14 @@
     }
 
     .search-result-middle {
+        min-height: 650px;
+
         &.empty {
             min-height: 230px;
+        }
+
+        .search-result-skeleton {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
         }
     }
 

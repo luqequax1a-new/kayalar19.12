@@ -70,7 +70,23 @@ Alpine.store("cart", {
     },
 
     init() {
-        this.fetchingCart();
+        // Defer network request to reduce initial page load time
+        this.fetching = true;
+
+        // If cart is empty, skip initial network request.
+        // UI can still show FleetCart.cartQuantity via the getter until user adds items.
+        if (!window.FleetCart || !FleetCart.cartQuantity) {
+            this.fetching = false;
+            this.fetched = true;
+            return;
+        }
+
+        if (typeof window.requestIdleCallback === "function") {
+            window.requestIdleCallback(() => this.fetchingCart(), { timeout: 2000 });
+            return;
+        }
+
+        setTimeout(() => this.fetchingCart(), 1200);
     },
 
     async fetchingCart() {

@@ -17,7 +17,7 @@ class SidebarExtender extends BaseSidebarExtender
                     $sub->weight(20);
                     $sub->route('admin.settings.geliver');
                     $sub->authorize(
-                        $this->auth->hasAccess('admin.settings.edit')
+                        $this->auth->hasAccess('admin.geliver_settings.edit')
                     );
                 });
             });

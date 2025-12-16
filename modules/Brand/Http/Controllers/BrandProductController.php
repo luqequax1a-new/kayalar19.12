@@ -31,9 +31,14 @@ class BrandProductController
 
         $brand = Brand::findBySlug($slug);
 
+        $payload = $this->buildListingPayload($model, $productFilter);
+
         return view('storefront::public.products.index', [
             'brandName' => $brand->name,
             'brandBanner' => $brand->banner->path,
+            'initialProducts' => $payload['products'] ?? null,
+            'initialAttributes' => $payload['attributes'] ?? null,
+            'initialCategoryData' => $payload['category'] ?? null,
         ]);
     }
 }

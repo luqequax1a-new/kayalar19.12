@@ -37,7 +37,7 @@
                             <div class="invoice-info clearfix">
                                 <div class="invoice-id">
                                     <label for="invoice-id">{{ trans('order::print.invoice_id') }}:</label>
-                                    <span>#{{ $order->id }}</span>
+                                    <span>#{{ $order->displayOrderNumber() }}</span>
                                 </div>
 
                                 <div class="invoice-date">

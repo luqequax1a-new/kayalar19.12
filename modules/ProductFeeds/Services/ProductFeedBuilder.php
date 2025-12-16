@@ -2,21 +2,68 @@
 
 namespace Modules\ProductFeeds\Services;
 
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Modules\Category\Entities\Category;
 use Modules\Product\Entities\Product;
 use Modules\Product\Entities\ProductVariant;
+use Modules\Tax\Entities\TaxRate;
 
 class ProductFeedBuilder
 {
+    private function sanitizeCategoryString(?string $value): string
+    {
+        $decoded = (string) ($value ?? '');
+
+        if ($decoded === '') {
+            return '';
+        }
+
+        $decoded = html_entity_decode($decoded, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $decoded = strip_tags($decoded);
+        $decoded = str_replace(['&gt;', '&amp;gt;', '&amp;amp;gt;'], '>', $decoded);
+        $decoded = preg_replace('/\s*>\s*/u', ' > ', $decoded) ?? '';
+        $decoded = preg_replace('/\s+/u', ' ', $decoded) ?? '';
+
+        return trim($decoded);
+    }
+
+    private function productTypeFor(Product $product, ?string $categoryPath, ?string $googleCategory): string
+    {
+        $categoryPath = $this->sanitizeCategoryString($categoryPath);
+        if ($categoryPath !== '') {
+            return $categoryPath;
+        }
+
+        $primaryName = $this->sanitizeCategoryString($product->primaryCategory?->name);
+        if ($primaryName !== '') {
+            return $primaryName;
+        }
+
+        $googleCategory = $this->sanitizeCategoryString($googleCategory);
+        if ($googleCategory !== '') {
+            $parts = array_values(array_filter(array_map('trim', explode(' > ', $googleCategory)), fn ($p) => $p !== ''));
+            if (! empty($parts)) {
+                return (string) end($parts);
+            }
+        }
+
+        $firstCategoryName = $this->sanitizeCategoryString($product->categories->first()?->name);
+        if ($firstCategoryName !== '') {
+            return $firstCategoryName;
+        }
+
+        return '';
+    }
+
     public function queryProducts(array $options = [])
     {
         $includeOutOfStock = (bool) ($options['include_out_of_stock'] ?? setting('product_feeds.global.include_out_of_stock', false));
         $includeUnpublished = (bool) ($options['include_unpublished'] ?? setting('product_feeds.global.include_unpublished', false));
 
         $query = Product::query()
-            ->with(['primaryCategory', 'categories', 'brand', 'productMedia', 'variants', 'variants.files'])
+            ->with(['primaryCategory', 'categories', 'brand', 'productMedia', 'variants', 'variants.files', 'taxClass.taxRates', 'variations', 'variations.values'])
             ->with('translations');
 
         if (! $includeUnpublished) {
@@ -33,6 +80,142 @@ class ProductFeedBuilder
         }
 
         return $query;
+    }
+
+
+    /**
+     * Build readable variation query params for a variant.
+     *
+     * key = Str::slug(variation.name)
+     * value = Str::slug(selectedValue.label)
+     *
+     * Ordering is stable: uses product variations display order.
+     */
+    public function readableParamsForVariant(Product $product, ProductVariant $variant): array
+    {
+        try {
+            $product->loadMissing(['variations.values']);
+
+            $uids = array_filter(explode('.', (string) $variant->uids));
+            if (empty($uids)) {
+                return [];
+            }
+
+            $uidSet = array_fill_keys($uids, true);
+            $params = [];
+
+            foreach ($product->variations as $variation) {
+                $key = Str::slug((string) ($variation->name ?? ''));
+                if ($key === '') {
+                    continue;
+                }
+
+                $selected = null;
+                foreach ($variation->values as $value) {
+                    if (isset($uidSet[$value->uid])) {
+                        $selected = $value;
+                        break;
+                    }
+                }
+
+                if (! $selected) {
+                    continue;
+                }
+
+                $valueSlug = Str::slug((string) ($selected->label ?? ''));
+                if ($valueSlug === '') {
+                    continue;
+                }
+
+                $params[$key] = $valueSlug;
+            }
+
+            return $params;
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
+
+    public function productUrlWithReadableVariantParams(Product $product, ProductVariant $variant): string
+    {
+        $base = route('products.show', ['slug' => $product->slug]);
+        $params = $this->readableParamsForVariant($product, $variant);
+
+        if (! empty($params)) {
+            $base .= '?' . http_build_query($params);
+        }
+
+        return $base;
+    }
+
+    public function streamNormalizedItemsForFeed(string $channel, callable $yield): void
+    {
+        $includeVariantsGlobal = (bool) setting('product_feeds.global.include_variants', true);
+
+        $includeVariants = match ($channel) {
+            'meta' => (bool) setting('product_feeds.meta.use_variants', $includeVariantsGlobal),
+            default => $includeVariantsGlobal,
+        };
+
+        $currency = (string) setting('product_feeds.global.currency', currency());
+        $defaultGoogleCategory = (string) setting('product_feeds.google.category', '');
+
+        $this->queryProducts()
+            ->orderBy('id')
+            ->chunkById(200, function ($products) use ($yield, $includeVariants, $currency, $defaultGoogleCategory, $channel) {
+                foreach ($products as $product) {
+                    $categoryPath = $this->buildCategoryPath($product);
+
+                    $productGoogleCategory = (string) ($product->google_product_category_path ?? '');
+
+                    if ($productGoogleCategory !== '') {
+                        $googleCategory = $productGoogleCategory;
+                    } elseif ($defaultGoogleCategory !== '') {
+                        $googleCategory = $defaultGoogleCategory;
+                    } else {
+                        $googleCategory = $categoryPath ?: null;
+                    }
+
+                    $brand = $this->brandName($product);
+                    $description = $this->buildDescription($product);
+
+                    $variants = $product->variants ?? collect();
+
+                    if ($includeVariants && $variants->count() > 0) {
+                        foreach ($variants as $variant) {
+                            if ((bool) $variant->is_active === false) {
+                                continue;
+                            }
+
+                            $row = $this->buildRowForVariant(
+                                $product,
+                                $variant,
+                                $channel,
+                                $currency,
+                                $brand,
+                                $description,
+                                $categoryPath,
+                                $googleCategory
+                            );
+
+                            $yield($row);
+                        }
+                    } else {
+                        $row = $this->buildRowForProduct(
+                            $product,
+                            $channel,
+                            $currency,
+                            $brand,
+                            $description,
+                            $categoryPath,
+                            $googleCategory
+                        );
+
+                        $yield($row);
+                    }
+                }
+            });
     }
 
     public function buildCategoryPath($product): string
@@ -58,7 +241,7 @@ class ProductFeedBuilder
             $current = Category::query()->find($parentId);
         }
 
-        return implode(' > ', array_reverse($segments));
+        return $this->sanitizeCategoryString(implode(' > ', array_reverse($segments)));
     }
 
     public function productUrl(Product $product, $variantId = null): string
@@ -79,7 +262,9 @@ class ProductFeedBuilder
             return (string) $product->brand->name;
         }
 
-        return (string) setting('product_feeds.global.brand_name', setting('store_name'));
+        $fallback = (string) setting('product_feeds.global.brand_name', setting('store_name'));
+
+        return trim($fallback);
     }
 
     public function availability(Product $product): string
@@ -137,22 +322,23 @@ class ProductFeedBuilder
         $meta = $product->seo_meta_description ?? null;
 
         if (is_string($meta) && $meta !== '') {
-            return $meta;
+            $clean = $this->cleanText($meta);
+            return Str::limit($clean, 5000, '');
         }
 
         $short = $this->cleanText($product->short_description ?? null);
 
         if ($short !== '') {
-            return $short;
+            return Str::limit($short, 5000, '');
         }
 
         $desc = $this->cleanText($product->description ?? null);
 
         if ($desc !== '') {
-            return Str::limit($desc, 500, '...');
+            return Str::limit($desc, 5000, '');
         }
 
-        return $this->cleanText($product->name ?? '');
+        return Str::limit($this->cleanText($product->name ?? ''), 5000, '');
     }
 
 
@@ -213,99 +399,191 @@ class ProductFeedBuilder
      */
     public function normalizedItemsForFeed(string $channel): Collection
     {
-        $includeVariantsGlobal = (bool) setting('product_feeds.global.include_variants', true);
-
-        $includeVariants = match ($channel) {
-            'meta' => (bool) setting('product_feeds.meta.use_variants', $includeVariantsGlobal),
-            default => $includeVariantsGlobal,
-        };
-
-        $currency = (string) setting('product_feeds.global.currency', currency());
-        $defaultGoogleCategory = (string) setting('product_feeds.google.category', '');
-
-        $products = $this->queryProducts()->get();
-
         $rows = [];
 
-        foreach ($products as $product) {
-            $categoryPath = $this->buildCategoryPath($product);
-
-            $productGoogleCategory = (string) ($product->google_product_category_path ?? '');
-
-            if ($productGoogleCategory !== '') {
-                $googleCategory = $productGoogleCategory;
-            } elseif ($defaultGoogleCategory !== '') {
-                $googleCategory = $defaultGoogleCategory;
-            } else {
-                $googleCategory = $categoryPath ?: null;
-            }
-            $brand = $this->brandName($product);
-            $description = $this->buildDescription($product);
-
-            $variants = $product->variants ?? collect();
-
-            if ($includeVariants && $variants->count() > 0) {
-                foreach ($variants as $variant) {
-                    if ((bool) $variant->is_active === false) {
-                        continue;
-                    }
-
-                    [$price, $sale] = $this->numericPriceForVariant($variant);
-
-                    $mainImage = $variant->base_image?->path ?: $this->mainImage($product);
-                    $additional = $variant->additional_images->pluck('path')->all();
-
-                    $rows[] = [
-                        'product' => $product,
-                        'variant' => $variant,
-                        'id' => (string) $variant->id,
-                        'item_group_id' => (string) $product->id,
-                        'sku' => $variant->sku ?: $product->sku,
-                        'stock' => $variant->qty !== null ? (int) $variant->qty : null,
-                        'availability' => $variant->is_out_of_stock ? 'out of stock' : 'in stock',
-                        'title' => $this->buildTitle($product, $variant, $channel),
-                        'description' => $description,
-                        'url' => $variant->url(),
-                        'brand' => $brand,
-                        'category_path' => $categoryPath ?: null,
-                        'product_type' => $categoryPath ?: '',
-                        'google_category' => $googleCategory,
-                        'price' => $price,
-                        'sale_price' => $sale,
-                        'currency' => $currency,
-                        'main_image' => $mainImage,
-                        'additional_images' => $additional,
-                        'weight' => null,
-                    ];
-                }
-            } else {
-                [$price, $sale] = $this->numericPriceForProduct($product);
-
-                $rows[] = [
-                    'product' => $product,
-                    'variant' => null,
-                    'id' => (string) $product->id,
-                    'item_group_id' => (string) $product->id,
-                    'sku' => $product->sku,
-                    'stock' => $product->qty !== null ? (int) $product->qty : null,
-                    'availability' => $this->availability($product),
-                    'title' => $this->buildTitle($product, null, $channel),
-                    'description' => $description,
-                    'url' => $this->productUrl($product),
-                    'brand' => $brand,
-                    'category_path' => $categoryPath ?: null,
-                    'product_type' => $categoryPath ?: '',
-                    'google_category' => $googleCategory,
-                    'price' => $price,
-                    'sale_price' => $sale,
-                    'currency' => $currency,
-                    'main_image' => $this->mainImage($product),
-                    'additional_images' => $this->additionalImages($product),
-                    'weight' => null,
-                ];
-            }
-        }
+        $this->streamNormalizedItemsForFeed($channel, function (array $row) use (&$rows) {
+            $rows[] = $row;
+        });
 
         return collect($rows);
+    }
+
+    public function resolveVatRate(Product $product): int
+    {
+        try {
+            $country = (string) setting('product_feeds.google.shipping_country', 'TR');
+            $taxClass = $product->taxClass ?? null;
+
+            if (! $taxClass) {
+                return 0;
+            }
+
+            $rates = $taxClass->taxRates ?? null;
+
+            if (! $rates || (is_countable($rates) && count($rates) === 0)) {
+                return 0;
+            }
+
+            $picked = null;
+
+            foreach ($rates as $rate) {
+                if (! $rate instanceof TaxRate) {
+                    continue;
+                }
+
+                if ((string) ($rate->country ?? '') === $country) {
+                    $picked = $rate;
+                    break;
+                }
+            }
+
+            if ($picked === null) {
+                $picked = $rates->first();
+            }
+
+            $value = (int) round((float) ($picked->rate ?? 0));
+
+            return $value > 0 ? $value : 0;
+        } catch (\Throwable $e) {
+            return 0;
+        }
+    }
+
+    public function normalizeAbsoluteUrl(?string $url): string
+    {
+        $url = (string) ($url ?? '');
+
+        if ($url === '') {
+            return '';
+        }
+
+        $base = (string) config('app.url');
+
+        if ($base === '') {
+            $base = url('/');
+        }
+
+        $base = rtrim($base, '/');
+
+        if (str_starts_with($url, 'http://') || str_starts_with($url, 'https://')) {
+            $parsed = parse_url($url);
+            $host = strtolower((string) ($parsed['host'] ?? ''));
+
+            if ($host === '' || $host === '127.0.0.1' || $host === 'localhost') {
+                $path = (string) ($parsed['path'] ?? '');
+                $query = isset($parsed['query']) ? ('?' . $parsed['query']) : '';
+                $fragment = isset($parsed['fragment']) ? ('#' . $parsed['fragment']) : '';
+
+                if ($path !== '') {
+                    return $base . $path . $query . $fragment;
+                }
+            }
+
+            return $url;
+        }
+
+        return $base . '/' . ltrim($url, '/');
+    }
+
+    public function normalizeStorefrontUrl(string $url): string
+    {
+        try {
+            if (function_exists('non_localized_url')) {
+                return (string) non_localized_url($url);
+            }
+        } catch (\Throwable $e) {
+        }
+
+        return $url;
+    }
+
+    private function buildRowForProduct(
+        Product $product,
+        string $channel,
+        string $currency,
+        string $brand,
+        string $description,
+        ?string $categoryPath,
+        ?string $googleCategory
+    ): array {
+        [$price, $sale] = $this->numericPriceForProduct($product);
+
+        $url = $this->normalizeAbsoluteUrl($this->normalizeStorefrontUrl($this->productUrl($product)));
+
+        $categoryPath = $this->sanitizeCategoryString($categoryPath);
+        $googleCategory = $this->sanitizeCategoryString($googleCategory);
+        $productType = $this->productTypeFor($product, $categoryPath, $googleCategory);
+
+        return [
+            'product' => $product,
+            'variant' => null,
+            'id' => (string) $product->id,
+            'item_group_id' => (string) $product->id,
+            'sku' => $product->sku,
+            'availability' => $this->availability($product),
+            'title' => $this->buildTitle($product, null, $channel),
+            'description' => $description,
+            'url' => $url,
+            'brand' => $brand,
+            'category_path' => $categoryPath !== '' ? $categoryPath : null,
+            'product_type' => $productType,
+            'google_category' => $googleCategory !== '' ? $googleCategory : null,
+            'price' => $price,
+            'sale_price' => $sale,
+            'sale_price_start' => $product->special_price_start,
+            'sale_price_end' => $product->special_price_end,
+            'currency' => $currency,
+            'main_image' => $this->normalizeAbsoluteUrl($this->mainImage($product)),
+            'additional_images' => array_slice(array_map([$this, 'normalizeAbsoluteUrl'], $this->additionalImages($product)), 0, 10),
+            'vat_rate' => $this->resolveVatRate($product),
+        ];
+    }
+
+    private function buildRowForVariant(
+        Product $product,
+        ProductVariant $variant,
+        string $channel,
+        string $currency,
+        string $brand,
+        string $description,
+        ?string $categoryPath,
+        ?string $googleCategory
+    ): array {
+        [$price, $sale] = $this->numericPriceForVariant($variant);
+
+        $mainImage = $variant->base_image?->path ?: $this->mainImage($product);
+        $additional = $variant->additional_images->pluck('path')->all();
+        // Feed link: point each variant to readable-parameter product URL (no ?variant=UID, no path-based variant URL).
+        $url = $this->normalizeAbsoluteUrl(
+            $this->normalizeStorefrontUrl($this->productUrlWithReadableVariantParams($product, $variant))
+        );
+
+        $categoryPath = $this->sanitizeCategoryString($categoryPath);
+        $googleCategory = $this->sanitizeCategoryString($googleCategory);
+        $productType = $this->productTypeFor($product, $categoryPath, $googleCategory);
+
+        return [
+            'product' => $product,
+            'variant' => $variant,
+            'id' => (string) $variant->id,
+            'item_group_id' => (string) $product->id,
+            'sku' => $variant->sku ?: $product->sku,
+            'availability' => $variant->is_out_of_stock ? 'out of stock' : 'in stock',
+            'title' => $this->buildTitle($product, $variant, $channel),
+            'description' => $description,
+            'url' => $url,
+            'brand' => $brand,
+            'category_path' => $categoryPath !== '' ? $categoryPath : null,
+            'product_type' => $productType,
+            'google_category' => $googleCategory !== '' ? $googleCategory : null,
+            'price' => $price,
+            'sale_price' => $sale,
+            'sale_price_start' => $variant->special_price_start,
+            'sale_price_end' => $variant->special_price_end,
+            'currency' => $currency,
+            'main_image' => $this->normalizeAbsoluteUrl($mainImage),
+            'additional_images' => array_slice(array_map([$this, 'normalizeAbsoluteUrl'], $additional), 0, 10),
+            'vat_rate' => $this->resolveVatRate($product),
+        ];
     }
 }

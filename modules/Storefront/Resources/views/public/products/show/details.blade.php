@@ -1,5 +1,5 @@
 <div class="product-details-info position-relative flex-grow-1"> 
-    <div class="details-info-top">
+    <div class="details-info-top" style="min-height: 150px;">
         <h1 class="product-name" x-text="productName"></h1>
 
         @if (setting('reviews_enabled'))
@@ -37,24 +37,33 @@
                 <template x-if="doesManageStock">
                     <div
                         class="availability in-stock"
-                        x-text="trans('storefront::product.left_in_stock', { count: new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(item.qty) + (product.unit_suffix ? ' ' + product.unit_suffix : '') })"
                     >
+                        <span x-text="trans('storefront::product.left_in_stock', { count: new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(item.qty) + (product.unit_suffix ? ' ' + product.unit_suffix : '') })"></span>
+                        <span x-cloak x-show="item.sku">
+                            ({{ trans('storefront::product.sku') }} <span x-text="item.sku"></span>)
+                        </span>
                     </div>
                 </template>
 
                 <template x-if="!doesManageStock">
                     <div class="availability in-stock">
                         {{ trans('storefront::product.in_stock') }}
+                        <span x-cloak x-show="item.sku">
+                            ({{ trans('storefront::product.sku') }} <span x-text="item.sku"></span>)
+                        </span>
                     </div>
                 </template>
             </div>
         </template>
-        <template x-if="!isInStock">
+
+        <template x-cloak x-if="!isInStock">
             <div class="availability out-of-stock">
                 {{ trans('storefront::product.out_of_stock') }}
+                <span x-cloak x-show="item.sku">
+                    ({{ trans('storefront::product.sku') }} <span x-text="item.sku"></span>)
+                </span>
             </div>
         </template>
-
         <div class="details-info-top-actions">
             <button
                 class="btn btn-wishlist"
@@ -89,16 +98,52 @@
             </button>
         </div>
 
-        
+        @if (!empty($hasSizeChart) && !empty($sizeChartEndpoint))
+            <div class="product-size-chart">
+                <button
+                    type="button"
+                    class="btn btn-link p-0 size-chart-trigger"
+                    data-size-chart-url="{{ $sizeChartEndpoint }}"
+                    data-size-chart-title="{{ trans('size_chart::storefront.size_chart') }}"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                        <path d="M4 7H20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        <path d="M4 12H20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        <path d="M4 17H20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        <path d="M7 4V20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        <path d="M17 4V20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                    <span>{{ trans('size_chart::storefront.size_chart') }}</span>
+                </button>
+            </div>
+
+            <div
+                class="modal fade"
+                id="sizeChartModal"
+                tabindex="-1"
+                aria-hidden="true"
+            >
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content">
+                        <button type="button" class="size-chart-modal-close" data-bs-dismiss="modal" aria-label="Close">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+                                <path d="M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                <path d="M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </button>
+                        <div class="modal-body">
+                            <div class="size-chart-modal-tabs" data-size-chart-tabs></div>
+                            <div class="size-chart-modal-body" data-size-chart-modal-body></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
 
         <div class="brief-description">
             {!! $product->short_description !!}
         </div>
-
-        
-    </div>
-
-    <div class="details-info-middle">
+    <div class="details-info-middle" style="min-height: 260px;">
         <form
             @input="errors.clear($event.target.name)"
             @submit.prevent="addToCart"
@@ -153,6 +198,7 @@
                                     :min="minQty"
                                     :max="maxQuantity"
                                     id="qty"
+                                    aria-label="{{ trans('storefront::product.quantity') }}"
                                     class="form-control input-quantity-decimal input-overlay-target"
                                     :disabled="isAddToCartDisabled"
                                     @focus="beginEditQty($event)"
@@ -232,15 +278,62 @@
                     </div>
                 </template>
 
-                <button
-                    type="submit"
-                    class="btn btn-primary btn-add-to-cart"
-                    :class="{'btn-loading': addingToCart }"
-                    :disabled="isAddToCartDisabled"
-                    x-text="isActiveItem ? '{{ trans('storefront::product.add_to_cart') }}' : '{{ trans('storefront::product.unavailable') }}'"
-                >
-                    {{ trans($item->is_active ? 'storefront::product.add_to_cart' : 'storefront::product.unavailable') }}
-                </button>
+                <template x-if="isInStock">
+                    <button
+                        type="submit"
+                        class="btn btn-primary btn-add-to-cart"
+                        :class="{'btn-loading': addingToCart }"
+                        :disabled="isAddToCartDisabled"
+                        x-text="isActiveItem ? '{{ trans('storefront::product.add_to_cart') }}' : '{{ trans('storefront::product.unavailable') }}'"
+                    >
+                        {{ trans($item->is_active ? 'storefront::product.add_to_cart' : 'storefront::product.unavailable') }}
+                    </button>
+                </template>
+
+                <template x-if="!isInStock">
+                    <div x-data="{ open: false, requested: false, email: '{{ auth()->check() ? auth()->user()->email : '' }}', submitting: false, notice: '', noticeType: '' }">
+                        <button
+                            type="button"
+                            class="btn btn-primary btn-add-to-cart"
+                            :disabled="requested"
+                            @click="if (!requested) { open = !open }"
+                        >
+                            <span x-show="!requested">Stoğa geldiğinde haber ver</span>
+                            <span x-show="requested" x-cloak>Talebiniz alındı</span>
+                        </button>
+
+                        <div class="mt-3" x-show="open && !requested" x-cloak>
+                            <div class="input-group">
+                                <input
+                                    type="email"
+                                    name="stock_notify_email"
+                                    class="form-control"
+                                    required
+                                    x-model="email"
+                                    placeholder="E-posta adresiniz"
+                                    :disabled="submitting"
+                                >
+
+                                <button
+                                    type="button"
+                                    class="btn btn-primary"
+                                    :disabled="submitting"
+                                    @click="if (requested) return; submitting = true; notice = ''; noticeType = ''; const params = new URLSearchParams({ product_id: '{{ $product->id }}', email }); if (product.variant && isActiveItem && item && item.id) { params.append('variant_id', item.id); } fetch('{{ route('stock.notify') }}', { method: 'POST', credentials: 'same-origin', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body: params }).then(async (res) => { let data = null; try { data = await res.json(); } catch (e) {} if (res.ok) { noticeType = 'success'; notice = (data && data.message) ? data.message : 'Talebiniz alındı.'; requested = true; open = false; } else { noticeType = 'error'; notice = (data && data.message) ? data.message : 'İşlem başarısız.'; } submitting = false; }).catch(() => { noticeType = 'error'; notice = 'İşlem başarısız.'; submitting = false; });"
+                                >
+                                    Gönder
+                                </button>
+                            </div>
+
+                            <div class="mt-2" x-show="notice && noticeType === 'error'" x-cloak>
+                                <div class="alert alert-danger" x-text="notice"></div>
+                            </div>
+                        </div>
+
+                        <div class="mt-3" x-show="requested" x-cloak>
+                            <div class="alert alert-success" x-text="notice || 'Talebiniz alındı. Ürün tekrar stok açıldığında size haber vereceğiz.'"></div>
+                        </div>
+                    </div>
+                </template>
 
                 @if (setting('phone_number') && setting('product_button_enabled'))
                     <a
@@ -271,16 +364,8 @@
         </form>
     </div>
 
-    <div class="details-info-bottom">
+    <div class="details-info-bottom" style="min-height: 80px;">
         <ul class="list-inline additional-info">
-            <template x-cloak x-if="item.sku">
-                <li class="sku">
-                    <label>{{ trans('storefront::product.sku') }}</label>
-                    
-                    <span x-text="item.sku">{{ $item->sku }}</span>
-                </li>
-            </template>
-
             @if ($product->categories->isNotEmpty())
                 <li>
                     <label>{{ trans('storefront::product.categories') }}</label>

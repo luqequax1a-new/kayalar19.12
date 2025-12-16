@@ -5,10 +5,15 @@
         top: -200px;
         right: 0;
         min-width: 320px;
-        padding: 4px 0;
+        padding: 0;
         background: var(--color-white);
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         z-index: 180;
+
+        > .container {
+            padding-top: 4px;
+            padding-bottom: 4px;
+        }
 
         .row {
             &.flex-nowrap {
@@ -67,8 +72,13 @@
 @media screen and (max-width: 991px) {
     .header-wrap-inner {
         &.sticky {
-            padding: 4px 0;
+            padding: 0;
             border: none;
+
+            > .container {
+                padding-top: 4px;
+                padding-bottom: 4px;
+            }
 
             .header-logo {
                 margin-top: unset;

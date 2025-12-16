@@ -1,28 +1,69 @@
 @extends('storefront::public.layout')
 
-@section('title', trans('storefront::blog.blog_posts.blog_post'))
 @section('title', $blogPost->title)
 
- @push('meta')
-    <meta name="title" content="{{ $blogPost->meta->meta_title }}">
-    <meta name="description" content="{{ $blogPost->meta->meta_description }}">
+@php
+    $metaTitle = $blogPost->meta->meta_title ?: $blogPost->title;
+    $metaDescription = $blogPost->meta->meta_description
+        ?: \Illuminate\Support\Str::limit(strip_tags($blogPost->description), 160);
+    $rawImage = $blogPost->featuredImage->path ?: asset('build/assets/image-placeholder.png');
+    $metaImage = \Illuminate\Support\Str::startsWith($rawImage, ['http://', 'https://'])
+        ? $rawImage
+        : url($rawImage);
+    // Article schema için yazar, marka (Organization) olarak tanımlansın
+    $metaAuthorName = config('app.name', 'Kayalar Manifatura');
+    $metaAuthorUrl = url('/');
+@endphp
+
+@push('meta')
+    <meta name="title" content="{{ $metaTitle }}">
+    <meta name="description" content="{{ $metaDescription }}">
+    <meta name="robots" content="index,follow">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ $blogPost->meta->meta_title ?: $blogPost->title }}">
-    <meta name="twitter:description" content="{{ $blogPost->meta->meta_description }}">
-    <meta name="twitter:image" content="{{ $blogPost->featuredImage->path }}">
+    <meta name="twitter:title" content="{{ $metaTitle }}">
+    <meta name="twitter:description" content="{{ $metaDescription }}">
+    <meta name="twitter:image" content="{{ $metaImage }}">
+    <meta property="og:type" content="article">
     <meta property="og:url" content="{{ url()->current() }}">
-    <meta property="og:title" content="{{ $blogPost->meta->meta_title }}">
-    <meta property="og:description" content="{{ $blogPost->meta->meta_description }}">
-    <meta property="og:image" content="{{ $blogPost->featuredImage->path }}">
+    <meta property="og:title" content="{{ $metaTitle }}">
+    <meta property="og:description" content="{{ $metaDescription }}">
+    <meta property="og:image" content="{{ $metaImage }}">
     <meta property="og:locale" content="{{ locale() }}">
 
     @foreach (supported_locale_keys() as $code)
         <meta property="og:locale:alternate" content="{{ $code }}">
     @endforeach
+
+    {{-- Open Graph ekleri --}}
+    <meta property="og:site_name" content="Kayalar Manifatura">
+    @if ($blogPost->category)
+        <meta property="article:section" content="{{ $blogPost->category->name }}">
+    @endif
+    @if (!$blogPost->tags->isEmpty())
+        @foreach ($blogPost->tags as $tag)
+            <meta property="article:tag" content="{{ $tag->name }}">
+        @endforeach
+    @endif
+
+    {{-- Twitter Card ekleri (isteğe bağlı) --}}
+    {{-- <meta name="twitter:site" content="@hesapAdin"> --}}
 @endpush
 
 @section('canonical')
     <link rel="canonical" href="{{ \Illuminate\Support\Str::before($blogPost->url(), '?') }}">
+@endsection
+
+@section('breadcrumb')
+    <li><a href="{{ route('home') }}">{{ trans('storefront::account.pages.dashboard') }}</a></li>
+    <li><a href="{{ route('blog_posts.index') }}">{{ trans('storefront::blog.blog_posts.blog_posts') }}</a></li>
+    @if ($blogPost->category)
+        <li>
+            <a href="{{ route('blog_category.blog_posts.index', ['category' => $blogPost->category->id]) }}">
+                {{ $blogPost->category->name }}
+            </a>
+        </li>
+    @endif
+    <li class="active">{{ $blogPost->title }}</li>
 @endsection
 
 @section('content')
@@ -30,7 +71,7 @@
         <div class="container">
             <div class="row">
                 <div class="col-xl-14 col-lg-13 order-1 order-lg-0">
-                    <div class="blog-post-content">
+                    <article class="blog-post-content">
                         <div class="blog-post-featured-image overflow-hidden">
                             @if (!$blogPost->featured_image->path)
                                 <div class="image-holder image-placeholder position-relative">
@@ -47,13 +88,17 @@
                             <li class="d-flex align-items-center">
                                 <i class="las la-user"></i>
 
-                                {{ $blogPost->user_name }}
+                                @if ($blogPost->user_name && $blogPost->user_name !== 'Admin User')
+                                    {{ $blogPost->user_name }}
+                                @else
+                                    Kayalar Manifatura
+                                @endif
                             </li>
 
                             <li class="d-flex align-items-center">
                                 <i class="las la-calendar"></i>
 
-                                {{ $blogPost->created_at->format('d M, Y') }}
+                                {{ $blogPost->created_at->locale('tr_TR')->translatedFormat('d M, Y') }}
                             </li>
                         </ul>
 
@@ -62,7 +107,49 @@
                         <div class="custom-page-content">
                             {!! $blogPost->description !!}
                         </div>
-                    </div>
+                    </article>
+
+                    @if (!empty($blogPost->faqs) && is_array($blogPost->faqs))
+                        <section class="faq-section">
+                            <div class="container">
+                                <div class="faq-inner">
+                                    <div class="faq-header">
+                                        <h2 class="faq-title">Sık Sorulan Sorular</h2>
+                                        <p class="faq-subtitle">Bu blog yazısıyla ilgili en çok merak edilen sorular.</p>
+                                    </div>
+
+                                    <div class="faq-content">
+                                        <div class="faq-intro">
+                                            <p>
+                                                Bu blog yazısı hakkındaki sorularınızın cevaplarını aşağıda bulabilirsiniz.
+                                            </p>
+                                        </div>
+
+                                        <div class="faq-accordion">
+                                            @foreach ($blogPost->faqs as $index => $faq)
+                                                @if (!empty($faq['question']) && !empty($faq['answer']))
+                                                    <details class="faq-item" {{ $index === 0 ? 'open' : '' }}>
+                                                        <summary class="faq-question">
+                                                            <span>{{ $faq['question'] }}</span>
+
+                                                            <span class="faq-toggle-icon" aria-hidden="true">
+                                                                <span class="line line-1"></span>
+                                                                <span class="line line-2"></span>
+                                                            </span>
+                                                        </summary>
+
+                                                        <div class="faq-answer">
+                                                            <p>{!! nl2br(e($faq['answer'])) !!}</p>
+                                                        </div>
+                                                    </details>
+                                                @endif
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    @endif
 
                     <div class="blog-post-social-share">
                         <div class="row">
@@ -139,6 +226,95 @@
 @endsection
 
 @push('globals')
+    @php
+        $articleSchema = [
+            '@context' => 'https://schema.org',
+            '@type' => 'Article',
+            'headline' => $metaTitle,
+            'description' => $metaDescription,
+            'image' => [$metaImage],
+            'author' => [
+                '@type' => 'Organization',
+                'name' => $metaAuthorName,
+                'url'  => $metaAuthorUrl,
+            ],
+            'datePublished' => optional($blogPost->created_at)->toIso8601String(),
+            'dateModified' => optional($blogPost->updated_at)->toIso8601String(),
+            'mainEntityOfPage' => [
+                '@type' => 'WebPage',
+                '@id' => \Illuminate\Support\Str::before($blogPost->url(), '?'),
+            ],
+            'articleSection' => $blogPost->category?->name,
+            'keywords' => $blogPost->tags->isNotEmpty() ? $blogPost->tags->pluck('name')->implode(', ') : null,
+        ];
+
+        // Add FAQ schema if FAQs exist
+        if (!empty($blogPost->faqs) && is_array($blogPost->faqs)) {
+            $articleSchema['mainEntity'] = [
+                '@type' => 'FAQPage',
+                'mainEntity' => collect($blogPost->faqs)->map(function ($faq) {
+                    return [
+                        '@type' => 'Question',
+                        'name'  => $faq['question'] ?? '',
+                        'acceptedAnswer' => [
+                            '@type' => 'Answer',
+                            'text'  => $faq['answer'] ?? '',
+                        ],
+                    ];
+                })->all()
+            ];
+        }
+
+        $breadcrumbItems = [
+            [
+                '@type' => 'ListItem',
+                'position' => 1,
+                'name' => trans('storefront::account.pages.dashboard'),
+                'item' => route('home'),
+            ],
+            [
+                '@type' => 'ListItem',
+                'position' => 2,
+                'name' => trans('storefront::blog.blog_posts.blog_posts'),
+                'item' => route('blog_posts.index'),
+            ],
+        ];
+
+        if ($blogPost->category) {
+            $breadcrumbItems[] = [
+                '@type' => 'ListItem',
+                'position' => 3,
+                'name' => $blogPost->category->name,
+                'item' => route('blog_category.blog_posts.index', ['category' => $blogPost->category->id]),
+            ];
+
+            $breadcrumbItems[] = [
+                '@type' => 'ListItem',
+                'position' => 4,
+                'name' => $blogPost->title,
+                'item' => \Illuminate\Support\Str::before($blogPost->url(), '?'),
+            ];
+        } else {
+            $breadcrumbItems[] = [
+                '@type' => 'ListItem',
+                'position' => 3,
+                'name' => $blogPost->title,
+                'item' => \Illuminate\Support\Str::before($blogPost->url(), '?'),
+            ];
+        }
+    @endphp
+
+    <script type="application/ld+json">
+        {!! json_encode($articleSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+    </script>
+
+    <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": {!! json_encode($breadcrumbItems, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+        }
+    </script>
     @vite([
         'modules/Storefront/Resources/assets/public/sass/pages/blogs/show/main.scss',
     ])

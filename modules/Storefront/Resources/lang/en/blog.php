@@ -3,6 +3,7 @@
 return [
     'blog' => 'Blog',
     'blog_posts' => [
+        'blog_post' => 'Blog Post',
         'blog_posts' => 'Blog Posts',
         'view_all' => 'View All',
         'read_post' => 'Read Post',

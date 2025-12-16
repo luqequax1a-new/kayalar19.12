@@ -1,5 +1,5 @@
 .order-details-middle {
-    margin-bottom: 15px;
+    margin-bottom: 18px;
 
     .table-responsive {
         border: 1px solid var(--color-gray-lite);
@@ -12,24 +12,51 @@
         gap: 10px;
     }
 
+    .order-product-list > .order-product-card + .order-product-card {
+        border-top: 1px solid var(--color-gray-lite);
+        padding-top: 14px;
+        margin-top: 2px;
+    }
+
+    .order-items-card {
+        padding: 16px;
+
+        > h4 {
+            margin-bottom: 14px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--color-gray-lite);
+        }
+    }
+
     .order-product-card {
         display: grid;
-        grid-template-columns: 96px 1fr;
-        gap: 10px;
+        grid-template-columns: 110px 1fr;
+        gap: 12px;
         align-items: flex-start;
-        border: 1px solid var(--color-gray-lite);
-        border-radius: var(--radius-default);
-        background: #ffffff;
-        padding: 10px;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        padding: 0;
     }
 
     .order-product-card-image img {
-        width: 80px;
-        height: 80px;
+        width: 96px;
+        height: 96px;
         display: block;
         border: 1px solid var(--color-gray-lite);
-        border-radius: 8px;
+        border-radius: 10px;
         object-fit: cover;
+    }
+
+    @media screen and (max-width: 576px) {
+        .order-product-card {
+            grid-template-columns: 92px 1fr;
+        }
+
+        .order-product-card-image img {
+            width: 90px;
+            height: 90px;
+        }
     }
 
     .order-product-card-content .product-name {
@@ -56,7 +83,7 @@
     .order-product-card-content .product-meta {
         margin-top: 4px;
         display: grid;
-        gap: 2px;
+        gap: 4px;
     }
 
     .order-product-card-content .meta-row {
@@ -64,6 +91,13 @@
         align-items: center;
         justify-content: space-between;
         font-size: 14px;
+        padding-top: 2px;
+    }
+
+    .order-product-card-content .meta-row + .meta-row {
+        border-top: 1px dashed var(--color-gray-lite);
+        margin-top: 6px;
+        padding-top: 8px;
     }
 
     .order-product-card-content .meta-label {
@@ -141,7 +175,6 @@
 
         tbody {
             td {
-                vertical-align: top;
                 display: block;
 
                 &:nth-child(1) {

@@ -6,10 +6,25 @@
     background: var(--color-white);
 
     .title {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
         font-size: 20px;
         font-weight: 500;
         line-height: 28px;
         position: relative;
+
+        .sidebar-cart-title-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: var(--color-primary-alpha-8);
+            color: var(--color-primary);
+            flex: 0 0 auto;
+        }
 
         .count {
             position: absolute;

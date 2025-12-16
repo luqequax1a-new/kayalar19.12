@@ -2,7 +2,7 @@ Alpine.store("compare", {
     compareList: [],
     products: {},
     attributes: {},
-    fetchingCompareList: true,
+    fetchingCompareList: false,
     fetchedCompareProducts: false,
 
     get isEmptyCompareList() {
@@ -16,7 +16,28 @@ Alpine.store("compare", {
     },
 
     init() {
-        this.fetchCompareList();
+        const path = window.location?.pathname || "";
+
+        if (path.endsWith("/compare")) {
+            this.fetchCompareList();
+            return;
+        }
+
+        // If there are no compare items, skip the network request on initial page load.
+        // UI can still show FleetCart.compareCount via the getter until user adds items.
+        if (!FleetCart || !FleetCart.compareCount) {
+            this.fetchingCompareList = false;
+            return;
+        }
+
+        this.fetchingCompareList = true;
+
+        if (typeof window.requestIdleCallback === "function") {
+            window.requestIdleCallback(() => this.fetchCompareList(), { timeout: 2000 });
+            return;
+        }
+
+        setTimeout(() => this.fetchCompareList(), 1500);
     },
 
     async fetchCompareProducts() {

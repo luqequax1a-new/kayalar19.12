@@ -23,7 +23,7 @@
                 'label' => trans('storefront::storefront.form.banner_3'),
                 'name' => 'storefront_three_column_banners_3',
                 'banner' => $banners['banner_3'],
-            ])
+            ]) 
         </div>
     </div>
 </div>

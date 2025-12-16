@@ -18,13 +18,131 @@
         }
     }
 
+    .product-size-chart {
+        margin-top: 10px;
+
+        .size-chart-trigger {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--color-primary);
+            font-weight: var(--font-medium);
+            text-decoration: none;
+        }
+    }
+
+    #sizeChartModal {
+        .modal-content {
+            position: relative;
+        }
+
+        .size-chart-modal-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 2;
+            padding: 8px;
+            border: none;
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--color-gray-dark);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+
+            &:hover {
+                background: rgba(255, 255, 255, 1);
+                color: var(--color-black);
+            }
+
+            svg {
+                display: block;
+            }
+        }
+
+        .modal-body {
+            padding: 16px;
+        }
+
+        .size-chart-modal-tabs {
+            display: flex;
+            gap: 8px;
+            padding-right: 48px;
+            margin-bottom: 12px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+
+            &::-webkit-scrollbar {
+                height: 6px;
+            }
+
+            &::-webkit-scrollbar-thumb {
+                background: rgba(0, 0, 0, 0.15);
+                border-radius: 999px;
+            }
+        }
+
+        .size-chart-tab {
+            border: 1px solid var(--border-color-lite);
+            background: var(--color-white);
+            color: var(--color-black);
+            border-radius: 999px;
+            padding: 8px 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: var(--transition-150);
+
+            .size-chart-tab-title {
+                font-size: 13px;
+                line-height: 1;
+                font-weight: var(--font-medium);
+            }
+
+            .size-chart-tab-type {
+                font-size: 11px;
+                line-height: 1;
+                padding: 4px 7px;
+                border-radius: 999px;
+                background: rgba(0, 48, 120, 0.08);
+                color: var(--color-primary);
+                font-weight: var(--font-medium);
+            }
+
+            &.is-active {
+                border-color: rgba(0, 48, 120, 0.35);
+                background: rgba(0, 48, 120, 0.04);
+            }
+
+            &:hover {
+                border-color: rgba(0, 48, 120, 0.35);
+            }
+        }
+
+        .size-chart-modal-body {
+            max-width: 100%;
+
+            img {
+                max-width: 100%;
+                height: auto;
+                display: block;
+            }
+
+            table {
+                width: 100%;
+                max-width: 100%;
+            }
+        }
+    }
+
     // Mobilde: genel padding'i kaldir, sadece details-info-top'a ekstra ust bosluk ver
     @media screen and (max-width: 767px) {
         padding: 0;
-
-        .details-info-top {
-            padding-top: 20px;
-        }
     }
 
     .details-top-bar {
@@ -38,7 +156,6 @@
     .product-name {
         font-size: 24px;
         line-height: 30px;
-        margin-bottom: 15px;
     }
 
     .product-rating {
@@ -63,7 +180,7 @@
         margin-bottom: 10px;
 
         &.in-stock {
-            color: var(--color-green);
+            color: #0b7a34;
         }
 
         &.out-of-stock {
@@ -127,7 +244,7 @@
             font-size: 24px;
             font-weight: var(--font-medium);
             line-height: 1;
-            color: var(--color-primary);
+            color: var(--color-primary-hover);
             text-decoration: none;
         }
 
@@ -144,7 +261,7 @@
                 font-weight: var(--font-normal);
                 line-height: 1.25;
                 margin-left: 8px;
-                color: var(--color-gray);
+                color: #4c4c4c;
                 text-decoration: line-through;
             }
         }
@@ -350,6 +467,9 @@
             border-radius: var(--radius-default);
             min-height: 42px;
             line-height: 1;
+            background: var(--color-primary-hover);
+            border-color: var(--color-primary-hover);
+            color: var(--color-white);
 
             &.btn-loading {
                 &::after {

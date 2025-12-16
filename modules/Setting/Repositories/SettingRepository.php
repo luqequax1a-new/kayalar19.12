@@ -114,7 +114,13 @@ class SettingRepository implements ArrayAccess
      */
     public function get($key, $default = null)
     {
-        return $this->settings->get($key) ?: $default;
+        if ($this->settings->has($key)) {
+            $value = $this->settings->get($key);
+
+            return is_null($value) ? $default : $value;
+        }
+
+        return $default;
     }
 
 

@@ -21,9 +21,9 @@
                             ?? null
                     )
                     @php(
-                        $banner1Jpeg = $threeColumnFullWidthBanners['banner_1']->image->detail_jpeg_url
+                        $banner1Jpeg = $threeColumnFullWidthBanners['banner_1']->image->path
+                            ?? $threeColumnFullWidthBanners['banner_1']->image->detail_jpeg_url
                             ?? $threeColumnFullWidthBanners['banner_1']->image->grid_jpeg_url
-                            ?? $threeColumnFullWidthBanners['banner_1']->image->path
                     )
 
                     <picture>
@@ -57,9 +57,9 @@
                             ?? null
                     )
                     @php(
-                        $banner2Jpeg = $threeColumnFullWidthBanners['banner_2']->image->detail_jpeg_url
+                        $banner2Jpeg = $threeColumnFullWidthBanners['banner_2']->image->path
+                            ?? $threeColumnFullWidthBanners['banner_2']->image->detail_jpeg_url
                             ?? $threeColumnFullWidthBanners['banner_2']->image->grid_jpeg_url
-                            ?? $threeColumnFullWidthBanners['banner_2']->image->path
                     )
 
                     <picture>
@@ -93,9 +93,9 @@
                             ?? null
                     )
                     @php(
-                        $banner3Jpeg = $threeColumnFullWidthBanners['banner_3']->image->detail_jpeg_url
+                        $banner3Jpeg = $threeColumnFullWidthBanners['banner_3']->image->path
+                            ?? $threeColumnFullWidthBanners['banner_3']->image->detail_jpeg_url
                             ?? $threeColumnFullWidthBanners['banner_3']->image->grid_jpeg_url
-                            ?? $threeColumnFullWidthBanners['banner_3']->image->path
                     )
 
                     <picture>

@@ -45,5 +45,6 @@
     "Geliver": true,
     "BulkProductEdit": false,
     "DynamicCategory": true,
-    "ProductFeeds": true
+    "ProductFeeds": true,
+    "SizeChart": true
 }

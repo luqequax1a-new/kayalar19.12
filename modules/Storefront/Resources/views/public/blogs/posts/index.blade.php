@@ -2,6 +2,17 @@
 
 @section('title', trans('storefront::blog.blog_posts.blog_posts'))
 
+@push('meta')
+    <meta name="title" content="{{ $indexTitle }}">
+    <meta name="description" content="{{ $indexTitle }} - {{ config('app.name') }} blog yazıları.">
+    <meta name="robots" content="index,follow">
+@endpush
+
+@section('breadcrumb')
+    <li><a href="{{ route('home') }}">{{ trans('storefront::account.pages.dashboard') }}</a></li>
+    <li class="active">{{ $indexTitle }}</li>
+@endsection
+
 @section('content')
     <section class="all-blog-posts-wrap">
         <div class="container">
@@ -33,13 +44,17 @@
                                                     <li class="d-flex align-items-center">
                                                         <i class="las la-user"></i>
                                                         
-                                                        {{ $blogPost->user_name }}
+                                                        @if ($blogPost->user_name && $blogPost->user_name !== 'Admin User')
+                                                            {{ $blogPost->user_name }}
+                                                        @else
+                                                            Kayalar Manifatura
+                                                        @endif
                                                     </li>
 
                                                     <li class="d-flex align-items-center">
                                                         <i class="las la-calendar"></i>
                                                         
-                                                        {{ $blogPost->created_at->format('d M, Y') }}
+                                                        {{ $blogPost->created_at->locale('tr_TR')->translatedFormat('d M, Y') }}
                                                     </li>
                                                 </ul>
 
@@ -78,6 +93,45 @@
 @endsection
 
 @push('globals')
+    <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "ItemList",
+          "name": {{ json_encode($indexTitle) }},
+          "itemListElement": [
+            @foreach ($blogPosts as $loopIndex => $blogPost)
+            {
+              "@type": "ListItem",
+              "position": {{ $loopIndex + 1 }},
+              "url": "{{ \Illuminate\Support\Str::before($blogPost->url(), '?') }}",
+              "item": "{{ \Illuminate\Support\Str::before($blogPost->url(), '?') }}"
+            }@if (! $loop->last),@endif
+            @endforeach
+          ]
+        }
+    </script>
+
+    <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": {{ json_encode(trans('storefront::account.pages.dashboard')) }},
+              "item": "{{ route('home') }}"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": {{ json_encode($indexTitle) }},
+              "item": "{{ \Illuminate\Support\Str::before(url()->current(), '?') }}"
+            }
+          ]
+        }
+    </script>
+
     @vite([
         'modules/Storefront/Resources/assets/public/sass/pages/blogs/index/main.scss',
     ])

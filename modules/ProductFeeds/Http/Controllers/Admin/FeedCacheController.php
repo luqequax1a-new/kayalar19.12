@@ -7,9 +7,6 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Str;
 use Modules\ProductFeeds\Http\Controllers\Public\GoogleFeedController;
 use Modules\ProductFeeds\Http\Controllers\Public\MetaFeedController;
-use Modules\ProductFeeds\Http\Controllers\Public\TikTokFeedController;
-use Modules\ProductFeeds\Http\Controllers\Public\TrendyolFeedController;
-use Modules\ProductFeeds\Http\Controllers\Public\PinterestFeedController;
 use Modules\ProductFeeds\Services\FeedCacheService;
 
 class FeedCacheController extends Controller
@@ -20,7 +17,7 @@ class FeedCacheController extends Controller
 
     public function refresh(string $channel): RedirectResponse
     {
-        $validChannels = ['google', 'meta', 'tiktok', 'trendyol', 'pinterest'];
+        $validChannels = ['google', 'meta'];
 
         if (! in_array($channel, $validChannels, true)) {
             abort(404);
@@ -29,27 +26,13 @@ class FeedCacheController extends Controller
         switch ($channel) {
             case 'google':
                 $controller = app(GoogleFeedController::class);
-                $response = $controller->generate();
+                $controller->regenerateCache();
                 break;
             case 'meta':
                 $controller = app(MetaFeedController::class);
-                $response = $controller->generate();
-                break;
-            case 'tiktok':
-                $controller = app(TikTokFeedController::class);
-                $response = $controller->generate();
-                break;
-            case 'trendyol':
-                $controller = app(TrendyolFeedController::class);
-                $response = $controller->generate();
-                break;
-            case 'pinterest':
-                $controller = app(PinterestFeedController::class);
-                $response = $controller->generate();
+                $controller->regenerateCache();
                 break;
         }
-
-        $this->cache->writeCache($channel, (string) $response->getContent());
 
         return redirect()->back()->with('success', trans('product_feeds::messages.cache_refreshed'));
     }

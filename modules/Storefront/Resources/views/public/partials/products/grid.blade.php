@@ -1,7 +1,7 @@
 <div class="grid-view-products">
     <template
-        x-for="(product, idx) in products.data"
-        :key="uid()"
+        x-for="(product, idx) in visibleProducts"
+        :key="product.id"
     >
         <div class="grid-view-products-item">
             @include('storefront::public.partials.product_card')

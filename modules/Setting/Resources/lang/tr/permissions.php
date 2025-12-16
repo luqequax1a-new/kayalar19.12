@@ -1,5 +1,5 @@
 <?php
 
 return [
-    'edit' => 'Edit Settings',
+    'edit' => 'Ayarları Düzenle',
 ];

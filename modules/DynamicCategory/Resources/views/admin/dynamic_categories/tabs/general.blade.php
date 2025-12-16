@@ -65,16 +65,15 @@
             <div id="serp-preview" class="serp-preview serp-preview--google">
                 <div class="serp-preview__inner">
                     <div class="serp-preview__brand-row">
-                        <div class="serp-preview__logo-circle"></div>
+                        <img class="serp-preview__favicon" src="{{ url('/favicon.ico') }}" alt="" loading="lazy">
                         <div class="serp-preview__brand-text">
-                            <div class="serp-preview__brand-main">{{ parse_url(url('/'), PHP_URL_HOST) }}</div>
-                            <div class="serp-preview__brand-sub">{{ url('/') }}</div>
+                            <div class="serp-preview__brand-main" data-serp-host>{{ parse_url(url('/'), PHP_URL_HOST) }}</div>
+                            <div class="serp-preview__brand-sub" data-serp-breadcrumb></div>
                         </div>
                     </div>
 
                     <div class="serp-preview__result">
                         <div class="serp-title"></div>
-                        <div class="serp-url"></div>
                         <div class="serp-description"></div>
                     </div>
                 </div>
@@ -96,8 +95,25 @@
             const slugGenerateButton = document.querySelector('.btn-generate-dynamic-slug');
 
             const serpTitle = document.querySelector('#serp-preview .serp-title');
-            const serpUrl = document.querySelector('#serp-preview .serp-url');
             const serpDescription = document.querySelector('#serp-preview .serp-description');
+            const serpHost = document.querySelector('#serp-preview [data-serp-host]');
+            const serpBreadcrumb = document.querySelector('#serp-preview [data-serp-breadcrumb]');
+
+            function parseHost(url) {
+                try {
+                    return (new URL(url)).host || '';
+                } catch (_) {
+                    return '';
+                }
+            }
+
+            function stripProtocol(url) {
+                try {
+                    return (url || '').toString().replace(/^https?:\/\//i, '').replace(/\/$/, '');
+                } catch (_) {
+                    return url || '';
+                }
+            }
 
             function getTitle() {
                 const metaTitle = metaTitleInput?.value?.trim();
@@ -148,18 +164,51 @@
                 return categoryUrlTemplate.replace('SLUG_PLACEHOLDER', encoded);
             }
 
+            function getBreadcrumb() {
+                const url = getUrl();
+                const host = parseHost(url) || parseHost(baseUrl) || '';
+
+                let path = '';
+                try {
+                    path = (new URL(url)).pathname || '';
+                } catch (_) {
+                    path = '';
+                }
+
+                const parts = path
+                    .split('/')
+                    .filter(Boolean)
+                    .map((p) => decodeURIComponent(p));
+
+                const breadcrumb = [host]
+                    .concat(parts)
+                    .join(' › ');
+
+                return breadcrumb;
+            }
+
             function getDescription() {
                 return metaDescriptionInput?.value?.trim() || '';
             }
 
             function updateSerp() {
-                if (!serpTitle || !serpUrl || !serpDescription) {
+                if (!serpTitle || !serpDescription) {
                     return;
                 }
 
+                const url = getUrl();
+                const host = parseHost(url) || parseHost(baseUrl) || '';
+
                 serpTitle.textContent = getTitle();
-                serpUrl.textContent = getUrl();
                 serpDescription.textContent = getDescription();
+
+                if (serpHost) {
+                    serpHost.textContent = host;
+                }
+
+                if (serpBreadcrumb) {
+                    serpBreadcrumb.textContent = getBreadcrumb();
+                }
             }
 
             [nameInput, slugInput, metaTitleInput, metaDescriptionInput].forEach((input) => {
@@ -228,11 +277,12 @@
             margin-bottom: 10px;
         }
 
-        .serp-preview__logo-circle {
+        .serp-preview__favicon {
             width: 24px;
             height: 24px;
             border-radius: 999px;
             background: radial-gradient(circle at 30% 30%, #4285f4, #3367d6);
+            object-fit: cover;
         }
 
         .serp-preview__brand-text {
@@ -247,6 +297,10 @@
         .serp-preview__brand-sub {
             font-size: 11px;
             color: #5f6368;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 520px;
         }
 
         #serp-preview .serp-title {
@@ -256,23 +310,23 @@
             margin-bottom: 3px;
             font-weight: 400;
             word-break: break-word;
-        }
-
-        #serp-preview .serp-url {
-            font-size: 12px;
-            color: #006621;
-            margin-bottom: 6px;
-            word-break: break-all;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
         #serp-preview .serp-description {
             font-size: 12px;
             line-height: 1.5;
             color: #4b5563;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
 
         #serp-preview .serp-title:empty,
-        #serp-preview .serp-url:empty,
         #serp-preview .serp-description:empty {
             min-height: 12px;
             background: repeating-linear-gradient(90deg, #f3f4f6, #f3f4f6 80px, #ffffff 80px, #ffffff 96px);

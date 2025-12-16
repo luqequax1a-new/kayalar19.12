@@ -5,6 +5,7 @@ namespace Modules\Product\Providers;
 use Modules\Product\RecentlyViewed;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
+use Modules\Product\Http\Middleware\ListingInstrumentation;
 use Modules\Product\Http\ViewComposers\ProductEditPageComposer;
 use Modules\Product\Http\ViewComposers\ProductCreatePageComposer;
 
@@ -17,6 +18,8 @@ class ProductServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->app['router']->aliasMiddleware('listing.instrumentation', ListingInstrumentation::class);
+
         View::composer('product::admin.products.create', ProductCreatePageComposer::class);
         View::composer('product::admin.products.edit', ProductEditPageComposer::class);
     }

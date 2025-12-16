@@ -1,0 +1,9 @@
+{
+    "name": "SizeChart",
+    "alias": "size_chart",
+    "description": "The FleetCart Size Chart Module.",
+    "priority": 100,
+    "providers": [
+        "Modules\\SizeChart\\Providers\\SizeChartServiceProvider"
+    ]
+}

@@ -25,8 +25,13 @@ class TagProductController
             return $this->searchProducts($model, $productFilter);
         }
 
+        $payload = $this->buildListingPayload($model, $productFilter);
+
         return view('storefront::public.products.index', [
             'tagName' => Tag::findBySlug($slug)->name,
+            'initialProducts' => $payload['products'] ?? null,
+            'initialAttributes' => $payload['attributes'] ?? null,
+            'initialCategoryData' => $payload['category'] ?? null,
         ]);
     }
 }

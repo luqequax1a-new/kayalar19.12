@@ -33,4 +33,4 @@ Allow: /assets/
 Allow: /storage/cache/
 Allow: /storage/media/
 
-Sitemap: http://localhost:8001/sitemap.xml
+Sitemap: http://127.0.0.1:8001/sitemap.xml

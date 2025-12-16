@@ -3,6 +3,7 @@
 namespace Modules\Tag\Entities;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class TagBadge extends Model
@@ -60,14 +61,22 @@ class TagBadge extends Model
 
     public static function forTagIds(array $tagIds, string $context)
     {
-        $query = static::active()->whereIn('tag_id', $tagIds);
+        $locale = function_exists('locale') ? locale() : app()->getLocale();
+        $tagIds = array_values(array_filter($tagIds));
+        sort($tagIds);
 
-        if ($context === 'detail') {
-            $query->where('show_on_detail', true);
-        } else {
-            $query->where('show_on_listing', true);
-        }
+        $key = 'storefront:globals:' . $locale . ':tag_badges:' . $context . ':' . md5(json_encode($tagIds)) . ':v1';
 
-        return $query->orderByDesc('priority')->get();
+        return Cache::store('file')->remember($key, now()->addMinutes(10), function () use ($tagIds, $context) {
+            $query = static::active()->whereIn('tag_id', $tagIds);
+
+            if ($context === 'detail') {
+                $query->where('show_on_detail', true);
+            } else {
+                $query->where('show_on_listing', true);
+            }
+
+            return $query->orderByDesc('priority')->get();
+        });
     }
 }

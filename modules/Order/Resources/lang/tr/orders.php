@@ -15,7 +15,7 @@ return [
     'tracking_reference_placeholder' => 'Takip kodu, takip URL’si, takip kimliği vb.',
     'order_and_account_information' => 'Sipariş ve Hesap Bilgileri',
     'order_information' => 'Sipariş Bilgileri',
-    'order_id' => 'Sipariş ID',
+    'order_id' => 'Sipariş No',
     'order_date' => 'Sipariş Tarihi',
     'order_status' => 'Sipariş Durumu',
     'payment_method' => 'Ödeme Yöntemi',

@@ -1,13 +1,20 @@
 Alpine.store("wishlist", {
     wishlist: [],
-    fetching: true,
+    fetching: false,
+    fetched: false,
 
     get count() {
         return this.fetching ? FleetCart.wishlistCount : this.wishlist.length;
     },
 
     init() {
-        this.fetchWishlist();
+        const path = window.location?.pathname || "";
+
+        // Hard-disable wishlist fetch on non-wishlist pages.
+        // Keep showing count via FleetCart.wishlistCount.
+        if (path.startsWith("/account/wishlist")) {
+            this.fetchWishlist();
+        }
     },
 
     async fetchWishlist() {
@@ -20,6 +27,7 @@ Alpine.store("wishlist", {
                 );
 
                 this.wishlist = data;
+                this.fetched = true;
             } catch (error) {
                 // Handle error
             } finally {
@@ -37,6 +45,12 @@ Alpine.store("wishlist", {
     },
 
     syncWishlist(id) {
+        if (FleetCart.loggedIn && !this.fetched && !this.fetching) {
+            this.fetchWishlist().then(() => this.syncWishlist(id));
+
+            return;
+        }
+
         if (this.inWishlist(id)) {
             this.removeFromWishlist(id);
 
@@ -48,6 +62,10 @@ Alpine.store("wishlist", {
 
     async addToWishlist(id) {
         if (FleetCart.loggedIn) {
+            if (!this.fetched && !this.fetching) {
+                await this.fetchWishlist();
+            }
+
             this.wishlist.push(id);
 
             await axios.post("/account/wishlist/products", {
@@ -61,6 +79,11 @@ Alpine.store("wishlist", {
     },
 
     removeFromWishlist(id) {
+        if (FleetCart.loggedIn && !this.fetched && !this.fetching) {
+            this.fetchWishlist().then(() => this.removeFromWishlist(id));
+            return;
+        }
+
         this.wishlist.splice(this.wishlist.indexOf(id), 1);
 
         axios.delete(`/account/wishlist/products/${id}`);

@@ -129,7 +129,9 @@ class BlogPostController extends Controller
 
     private function getBlogTags()
     {
-        return BlogTag::all()->sortBy('name')->pluck('name', 'id');
+        return BlogTag::all()
+            ->sortBy('name')
+            ->pluck('name', 'id');
     }
 
 

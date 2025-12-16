@@ -24,6 +24,7 @@ modules/*/yarn-error.log
 npm-debug.log
 yarn-error.log
 *.log
+!profile-db.log
 
 #Others
 *.map

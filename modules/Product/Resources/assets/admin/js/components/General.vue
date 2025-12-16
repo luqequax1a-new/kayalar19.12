@@ -365,6 +365,7 @@ import { ref, watch, onMounted } from "vue";
 import { useForm } from "../composables/useForm";
 import { useProductMethods } from "../composables/useProductMethods";
 import tinyMCE from "@admin/js/wysiwyg";
+import { toaster } from "@admin/js/Toaster";
 
 const textEditor = ref(null);
 const brands = ref(FleetCart.data["brands"] ?? {});
@@ -386,12 +387,19 @@ function focusEditor() {
 
 function initTextEditor() {
     textEditor.value = tinyMCE({
+        selector: "#description",
         setup: (editor) => {
             editor.on("change", () => {
                 editor.save();
                 editor.getElement().dispatchEvent(new Event("input"));
 
-                errors.clear("description");
+                const key =
+                    editor.getElement().getAttribute("name") ||
+                    editor.getElement().getAttribute("id");
+
+                if (key) {
+                    errors.clear(key);
+                }
             });
         },
     });
@@ -508,6 +516,51 @@ function initTagsSelectize() {
         selectOnTab: true,
         hideSelected: true,
         allowEmptyOption: true,
+        create: (input, callback) => {
+            const name = (input || "").trim();
+
+            if (!name) {
+                return callback();
+            }
+
+            errors.clear("tags");
+
+            window.axios
+                .post("/tags", {
+                    name,
+                })
+                .then((response) => {
+                    const tag = response?.data?.tag;
+
+                    if (!tag?.id) {
+                        return callback();
+                    }
+
+                    tags.value = [...tags.value, { name: tag.name, value: tag.id }];
+
+                    callback({
+                        value: tag.id,
+                        text: tag.name,
+                    });
+                })
+                .catch((error) => {
+                    const message =
+                        error?.response?.data?.message ||
+                        error?.message ||
+                        "Unable to create tag.";
+
+                    try {
+                        const validationErrors = error?.response?.data?.errors;
+                        if (validationErrors) {
+                            errors.record(validationErrors);
+                        }
+                    } catch (_) {}
+
+                    toaster.error(message);
+
+                    callback();
+                });
+        },
         onChange: (values) => {
             form.tags = values;
         },
@@ -515,8 +568,15 @@ function initTagsSelectize() {
 }
 
 function resetFields() {
-    textEditor.value.get("description").setContent("");
-    textEditor.value.get("description").execCommand("mceCancel");
+    try {
+        textEditor.value.get("description").setContent("");
+        textEditor.value.get("description").execCommand("mceCancel");
+    } catch (_) {}
+
+    try {
+        textEditor.value.get("short-description").setContent("");
+        textEditor.value.get("short-description").execCommand("mceCancel");
+    } catch (_) {}
 
     $(categoriesField.value)[0].selectize.clear();
     $(tagsField.value)[0].selectize.clear();

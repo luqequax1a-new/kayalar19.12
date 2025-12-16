@@ -19,8 +19,120 @@
     margin-bottom: 44px;
 }
 
+.order-details-grid {
+    row-gap: 16px;
+}
+
+.order-details-header {
+    gap: 16px;
+    row-gap: 12px;
+}
+
+.order-details-actions {
+    gap: 10px;
+    margin-left: auto;
+    flex-wrap: wrap;
+    padding-left: 12px;
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+    }
+}
+
+.order-details-subtitle {
+    margin-top: 6px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--color-gray);
+
+    .order-date {
+        color: var(--color-gray);
+    }
+
+    .order-no {
+        font-weight: var(--font-medium);
+        color: var(--color-black);
+    }
+
+    .order-status {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-weight: var(--font-medium);
+        line-height: 1.1;
+    }
+}
+
+.badge-status {
+    border: 1px solid transparent;
+    background: var(--color-white);
+    color: var(--color-black);
+}
+
+.badge-status-pending,
+.badge-status-pending-payment,
+.badge-status-pending_payment {
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.25);
+    color: #b45309;
+}
+
+.badge-status-processing,
+.badge-status-on-hold,
+.badge-status-on_hold {
+    background: rgba(59, 130, 246, 0.12);
+    border-color: rgba(59, 130, 246, 0.25);
+    color: #1d4ed8;
+}
+
+.badge-status-shipped,
+.badge-status-on-the-way,
+.badge-status-on_the_way,
+.badge-status-out-for-delivery,
+.badge-status-out_for_delivery {
+    background: rgba(6, 182, 212, 0.12);
+    border-color: rgba(6, 182, 212, 0.25);
+    color: #0e7490;
+}
+
+.badge-status-completed {
+    background: rgba(16, 185, 129, 0.12);
+    border-color: rgba(16, 185, 129, 0.25);
+    color: #047857;
+}
+
+.badge-status-canceled,
+.badge-status-cancelled,
+.badge-status-refunded {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.25);
+    color: #b91c1c;
+}
+
+.order-details-card {
+    border: 1px solid var(--color-gray-lite);
+    border-radius: 12px;
+    background: #ffffff;
+    padding: 16px;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+
+    h4 {
+        margin-bottom: 12px;
+        font-size: 15px;
+        font-weight: var(--font-medium);
+        color: var(--color-black);
+    }
+}
+
 .order-information {
-    display: inline-block;
+    display: block;
 
     h4 {
         margin-bottom: 18px;
@@ -28,8 +140,10 @@
 
     .order-information-list {
         li {
-            display: flex;
-            margin-bottom: 9px;
+            display: grid;
+            grid-template-columns: 140px 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
 
             &:last-child {
                 margin-bottom: 0;
@@ -38,14 +152,15 @@
 
         label {
             font-weight: var(--font-medium);
-            min-width: 165px;
             margin-bottom: 0;
-            padding-right: 10px;
+            padding-right: 0;
+            color: var(--color-black);
         }
 
         span {
             color: var(--color-gray);
-            word-break: break-all;
+            word-break: break-word;
+            overflow-wrap: anywhere;
         }
     }
 
@@ -117,10 +232,44 @@
     .order-information {
         margin-bottom: 38px;
     }
+
+    .order-information {
+        .order-information-list {
+            li {
+                grid-template-columns: 120px 1fr;
+            }
+        }
+    }
 }
 
 @media screen and (max-width: 576px) {
-    .order-billing-details {
-        margin-bottom: 33px;
+    .order-details-top {
+        margin-bottom: 18px;
     }
+
+    .order-details-card {
+        padding: 14px;
+        border-radius: 10px;
+    }
+
+    .order-information {
+        .order-information-list {
+            li {
+                grid-template-columns: 130px 1fr;
+                gap: 10px;
+            }
+
+            label {
+                color: var(--color-gray);
+                font-weight: var(--font-medium);
+                white-space: nowrap;
+            }
+
+            span {
+                overflow-wrap: anywhere;
+                word-break: break-word;
+            }
+        }
+    }
+
 }

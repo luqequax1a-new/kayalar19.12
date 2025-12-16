@@ -10,7 +10,7 @@
                     <div class="swiper-slide">
                         <div class="vertical-products-slide">
                             @foreach ($latestProductChunks as $latestProduct)
-                                <div x-data="ProductCard({{ json_encode($latestProduct) }})" class="vertical-product-card">
+                                <div x-data='ProductCard(@json($latestProduct))' class="vertical-product-card">
                                     <a :href="productUrl" class="product-image">
                                         <img
                                             :src="baseImage"

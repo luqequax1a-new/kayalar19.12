@@ -21,6 +21,8 @@ return [
             'description' => 'Description',
             'short_description' => 'Short Description',
             'featured_image' => 'Featured Image',
+            'related_products' => 'Related Products',
+            'related_products_help' => 'Select the products related to this post. These selections are used only for SEO and will not render a separate product list on the blog page.',
         ],
     ],
     'blog_category' => [
