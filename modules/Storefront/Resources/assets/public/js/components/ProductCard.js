@@ -1,5 +1,7 @@
 import ProductMixin from "../mixins/ProductMixin";
 import "./ProductRating";
+import Swiper from "swiper";
+import { Navigation, Pagination } from "swiper/modules";
 
 const LQIP_GIF =
     "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
@@ -193,6 +195,7 @@ Alpine.data("ProductCard", (product, idx = 0) => ({
     previewImagePath: null,
     selectedVariantUid: null,
     showAllVariants: false,
+    gallerySwiper: null,
 
     init() {
         startIkasImageLoad();
@@ -209,7 +212,116 @@ Alpine.data("ProductCard", (product, idx = 0) => ({
                     injectRealImage(shell, shell.dataset.realImg, shell.dataset.alt);
                 });
             }
+
+            queueMicrotask(() => {
+                if (this.gallerySwiper && typeof this.gallerySwiper.update === "function") {
+                    this.gallerySwiper.update();
+                }
+            });
         });
+
+        this.$watch("selectedVariantUid", () => {
+            queueMicrotask(() => {
+                if (!this.gallerySwiper) return;
+                if (typeof this.gallerySwiper.slideTo === "function") {
+                    this.gallerySwiper.slideTo(0, 0);
+                }
+                if (typeof this.gallerySwiper.update === "function") {
+                    this.gallerySwiper.update();
+                }
+            });
+        });
+
+        this.$watch("previewImagePath", () => {
+            queueMicrotask(() => {
+                if (this.gallerySwiper && typeof this.gallerySwiper.update === "function") {
+                    this.gallerySwiper.update();
+                }
+            });
+        });
+
+        queueMicrotask(() => {
+            this.initGallery();
+        });
+    },
+
+    initGallery() {
+        try {
+            const items = this.galleryItems;
+            if (!Array.isArray(items) || items.length <= 1) return;
+
+            const container = this.$refs?.gallery;
+            if (!container) return;
+
+            if (container.classList.contains("swiper-initialized") || container.__swiperInstance) {
+                this.gallerySwiper = container.__swiperInstance;
+                return;
+            }
+
+            const nextEl = this.$refs?.galleryNext;
+            const prevEl = this.$refs?.galleryPrev;
+            const paginationEl = this.$refs?.galleryPagination;
+
+            container.__swiperInstance = new Swiper(container, {
+                modules: [Navigation, Pagination],
+                slidesPerView: 1,
+                spaceBetween: 0,
+                allowTouchMove: true,
+                loop: true,
+                navigation: nextEl && prevEl ? { nextEl, prevEl } : undefined,
+                pagination: paginationEl
+                    ? {
+                          el: paginationEl,
+                          clickable: true,
+                      }
+                    : undefined,
+            });
+
+            this.gallerySwiper = container.__swiperInstance;
+        } catch (e) {
+            // ignore
+        }
+    },
+
+    get galleryItems() {
+        const out = [];
+
+        const p = this.previewImagePath;
+
+        const variants = Array.isArray(this.product?.variants) ? this.product.variants : [];
+        const selected = this.selectedVariantUid
+            ? variants.find((v) => v && v.uid === this.selectedVariantUid)
+            : null;
+        const hovered = p ? variants.find((v) => v?.base_image?.path === p) : null;
+
+        // 1) Variant images first (hovered > selected > product.variant)
+        const primaryVariant = hovered || selected || this.product?.variant || null;
+        const vBase = primaryVariant?.base_image;
+        if (vBase && vBase.path) out.push(vBase);
+        const vMedia = Array.isArray(primaryVariant?.media) ? primaryVariant.media : [];
+        for (const m of vMedia) {
+            if (m && m.path) out.push(m);
+        }
+
+        // 2) Then product images
+        const pBase = this.product?.base_image;
+        if (pBase && pBase.path) out.push(pBase);
+        const pMedia = Array.isArray(this.product?.media) ? this.product.media : [];
+        for (const m of pMedia) {
+            if (m && m.path) out.push(m);
+        }
+
+        const seen = new Set();
+        const uniq = [];
+        for (const f of out) {
+            const p = String(f?.path || "");
+            if (!p) continue;
+            if (seen.has(p)) continue;
+            seen.add(p);
+            uniq.push(f);
+        }
+
+        return uniq.slice(0, 6);
     },
 
     get currentImage() {

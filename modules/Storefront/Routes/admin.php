@@ -19,3 +19,9 @@ Route::put('storefront/home-page-sections/order', [
     'uses' => 'StorefrontController@updateHomePageSectionsOrder',
     'middleware' => 'can:admin.storefront.edit',
 ]);
+
+Route::put('storefront/product-page-sections/order', [
+    'as' => 'admin.storefront.product_page_sections.order.update',
+    'uses' => 'StorefrontController@updateProductPageSectionsOrder',
+    'middleware' => 'can:admin.storefront.edit',
+]);

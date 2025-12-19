@@ -50,4 +50,20 @@ class StorefrontController
 
         return response()->json(['success' => true]);
     }
+
+
+    public function updateProductPageSectionsOrder(Request $request)
+    {
+        $order = $request->input('order', []);
+
+        if (is_string($order)) {
+            $order = json_decode($order, true);
+        }
+
+        $order = is_array($order) ? array_values($order) : [];
+
+        setting(['storefront_product_page_sections_order' => $order]);
+
+        return response()->json(['success' => true]);
+    }
 }

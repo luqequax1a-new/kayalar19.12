@@ -9,6 +9,7 @@ use Modules\Support\State;
 use Modules\Support\Country;
 use Modules\Media\Entities\File;
 use Modules\Tax\Entities\TaxRate;
+use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
 use Modules\Order\OrderCollection;
@@ -367,8 +368,10 @@ class Order extends Model
      *
      * @return JsonResponse
      */
-    public function table()
+    public function table(?Request $request = null)
     {
+        $request ??= request();
+
         $query = $this->newQuery()->select([
             'id',
             'customer_first_name',
@@ -380,6 +383,22 @@ class Order extends Model
             'status',
             'created_at',
         ]);
+
+        $source = $request?->query('traffic_source');
+
+        if (is_string($source) && trim($source) !== '') {
+            $source = strtolower(trim($source));
+
+            if ($source === 'other') {
+                $query->where(function ($q) {
+                    $q->whereNull('traffic_source')
+                        ->orWhere('traffic_source', '')
+                        ->orWhere('traffic_source', 'other');
+                });
+            } else {
+                $query->where('traffic_source', $source);
+            }
+        }
 
         return new OrderTable($query);
     }

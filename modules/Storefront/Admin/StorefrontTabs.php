@@ -25,6 +25,7 @@ class StorefrontTabs extends Tabs
     public function make()
     {
         $homeWeights = $this->homePageSectionsWeights();
+        $productWeights = $this->productPageSectionsWeights();
 
         $this->group('general_settings', trans('storefront::storefront.tabs.group.general_settings'))
             ->active()
@@ -65,6 +66,17 @@ class StorefrontTabs extends Tabs
             ->add($this->prepareHomeTab($this->faqSection(), $homeWeights, 'storefront_faq_enabled'))
             ->add($this->prepareHomeTab($this->blogs(), $homeWeights, 'storefront_blogs_section_enabled'))
             ->add($this->prepareHomeTab($this->htmlBlogSection(), $homeWeights, 'storefront_html_blog_enabled'));
+
+
+        $this->group('product_page_sections', trans('storefront::storefront.tabs.group.product_page_sections'))
+            ->add($this->prepareHomeTab($this->productPageUpSellProductsSection(), $productWeights, 'storefront_product_page_upsell_products_enabled'))
+            ->add($this->prepareHomeTab($this->productPageRelatedProductsSection(), $productWeights, 'storefront_product_page_related_products_enabled'))
+            ->add($this->prepareHomeTab($this->productPageCustomTabSection(), $productWeights, 'storefront_product_page_custom_tab_enabled'))
+            ->add($this->prepareHomeTab($this->productPageCustomTab2Section(), $productWeights, 'storefront_product_page_custom_tab_2_enabled'))
+            ->add($this->prepareHomeTab($this->productPageCustomTextSection(), $productWeights, 'storefront_product_page_custom_text_enabled'))
+            ->add($this->prepareHomeTab($this->productPageCustomHtmlSection(), $productWeights, 'storefront_product_page_custom_html_enabled'))
+            ->add($this->prepareHomeTab($this->productPageImageBannerSection(), $productWeights, 'storefront_product_page_image_banner_enabled'))
+            ->add($this->prepareHomeTab($this->productPageInfoIconsSection(), $productWeights, 'storefront_product_page_info_icons_enabled'));
     }
 
 
@@ -83,6 +95,34 @@ class StorefrontTabs extends Tabs
                 'storefront_home_marquee_text_color',
                 'storefront_home_marquee_margin_top',
                 'storefront_home_marquee_margin_bottom',
+            ]);
+        });
+    }
+
+
+    private function productPageCustomTab2Section()
+    {
+        return tap(new Tab('product_page_custom_tab_2', trans('storefront::storefront.tabs.product_page_custom_tab_2')), function (Tab $tab) {
+            $tab->view('storefront::admin.storefront.tabs.product_page_custom_tab_2');
+
+            $tab->fields([
+                'storefront_product_page_custom_tab_2_enabled',
+                'storefront_product_page_custom_tab_2_title',
+                'storefront_product_page_custom_tab_2_content',
+            ]);
+        });
+    }
+
+
+    private function productPageCustomTabSection()
+    {
+        return tap(new Tab('product_page_custom_tab', trans('storefront::storefront.tabs.product_page_custom_tab')), function (Tab $tab) {
+            $tab->view('storefront::admin.storefront.tabs.product_page_custom_tab');
+
+            $tab->fields([
+                'storefront_product_page_custom_tab_enabled',
+                'storefront_product_page_custom_tab_title',
+                'storefront_product_page_custom_tab_content',
             ]);
         });
     }
@@ -118,6 +158,35 @@ class StorefrontTabs extends Tabs
         ];
 
         $raw = setting('storefront_home_page_sections_order');
+        $savedOrder = is_array($raw) ? $raw : json_decode($raw ?: '[]', true);
+        $savedOrder = is_array($savedOrder) ? $savedOrder : [];
+
+        $merged = collect($savedOrder)
+            ->filter(fn ($name) => in_array($name, $defaultOrder, true))
+            ->merge(collect($defaultOrder)->diff($savedOrder))
+            ->values();
+
+        return $merged
+            ->flip()
+            ->map(fn ($index) => (int) $index)
+            ->all();
+    }
+
+
+    private function productPageSectionsWeights()
+    {
+        $defaultOrder = [
+            'product_page_upsell_products',
+            'product_page_related_products',
+            'product_page_custom_tab',
+            'product_page_custom_tab_2',
+            'product_page_custom_text',
+            'product_page_custom_html',
+            'product_page_image_banner',
+            'product_page_info_icons',
+        ];
+
+        $raw = setting('storefront_product_page_sections_order');
         $savedOrder = is_array($raw) ? $raw : json_decode($raw ?: '[]', true);
         $savedOrder = is_array($savedOrder) ? $savedOrder : [];
 
@@ -207,6 +276,32 @@ class StorefrontTabs extends Tabs
             'dataKey' => 'storefront_slider',
             'hasAnyBannerImage' => $hasAnyBannerImage,
         ];
+    }
+
+
+    private function productPageUpSellProductsSection()
+    {
+        return tap(new Tab('product_page_upsell_products', trans('storefront::storefront.tabs.product_page_upsell_products')), function (Tab $tab) {
+            $tab->view('storefront::admin.storefront.tabs.product_page_upsell_products');
+
+            $tab->fields([
+                'storefront_product_page_upsell_products_enabled',
+                'storefront_product_page_upsell_products_title',
+            ]);
+        });
+    }
+
+
+    private function productPageRelatedProductsSection()
+    {
+        return tap(new Tab('product_page_related_products', trans('storefront::storefront.tabs.product_page_related_products')), function (Tab $tab) {
+            $tab->view('storefront::admin.storefront.tabs.product_page_related_products');
+
+            $tab->fields([
+                'storefront_product_page_related_products_enabled',
+                'storefront_product_page_related_products_title',
+            ]);
+        });
     }
 
 
@@ -405,6 +500,74 @@ class StorefrontTabs extends Tabs
             $tab->weight(22);
             $tab->view('storefront::admin.storefront.tabs.product_page', [
                 'banner' => Banner::getProductPageBanner(),
+            ]);
+        });
+    }
+
+
+    private function productPageCustomTextSection()
+    {
+        return tap(new Tab('product_page_custom_text', trans('storefront::storefront.tabs.product_page_custom_text')), function (Tab $tab) {
+            $tab->view('storefront::admin.storefront.tabs.product_page_custom_text');
+
+            $tab->fields([
+                'storefront_product_page_custom_text_enabled',
+                'storefront_product_page_custom_text_content',
+            ]);
+        });
+    }
+
+
+    private function productPageCustomHtmlSection()
+    {
+        return tap(new Tab('product_page_custom_html', trans('storefront::storefront.tabs.product_page_custom_html')), function (Tab $tab) {
+            $tab->view('storefront::admin.storefront.tabs.product_page_custom_html');
+
+            $tab->fields([
+                'storefront_product_page_custom_html_enabled',
+                'storefront_product_page_custom_html_content',
+            ]);
+        });
+    }
+
+
+    private function productPageImageBannerSection()
+    {
+        return tap(new Tab('product_page_image_banner', trans('storefront::storefront.tabs.product_page_image_banner')), function (Tab $tab) {
+            $tab->view('storefront::admin.storefront.tabs.product_page_image_banner', [
+                'banner' => Banner::findByName('storefront_product_page_image_banner'),
+            ]);
+
+            $tab->fields([
+                'storefront_product_page_image_banner_enabled',
+                'storefront_product_page_image_banner_file_id',
+                'storefront_product_page_image_banner_call_to_action_url',
+                'storefront_product_page_image_banner_open_in_new_window',
+            ]);
+        });
+    }
+
+
+    private function productPageInfoIconsSection()
+    {
+        return tap(new Tab('product_page_info_icons', trans('storefront::storefront.tabs.product_page_info_icons')), function (Tab $tab) {
+            $tab->view('storefront::admin.storefront.tabs.product_page_info_icons', [
+                'icon1' => $this->getMedia(setting('storefront_product_page_info_icons_icon_1_image')),
+                'icon2' => $this->getMedia(setting('storefront_product_page_info_icons_icon_2_image')),
+                'icon3' => $this->getMedia(setting('storefront_product_page_info_icons_icon_3_image')),
+            ]);
+
+            $tab->fields([
+                'storefront_product_page_info_icons_enabled',
+                'storefront_product_page_info_icons_icon_1_image',
+                'storefront_product_page_info_icons_icon_1_title',
+                'storefront_product_page_info_icons_icon_1_text',
+                'storefront_product_page_info_icons_icon_2_image',
+                'storefront_product_page_info_icons_icon_2_title',
+                'storefront_product_page_info_icons_icon_2_text',
+                'storefront_product_page_info_icons_icon_3_image',
+                'storefront_product_page_info_icons_icon_3_title',
+                'storefront_product_page_info_icons_icon_3_text',
             ]);
         });
     }

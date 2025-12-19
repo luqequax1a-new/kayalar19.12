@@ -26,6 +26,7 @@ return [
     'specification' => 'Özellikler',
     'loading' => 'Yükleniyor...',
     'reviews' => ':count Yorum',
+    'review_label' => 'değerlendirme',
     'add_a_review' => 'Yorum yap',
     'review_submitted' => 'Yorum gönderildi',
     'review_form' => [

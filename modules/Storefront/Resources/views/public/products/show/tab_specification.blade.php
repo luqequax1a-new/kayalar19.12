@@ -10,7 +10,7 @@
                     <ul class="list-inline specification-list">
                         @foreach ($attributes as $attribute)
                             <li>
-                                <label>{{ $attribute->name }}</label>
+                                <span>{{ $attribute->name }}</span>
                                 <span>{{ $attribute->values->implode('value', ', ') }}</span>
                             </li>
                         @endforeach

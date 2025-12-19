@@ -59,9 +59,27 @@ Route::group(['prefix' => 'cart-links', 'as' => 'admin.cart_links.'], function (
             'middleware' => 'can:admin.cart_links.create',
         ]);
 
+        Route::post('orders/store', [
+            'as' => 'orders.store',
+            'uses' => 'CartLinkController@createOrder',
+            'middleware' => 'can:admin.cart_links.create',
+        ]);
+
         Route::post('preview', [
             'as' => 'preview',
             'uses' => 'CartLinkController@preview',
+            'middleware' => 'can:admin.cart_links.create',
+        ]);
+
+        Route::get('locations/cities', [
+            'as' => 'locations.cities',
+            'uses' => 'CartLinkController@cities',
+            'middleware' => 'can:admin.cart_links.create',
+        ]);
+
+        Route::get('locations/districts', [
+            'as' => 'locations.districts',
+            'uses' => 'CartLinkController@districts',
             'middleware' => 'can:admin.cart_links.create',
         ]);
 
@@ -73,6 +91,12 @@ Route::group(['prefix' => 'cart-links', 'as' => 'admin.cart_links.'], function (
     Route::get('customers/search', [
         'as' => 'customers.search',
         'uses' => 'ManualOrderController@searchCustomers',
+        'middleware' => 'can:admin.cart_links.create',
+    ]);
+
+    Route::get('customers/{customer}/addresses', [
+        'as' => 'customers.addresses',
+        'uses' => 'CartLinkController@addresses',
         'middleware' => 'can:admin.cart_links.create',
     ]);
 });

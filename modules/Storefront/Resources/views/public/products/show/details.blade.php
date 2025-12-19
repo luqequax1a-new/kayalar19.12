@@ -1,6 +1,35 @@
 <div class="product-details-info position-relative flex-grow-1"> 
+    <script>
+        window.FleetCart = window.FleetCart || {};
+        window.FleetCart.data = window.FleetCart.data || {};
+        window.FleetCart.data.productId = {{ (int) $product->id }};
+        window.FleetCart.data.productInWishlist = {{ auth()->check() && auth()->user()->wishlistHas($product->id) ? 'true' : 'false' }};
+    </script>
     <div class="details-info-top" style="min-height: 150px;">
-        <h1 class="product-name" x-text="productName"></h1>
+        <div class="details-top-bar">
+            <h1 class="product-name" x-text="productName"></h1>
+
+            <button
+                class="btn btn-wishlist"
+                :class="{ 'added': inWishlist }"
+                @click="syncWishlist"
+                aria-label="{{ trans('storefront::product.wishlist') }}"
+            >
+                <template x-if="inWishlist">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                    </svg>
+                </template>
+                
+                <template x-if="!inWishlist">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none">
+                        <path d="M12.1 21.35l-.1.1-.11-.1C6.14 16.24 2.5 12.97 2.5 8.5 2.5 5.64 4.82 3.5 7.5 3.5c1.74 0 3.41.81 4.5 2.09C13.09 4.31 14.76 3.5 16.5 3.5c2.68 0 5 2.14 5 5 0 4.47-3.64 7.74-9.4 12.85z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </template>
+
+                <span class="visually-hidden">{{ trans('storefront::product.wishlist') }}</span>
+            </button>
+        </div>
 
         @if (setting('reviews_enabled'))
             <div x-show="reviewCount > 0">
@@ -11,24 +40,50 @@
         @if ($product->variant)
             <template x-if="isActiveItem">
                 <div class="product-price">
-                    <template x-if="hasSpecialPrice">
-                        <span class="special-price" x-text="formatCurrency(specialPrice) + (product.unit_suffix ? ' /' + product.unit_suffix : '')"></span>
+                    <template x-if="specialPrice < regularPrice">
+                        <span
+                            class="product-discount-badge"
+                            x-text="'%' + Math.round((1 - (specialPrice / regularPrice)) * 100)"
+                        ></span>
                     </template>
 
-                    <span class="previous-price" x-text="formatCurrency(regularPrice) + (product.unit_suffix ? ' /' + product.unit_suffix : '')">
-                        {!! $item->is_active ? $item->hasSpecialPrice() ? $item->special_price->format() : $item->price->format() : '' !!}
-                    </span>
+                    <div class="product-price-values">
+                        <template x-if="specialPrice < regularPrice">
+                            <span class="previous-price" x-text="formatCurrency(regularPrice) + (product.unit_suffix ? ' /' + product.unit_suffix : '')"></span>
+                        </template>
+
+                        <template x-if="specialPrice < regularPrice">
+                            <span class="special-price" x-text="formatCurrency(specialPrice) + (product.unit_suffix ? ' /' + product.unit_suffix : '')"></span>
+                        </template>
+
+                        <template x-if="!(specialPrice < regularPrice)">
+                            <span class="special-price" x-text="formatCurrency(regularPrice) + (product.unit_suffix ? ' /' + product.unit_suffix : '')"></span>
+                        </template>
+                    </div>
                 </div>
             </template>
         @else
             <div class="product-price">
-                <template x-if="hasSpecialPrice">
-                    <span class="special-price" x-text="formatCurrency(specialPrice) + (product.unit_suffix ? ' /' + product.unit_suffix : '')"></span>
+                <template x-if="specialPrice < regularPrice">
+                    <span
+                        class="product-discount-badge"
+                        x-text="'%' + Math.round((1 - (specialPrice / regularPrice)) * 100)"
+                    ></span>
                 </template>
 
-                <span class="previous-price" x-text="formatCurrency(regularPrice) + (product.unit_suffix ? ' /' + product.unit_suffix : '')">
-                    {{ $item->hasSpecialPrice() ? $item->special_price->format() : $item->price->format() }}
-                </span>
+                <div class="product-price-values">
+                    <template x-if="specialPrice < regularPrice">
+                        <span class="previous-price" x-text="formatCurrency(regularPrice) + (product.unit_suffix ? ' /' + product.unit_suffix : '')"></span>
+                    </template>
+
+                    <template x-if="specialPrice < regularPrice">
+                        <span class="special-price" x-text="formatCurrency(specialPrice) + (product.unit_suffix ? ' /' + product.unit_suffix : '')"></span>
+                    </template>
+
+                    <template x-if="!(specialPrice < regularPrice)">
+                        <span class="special-price" x-text="formatCurrency(regularPrice) + (product.unit_suffix ? ' /' + product.unit_suffix : '')"></span>
+                    </template>
+                </div>
             </div>
         @endif
 
@@ -65,63 +120,83 @@
             </div>
         </template>
         <div class="details-info-top-actions">
-            <button
-                class="btn btn-wishlist"
-                :class="{ 'added': inWishlist }"
-                @click="syncWishlist"
-            >
-                <template x-if="inWishlist">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <path d="M16.44 3.1001C14.63 3.1001 13.01 3.9801 12 5.3301C10.99 3.9801 9.37 3.1001 7.56 3.1001C4.49 3.1001 2 5.6001 2 8.6901C2 9.8801 2.19 10.9801 2.52 12.0001C4.1 17.0001 8.97 19.9901 11.38 20.8101C11.72 20.9301 12.28 20.9301 12.62 20.8101C15.03 19.9901 19.9 17.0001 21.48 12.0001C21.81 10.9801 22 9.8801 22 8.6901C22 5.6001 19.51 3.1001 16.44 3.1001Z" fill="#292D32"/>
-                    </svg>
-                </template>
-                
-                <template x-if="!inWishlist">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <path d="M12.62 20.81C12.28 20.93 11.72 20.93 11.38 20.81C8.48 19.82 2 15.69 2 8.68998C2 5.59998 4.49 3.09998 7.56 3.09998C9.38 3.09998 10.99 3.97998 12 5.33998C13.01 3.97998 14.63 3.09998 16.44 3.09998C19.51 3.09998 22 5.59998 22 8.68998C22 15.69 15.52 19.82 12.62 20.81Z" stroke="#292D32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </template>
-
-                {{ trans('storefront::product.wishlist') }}
-            </button>
-
-            <button
-                class="btn btn-compare"
-                :class="{ 'added': inCompareList }"
-                @click="syncCompareList"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                    <path d="M3.58008 5.15991H17.4201C19.0801 5.15991 20.4201 6.49991 20.4201 8.15991V11.4799" stroke="#292D32" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"></path> <path d="M6.74008 2L3.58008 5.15997L6.74008 8.32001" stroke="#292D32" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"></path> <path d="M20.4201 18.84H6.58008C4.92008 18.84 3.58008 17.5 3.58008 15.84V12.52" stroke="#292D32" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"></path> <path d="M17.26 21.9999L20.42 18.84L17.26 15.6799" stroke="#292D32" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"></path>
-                </svg>
-                
-                {{ trans('storefront::product.compare') }}
-            </button>
-        </div>
-
-        @if (!empty($hasSizeChart) && !empty($sizeChartEndpoint))
-            <div class="product-size-chart">
+            @if (!empty($hasSizeChart) && !empty($sizeChartEndpoint))
                 <button
                     type="button"
                     class="btn btn-link p-0 size-chart-trigger"
                     data-size-chart-url="{{ $sizeChartEndpoint }}"
                     data-size-chart-title="{{ trans('size_chart::storefront.size_chart') }}"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
-                        <path d="M4 7H20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                        <path d="M4 12H20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                        <path d="M4 17H20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                        <path d="M7 4V20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                        <path d="M17 4V20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+                        <path d="M14.86,14.86a6.68,6.68,0,1,1-13.36,0A6.53,6.53,0,0,1,2.15,12a6.67,6.67,0,0,1,12.06,0A6.53,6.53,0,0,1,14.86,14.86Z" stroke="currentColor" stroke-miterlimit="10" stroke-width="1.91"/>
+                        <path d="M11.05,14.86a2.87,2.87,0,1,1-5.73,0,2.77,2.77,0,0,1,.28-1.22,2.86,2.86,0,0,1,5.17,0A2.77,2.77,0,0,1,11.05,14.86Z" stroke="currentColor" stroke-miterlimit="10" stroke-width="1.91"/>
+                        <path d="M22.5,2.45V8.18H8.18a6.66,6.66,0,0,0-6,3.82,6.53,6.53,0,0,0-.65,2.86V9.14a5,5,0,0,1,.08-1,6.66,6.66,0,0,1,6.6-5.73Z" stroke="currentColor" stroke-miterlimit="10" stroke-width="1.91"/>
+                        <line x1="18.68" y1="2.45" x2="18.68" y2="6.27" stroke="currentColor" stroke-miterlimit="10" stroke-width="1.91"/>
+                        <line x1="14.86" y1="2.45" x2="14.86" y2="5.32" stroke="currentColor" stroke-miterlimit="10" stroke-width="1.91"/>
+                        <line x1="11.05" y1="2.45" x2="11.05" y2="6.27" stroke="currentColor" stroke-miterlimit="10" stroke-width="1.91"/>
+                        <line x1="7.23" y1="2.45" x2="7.23" y2="5.32" stroke="currentColor" stroke-miterlimit="10" stroke-width="1.91"/>
                     </svg>
                     <span>{{ trans('size_chart::storefront.size_chart') }}</span>
                 </button>
-            </div>
+            @endif
+        </div>
 
+        @foreach (($productSectionsOrder ?? []) as $section)
+            @if ($section === 'product_page_custom_text')
+                @if (setting('storefront_product_page_custom_text_enabled') && setting('storefront_product_page_custom_text_content'))
+                    <div class="product-page-custom-section product-page-custom-text">
+                        {!! setting('storefront_product_page_custom_text_content') !!}
+                    </div>
+                @endif
+            @elseif ($section === 'product_page_custom_html')
+                @if (setting('storefront_product_page_custom_html_enabled') && setting('storefront_product_page_custom_html_content'))
+                    <div class="product-page-custom-section product-page-custom-html">
+                        {!! setting('storefront_product_page_custom_html_content') !!}
+                    </div>
+                @endif
+            @elseif ($section === 'product_page_image_banner')
+                @php($productPageImageBanner = \Modules\Storefront\Banner::findByName('storefront_product_page_image_banner'))
+                @if (setting('storefront_product_page_image_banner_enabled') && !is_null($productPageImageBanner) && $productPageImageBanner->image->exists)
+                    <div class="product-page-custom-section product-page-image-banner">
+                        @if (!empty($productPageImageBanner->call_to_action_url))
+                            <a
+                                href="{{ $productPageImageBanner->call_to_action_url }}"
+                                target="{{ $productPageImageBanner->open_in_new_window ? '_blank' : '_self' }}"
+                                rel="{{ $productPageImageBanner->open_in_new_window ? 'noopener noreferrer' : '' }}"
+                                class="d-block"
+                            >
+                                <img src="{{ $productPageImageBanner->image->path }}" alt="Banner" loading="lazy" class="img-fluid" />
+                            </a>
+                        @else
+                            <img src="{{ $productPageImageBanner->image->path }}" alt="Banner" loading="lazy" class="img-fluid" />
+                        @endif
+                    </div>
+                @endif
+            @elseif ($section === 'product_page_info_icons')
+                @if (setting('storefront_product_page_info_icons_enabled'))
+                    @php(
+                        $productPageInfoIconsItems = collect([1, 2, 3])->map(function ($number) {
+                            return [
+                                'image' => \Modules\Media\Entities\File::findOrNew(setting("storefront_product_page_info_icons_icon_{$number}_image")),
+                                'title' => setting("storefront_product_page_info_icons_icon_{$number}_title"),
+                                'text' => setting("storefront_product_page_info_icons_icon_{$number}_text"),
+                            ];
+                        })
+                    )
+                    <div class="product-page-info-icons">
+                        @include('storefront::public.products.show.info_icons', [
+                            'items' => $productPageInfoIconsItems,
+                        ])
+                    </div>
+                @endif
+            @endif
+        @endforeach
+
+        @if (!empty($hasSizeChart) && !empty($sizeChartEndpoint))
             <div
                 class="modal fade"
                 id="sizeChartModal"
                 tabindex="-1"
-                aria-hidden="true"
             >
                 <div class="modal-dialog modal-dialog-centered modal-lg">
                     <div class="modal-content">
@@ -368,7 +443,7 @@
         <ul class="list-inline additional-info">
             @if ($product->categories->isNotEmpty())
                 <li>
-                    <label>{{ trans('storefront::product.categories') }}</label>
+                    <span>{{ trans('storefront::product.categories') }}</span>
 
                     @foreach ($product->categories as $category)
                         <a href="{{ $category->url() }}">{{ $category->name }}</a>{{ $loop->last ? '' : ',' }}
@@ -378,7 +453,7 @@
 
             @if ($product->tags->isNotEmpty())
                 <li>
-                    <label>{{ trans('storefront::product.tags') }}</label>
+                    <span>{{ trans('storefront::product.tags') }}</span>
 
                     @foreach ($product->tags as $tag)
                         <a href="{{ $tag->url() }}">{{ $tag->name }}</a>{{ $loop->last ? '' : ',' }}

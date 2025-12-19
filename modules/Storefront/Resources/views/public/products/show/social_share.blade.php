@@ -1,5 +1,5 @@
 <div class="social-share">
-    <label>{{ trans('storefront::product.share') }}</label>
+    <span>{{ trans('storefront::product.share') }}</span>
 
     <ul class="list-inline social-links d-flex">
         <li>

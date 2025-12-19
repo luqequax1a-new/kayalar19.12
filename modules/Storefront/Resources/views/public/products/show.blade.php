@@ -41,7 +41,7 @@
         ($lcpCard3xAvif ? $lcpCard3xAvif.' 780w' : null),
         ($lcpAvif ? $lcpAvif.' 1000w' : null),
     ])->filter()->unique()->values()->implode(', ')))
-    @php($lcpSizes = '(max-width: 576px) 92vw, (max-width: 992px) 50vw, 540px')
+    @php($lcpSizes = '(max-width: 576px) 92vw, (max-width: 992px) 50vw, 650px')
 
     @if (!empty($lcpPreloadHref))
         @php($lcpHost = parse_url($lcpPreloadHref, PHP_URL_HOST))
@@ -112,6 +112,39 @@
 @endsection
 
 @section('content')
+    @php(
+        $defaultProductSectionsOrder = [
+            // product_page_sections tab names (admin-side ordering)
+            'product_page_custom_text',
+            'product_page_custom_html',
+            'product_page_image_banner',
+            'product_page_info_icons',
+        ]
+    )
+
+    @php(
+        $rawProductSectionsOrder = setting('storefront_product_page_sections_order')
+    )
+
+    @php(
+        $savedProductSectionsOrder = is_array($rawProductSectionsOrder)
+            ? $rawProductSectionsOrder
+            : json_decode($rawProductSectionsOrder ?: '[]', true)
+    )
+
+    @php(
+        $savedProductSectionsOrder = is_array($savedProductSectionsOrder)
+            ? $savedProductSectionsOrder
+            : []
+    )
+
+    @php(
+        $productSectionsOrder = collect($savedProductSectionsOrder)
+            ->filter(fn ($name) => in_array($name, $defaultProductSectionsOrder, true))
+            ->merge(collect($defaultProductSectionsOrder)->diff($savedProductSectionsOrder))
+            ->values()
+    )
+
     <section
         x-data="ProductShow({
             product: {{ $product }},
@@ -183,6 +216,22 @@
                                         </a>
                                     </li>
                                 @endif
+
+                                @if (setting('storefront_product_page_custom_tab_enabled') && setting('storefront_product_page_custom_tab_content'))
+                                    <li class="nav-item" role="presentation">
+                                        <a href="#custom_tab" data-bs-toggle="tab" class="nav-link">
+                                            {{ setting('storefront_product_page_custom_tab_title') ?: trans('storefront::storefront.tabs.product_page_custom_tab') }}
+                                        </a>
+                                    </li>
+                                @endif
+
+                                @if (setting('storefront_product_page_custom_tab_2_enabled') && setting('storefront_product_page_custom_tab_2_content'))
+                                    <li class="nav-item" role="presentation">
+                                        <a href="#custom_tab_2" data-bs-toggle="tab" class="nav-link">
+                                            {{ setting('storefront_product_page_custom_tab_2_title') ?: trans('storefront::storefront.tabs.product_page_custom_tab_2') }}
+                                        </a>
+                                    </li>
+                                @endif
                             </ul>
 
                             <hr>
@@ -192,10 +241,20 @@
                             @include('storefront::public.products.show.tab_description')
                             @include('storefront::public.products.show.tab_specification')
                             @include('storefront::public.products.show.tab_reviews')
+
+                            @if (setting('storefront_product_page_custom_tab_enabled') && setting('storefront_product_page_custom_tab_content'))
+                                @include('storefront::public.products.show.tab_custom_tab')
+                            @endif
+
+                            @if (setting('storefront_product_page_custom_tab_2_enabled') && setting('storefront_product_page_custom_tab_2_content'))
+                                @include('storefront::public.products.show.tab_custom_tab_2')
+                            @endif
                         </div>
                     </div>
 
-                    @include('storefront::public.products.show.related_products')
+                    @if (setting('storefront_product_page_related_products_enabled'))
+                        @include('storefront::public.products.show.related_products')
+                    @endif
                 </div>
             </div>
         </div>
@@ -220,6 +279,12 @@
         FleetCart.langs['storefront::product.reviews'] = '{{ trans("storefront::product.reviews") }}';
         FleetCart.langs['storefront::product.review_submitted'] = '{{ trans("storefront::product.review_submitted") }}';
     </script>
+
+    <template data-related-product-card-template>
+        <div class="grid-view-products-item">
+            @include('storefront::public.partials.product_card', ['data' => '__PRODUCT__'])
+        </div>
+    </template>
 
     
 

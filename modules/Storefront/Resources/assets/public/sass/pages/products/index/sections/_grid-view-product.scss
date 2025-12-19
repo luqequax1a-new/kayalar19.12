@@ -26,8 +26,9 @@
         overflow: visible;
         text-overflow: clip;
         -webkit-line-clamp: unset;
+        line-clamp: unset;
         -webkit-box-orient: unset;
-        margin-bottom: 5px;
+        margin-bottom: 2px;
     }
 
     .product-card-bottom .btn-add-to-cart {
@@ -186,14 +187,6 @@
 }
 .grid-view-products .product-card {
     display: block !important;
-}
-
-.grid-view-products .product-card .product-card-middle {
-    gap: 5px;
-}
-
-.grid-view-products .product-card .product-rating {
-    margin-bottom: 5px;
 }
 
 .grid-view-products .product-card .product-card-bottom {

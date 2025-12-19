@@ -167,6 +167,9 @@ class ManualOrderController
                     'sku' => $p->sku,
                     'name' => $p->name ?: $p->sku,
                     'image' => $p->base_image?->path,
+                    'in_stock' => (bool) $p->in_stock,
+                    'manage_stock' => (bool) $p->manage_stock,
+                    'qty' => is_numeric($p->qty) ? (float) $p->qty : $p->qty,
                     'variants' => $p->variants->map(function($v){
                         return [
                             'id' => $v->id,
@@ -174,9 +177,16 @@ class ManualOrderController
                             'sku' => $v->sku,
                             'image' => $v->base_image?->path,
                             'price' => $v->selling_price?->amount(),
+                            'selling_price' => $v->selling_price?->amount(),
+                            'original_price' => $v->price?->amount(),
+                            'in_stock' => (bool) $v->in_stock,
+                            'manage_stock' => (bool) $v->manage_stock,
+                            'qty' => is_numeric($v->qty) ? (float) $v->qty : $v->qty,
                         ];
                     })->values()->all(),
                     'price' => $p->selling_price?->amount(),
+                    'selling_price' => $p->selling_price?->amount(),
+                    'original_price' => $p->price?->amount(),
                     'unit_step' => $p->unit_step,
                     'unit_min' => $p->unit_min,
                     'unit_decimal' => $p->unit_decimal,

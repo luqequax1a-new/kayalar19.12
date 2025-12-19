@@ -204,6 +204,9 @@ class OrderService
         $billingZip = $billing['zip'] ?? ($shipping['zip'] ?? '');
         $billingPhone = $billing['phone'] ?? ($shipping['phone'] ?? null);
 
+        $attribution = $this->orderAttributionFromSession();
+        $trafficSource = $this->classifyTrafficSource($attribution);
+
         return Order::create([
             'customer_id' => auth()->id(),
             'customer_email' => $request->customer_email,
@@ -245,7 +248,79 @@ class OrderService
             'locale' => locale(),
             'status' => Order::PENDING_PAYMENT,
             'note' => $request->order_note,
+
+            'traffic_source' => $trafficSource,
+            'utm_source' => $attribution['utm_source'] ?? null,
+            'utm_medium' => $attribution['utm_medium'] ?? null,
+            'utm_campaign' => $attribution['utm_campaign'] ?? null,
+            'utm_term' => $attribution['utm_term'] ?? null,
+            'utm_content' => $attribution['utm_content'] ?? null,
+            'referrer_url' => $attribution['referrer_url'] ?? null,
+            'landing_url' => $attribution['landing_url'] ?? null,
+            'click_id_gclid' => $attribution['click_id_gclid'] ?? null,
+            'click_id_fbclid' => $attribution['click_id_fbclid'] ?? null,
         ]);
+    }
+
+    private function orderAttributionFromSession(): array
+    {
+        try {
+            $session = request()?->session();
+            if (!$session) {
+                return [];
+            }
+
+            $data = $session->get('order_attribution');
+
+            return is_array($data) ? $data : [];
+        } catch (\Throwable $e) {
+            return [];
+        }
+    }
+
+    private function classifyTrafficSource(array $a): ?string
+    {
+        $utmSource = strtolower(trim((string) ($a['utm_source'] ?? '')));
+        $utmMedium = strtolower(trim((string) ($a['utm_medium'] ?? '')));
+
+        $gclid = trim((string) ($a['click_id_gclid'] ?? ''));
+        $fbclid = trim((string) ($a['click_id_fbclid'] ?? ''));
+
+        $ref = strtolower(trim((string) ($a['referrer_url'] ?? '')));
+
+        $hasAnyUtm = $utmSource !== '' || $utmMedium !== '' || trim((string) ($a['utm_campaign'] ?? '')) !== '';
+
+        $paidMediums = ['cpc', 'ppc', 'paid', 'google_ads'];
+
+        if ($gclid !== '' || ($utmSource === 'google' && in_array($utmMedium, $paidMediums, true))) {
+            return 'google_ads';
+        }
+
+        if ($fbclid !== '' || ($utmSource === 'facebook' && in_array($utmMedium, ['cpc', 'ppc', 'paid'], true))) {
+            return 'facebook_ads';
+        }
+
+        if ($utmSource === 'instagram' && in_array($utmMedium, ['cpc', 'ppc', 'paid'], true)) {
+            return 'instagram_ads';
+        }
+
+        if ($ref !== '' && str_contains($ref, 'etsy.com')) {
+            return 'etsy';
+        }
+
+        if ($ref !== '' && str_contains($ref, 'google.') && $utmMedium === '') {
+            return 'google_organic';
+        }
+
+        if (! $hasAnyUtm && $ref === '') {
+            return 'direct';
+        }
+
+        if ($hasAnyUtm || $ref !== '') {
+            return 'other';
+        }
+
+        return null;
     }
 
     private function resolveAndPersistAddresses($request, $customer = null): array

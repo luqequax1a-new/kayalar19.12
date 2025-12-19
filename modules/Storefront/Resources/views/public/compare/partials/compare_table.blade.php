@@ -53,7 +53,7 @@
 
                     <template x-for="(product, index) in $store.compare.products" :key="index">
                         <td>
-                            @include('storefront::public.partials.product_rating')
+                            @include('storefront::public.partials.product_rating', ['showLabel' => false])
                         </td>
                     </template>
                 </tr>

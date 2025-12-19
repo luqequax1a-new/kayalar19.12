@@ -107,7 +107,7 @@
                                     <div class="col-md-18">
                                         <input type="hidden" name="order_id" :value="orderIdFromQuery || ''">
                                         <div class="form-group">
-                                            <label>{{ trans('storefront::product.review_form.your_rating') }}<span>*</span></label>
+                                            <span>{{ trans('storefront::product.review_form.your_rating') }}<span>*</span></span>
                                             <div class="rating-input">
                                                 <input type="radio" name="rating" x-model="reviewForm.rating" id="side-star-5" value="5">
                                                 <label for="side-star-5" title="5 star"><i class="las la-star"></i></label>
@@ -136,7 +136,7 @@
                                         </div>
 
                                         <div class="form-group">
-                                            <label>{{ trans('storefront::product.review_form.images_max_4') }}</label>
+                                            <span>{{ trans('storefront::product.review_form.images_max_4') }}</span>
                                             <div class="review-upload-grid" :class="{ 'dragover': isDraggingUpload }" @dragenter.prevent="isDraggingUpload = true" @dragleave.prevent="isDraggingUpload = false" @dragover.prevent @drop.prevent="onDropReviewImages($event)">
                                                 <template x-for="(img, idx) in reviewImages" :key="idx">
                                                     <div class="slot">

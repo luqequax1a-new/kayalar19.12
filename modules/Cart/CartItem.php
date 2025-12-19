@@ -66,6 +66,7 @@ class CartItem implements JsonSerializable
      * @var array|null
      */
     public $upsell;
+    public $manual_unit_price;
 
 
     /**
@@ -81,6 +82,7 @@ class CartItem implements JsonSerializable
         $this->variations = $item->attributes['variations'];
         $this->options = $item->attributes['options'];
         $this->upsell = $item->attributes['upsell'] ?? null;
+        $this->manual_unit_price = $item->attributes['manual_unit_price'] ?? null;
     }
 
 
@@ -190,6 +192,11 @@ class CartItem implements JsonSerializable
      */
     public function unitPrice()
     {
+        if ($this->manual_unit_price !== null && is_numeric($this->manual_unit_price)) {
+            return Money::inDefaultCurrency((float) $this->manual_unit_price)
+                ->add($this->optionsPrice());
+        }
+
         if (is_array($this->upsell) && isset($this->upsell['unit_price'])) {
             return Money::inDefaultCurrency((float) $this->upsell['unit_price'])
                 ->add($this->optionsPrice());

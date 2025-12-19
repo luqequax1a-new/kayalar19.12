@@ -1,14 +1,28 @@
 Alpine.store("wishlist", {
     wishlist: [],
+    bootstrapped: {},
+    countValue: null,
     fetching: false,
     fetched: false,
 
     get count() {
-        return this.fetching ? FleetCart.wishlistCount : this.wishlist.length;
+        if (this.fetched) {
+            return this.wishlist.length;
+        }
+
+        if (this.countValue === null) {
+            this.countValue = FleetCart.wishlistCount;
+        }
+
+        return this.countValue;
     },
 
     init() {
         const path = window.location?.pathname || "";
+
+        if (this.countValue === null) {
+            this.countValue = FleetCart.wishlistCount;
+        }
 
         // Hard-disable wishlist fetch on non-wishlist pages.
         // Keep showing count via FleetCart.wishlistCount.
@@ -28,6 +42,9 @@ Alpine.store("wishlist", {
 
                 this.wishlist = data;
                 this.fetched = true;
+
+                this.countValue = this.wishlist.length;
+                FleetCart.wishlistCount = this.countValue;
             } catch (error) {
                 // Handle error
             } finally {
@@ -40,8 +57,25 @@ Alpine.store("wishlist", {
         this.fetching = false;
     },
 
+    bootstrap(id, inWishlist) {
+        try {
+            this.bootstrapped[String(id)] = !!inWishlist;
+        } catch (_) {}
+    },
+
     inWishlist(id) {
-        return this.wishlist.includes(id);
+        if (this.fetched) {
+            return this.wishlist.includes(id);
+        }
+
+        try {
+            const key = String(id);
+            if (Object.prototype.hasOwnProperty.call(this.bootstrapped, key)) {
+                return !!this.bootstrapped[key];
+            }
+        } catch (_) {}
+
+        return false;
     },
 
     syncWishlist(id) {
@@ -66,11 +100,28 @@ Alpine.store("wishlist", {
                 await this.fetchWishlist();
             }
 
-            this.wishlist.push(id);
+            try {
+                await axios.post("/account/wishlist/products", {
+                    productId: id,
+                });
 
-            await axios.post("/account/wishlist/products", {
-                productId: id,
-            });
+                if (!this.wishlist.includes(id)) {
+                    this.wishlist.push(id);
+                }
+
+                this.bootstrap(id, true);
+
+                if (!this.fetched) {
+                    if (this.countValue === null) {
+                        this.countValue = FleetCart.wishlistCount;
+                    }
+                    this.countValue = Number(this.countValue || 0) + 1;
+                    FleetCart.wishlistCount = this.countValue;
+                }
+            } catch (error) {
+                this.bootstrap(id, false);
+                throw error;
+            }
 
             return;
         }
@@ -78,14 +129,32 @@ Alpine.store("wishlist", {
         window.location.href = "/login";
     },
 
-    removeFromWishlist(id) {
+    async removeFromWishlist(id) {
         if (FleetCart.loggedIn && !this.fetched && !this.fetching) {
             this.fetchWishlist().then(() => this.removeFromWishlist(id));
             return;
         }
 
-        this.wishlist.splice(this.wishlist.indexOf(id), 1);
+        try {
+            await axios.delete(`/account/wishlist/products/${id}`);
 
-        axios.delete(`/account/wishlist/products/${id}`);
+            const idx = this.wishlist.indexOf(id);
+            if (idx !== -1) {
+                this.wishlist.splice(idx, 1);
+            }
+
+            this.bootstrap(id, false);
+
+            if (!this.fetched) {
+                if (this.countValue === null) {
+                    this.countValue = FleetCart.wishlistCount;
+                }
+                this.countValue = Math.max(0, Number(this.countValue || 0) - 1);
+                FleetCart.wishlistCount = this.countValue;
+            }
+        } catch (error) {
+            this.bootstrap(id, true);
+            throw error;
+        }
     },
 });

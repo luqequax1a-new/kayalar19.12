@@ -197,6 +197,78 @@ $(function () {
         });
     }
 
+    const productPageSectionsTabList = $(
+        '.accordion-tab[data-group="product_page_sections"]'
+    );
+
+    if (productPageSectionsTabList.length && window.Sortable) {
+        let orderInput = $(
+            'input[name="storefront_product_page_sections_order"]'
+        );
+
+        if (!orderInput.length) {
+            return;
+        }
+
+        const serializeOrder = () => {
+            const tabNames = productPageSectionsTabList
+                .find('a[data-toggle="tab"]')
+                .map((_, a) => $(a).attr("href").replace("#", ""))
+                .get();
+
+            orderInput.val(JSON.stringify(tabNames));
+        };
+
+        const orderActions = productPageSectionsTabList
+            .closest(".panel-body")
+            .find("[data-product-page-sections-order-actions]");
+
+        const showOrderActions = () => {
+            if (orderActions.length) {
+                orderActions.removeClass("hide");
+            }
+        };
+
+        // Initialize input with current UI order (ensures backend gets a value on save)
+        serializeOrder();
+
+        $("#storefront-settings-edit-form").on("submit", () => {
+            serializeOrder();
+        });
+
+        $(document).on("click", "[data-save-product-page-sections-order]", () => {
+            if (!window.axios) {
+                return;
+            }
+
+            serializeOrder();
+
+            let order = [];
+
+            try {
+                order = JSON.parse(orderInput.val() || "[]");
+            } catch (e) {
+                order = [];
+            }
+
+            window.axios
+                .put("storefront/product-page-sections/order", { order })
+                .then(() => {
+                    if (orderActions.length) {
+                        orderActions.addClass("hide");
+                    }
+                });
+        });
+
+        window.Sortable.create(productPageSectionsTabList.get(0), {
+            animation: 150,
+            onEnd: () => {
+                serializeOrder();
+                showOrderActions();
+            },
+        });
+    }
+
     if ($("#logo").hasClass("active")) {
         $("#logo")
             .parent()

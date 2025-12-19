@@ -131,7 +131,7 @@
                         </a>
     
                         <template x-if="hasVisibleRating">
-                            @include('storefront::public.partials.product_rating')
+                            @include('storefront::public.partials.product_rating', ['showLabel' => false])
                         </template>
                     </div>
 

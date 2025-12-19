@@ -32,27 +32,72 @@
             </template>
 
             <div class="product-image-wrap" x-init="init && init()">
-                <div
-                    x-ref="pshell"
-                    class="product-image-shell"
-                    :data-real-img="(currentSourceFile?.fast_avif_url
-                        || currentSourceFile?.fast_webp_url
-                        || currentSourceFile?.grid_webp_url
-                        || currentSourceFile?.grid_avif_url
-                        || currentSourceFile?.detail_webp_url
-                        || currentSourceFile?.detail_avif_url
-                        || currentSourceFile?.path
-                        || baseImage)"
-                    :data-alt="productName"
-                >
-                    <img
-                        class="product-image-img lqip"
-                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23f2f2f2'/%3E%3Cstop offset='1' stop-color='%23e6e6e6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='40' height='40' fill='url(%23g)'/%3E%3Ccircle cx='12' cy='14' r='8' fill='%23ededed'/%3E%3Crect x='18' y='20' width='18' height='10' rx='3' fill='%23eaeaea'/%3E%3C/svg%3E"
-                        width="400"
-                        height="400"
-                        decoding="async"
-                    />
-                </div>
+                <template x-if="Array.isArray(galleryItems) && galleryItems.length > 1">
+                    <div class="product-image-carousel swiper" x-ref="gallery">
+                        <div class="swiper-wrapper product-image-track">
+                            <template x-for="(file, gidx) in galleryItems" :key="(file && file.path ? file.path : gidx)">
+                                <div class="swiper-slide product-image-slide">
+                                    <div
+                                        class="product-image-shell"
+                                        :data-real-img="(file?.fast_avif_url
+                                            || file?.fast_webp_url
+                                            || file?.grid_webp_url
+                                            || file?.grid_avif_url
+                                            || file?.detail_webp_url
+                                            || file?.detail_avif_url
+                                            || file?.path
+                                            || baseImage)"
+                                        :data-alt="productName"
+                                    >
+                                        <img
+                                            class="product-image-img lqip"
+                                            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23f2f2f2'/%3E%3Cstop offset='1' stop-color='%23e6e6e6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='40' height='40' fill='url(%23g)'/%3E%3Ccircle cx='12' cy='14' r='8' fill='%23ededed'/%3E%3Crect x='18' y='20' width='18' height='10' rx='3' fill='%23eaeaea'/%3E%3C/svg%3E"
+                                            width="400"
+                                            height="400"
+                                            decoding="async"
+                                        />
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+
+                        <div class="product-card-dots swiper-pagination" x-ref="galleryPagination" @click.stop.prevent></div>
+                        <button type="button" class="product-image-nav product-image-nav--prev" x-ref="galleryPrev" @click.stop.prevent>
+                            <svg class="product-image-nav__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+                                <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                        <button type="button" class="product-image-nav product-image-nav--next" x-ref="galleryNext" @click.stop.prevent>
+                            <svg class="product-image-nav__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none">
+                                <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                    </div>
+                </template>
+
+                <template x-if="!(Array.isArray(galleryItems) && galleryItems.length > 1)">
+                    <div
+                        x-ref="pshell"
+                        class="product-image-shell"
+                        :data-real-img="(currentSourceFile?.fast_avif_url
+                            || currentSourceFile?.fast_webp_url
+                            || currentSourceFile?.grid_webp_url
+                            || currentSourceFile?.grid_avif_url
+                            || currentSourceFile?.detail_webp_url
+                            || currentSourceFile?.detail_avif_url
+                            || currentSourceFile?.path
+                            || baseImage)"
+                        :data-alt="productName"
+                    >
+                        <img
+                            class="product-image-img lqip"
+                            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23f2f2f2'/%3E%3Cstop offset='1' stop-color='%23e6e6e6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='40' height='40' fill='url(%23g)'/%3E%3Ccircle cx='12' cy='14' r='8' fill='%23ededed'/%3E%3Crect x='18' y='20' width='18' height='10' rx='3' fill='%23eaeaea'/%3E%3C/svg%3E"
+                            width="400"
+                            height="400"
+                            decoding="async"
+                        />
+                    </div>
+                </template>
             </div>
 
             @if (setting('storefront_grid_variant_badge_enabled'))
@@ -152,7 +197,7 @@
         </a> 
         
         <template x-if="hasVisibleRating">
-            @include('storefront::public.partials.product_rating', ['data' => $data ?? null])
+            @include('storefront::public.partials.product_rating', ['data' => $data ?? null, 'showLabel' => false])
         </template>
 
         <div class="product-price" x-html="productPrice"></div>

@@ -2,11 +2,11 @@
     <div class="variant-custom-selection">
         <div class="row">
             <div class="col-lg-18">
-                <label class="d-flex">
+                <span class="d-flex">
                     {{ $variation->name }}:
                     
                     <span class="d-flex variation-label" x-text="activeVariationValues['{{ $variation->uid }}']"></span>
-                </label>
+                </span>
             </div>
 
             <div class="col-lg-18">               

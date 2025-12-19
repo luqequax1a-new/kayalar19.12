@@ -34,8 +34,8 @@
         <link rel="shortcut icon" href="{{ $favicon }}" type="image/x-icon">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="preload" href="{{ font_url(setting('storefront_display_font', 'Poppins')) }}"
-            onload="this.onload=null; this.rel='stylesheet'; this.removeAttribute('as')" as="style">
+        <link rel="preload" as="style" href="{{ font_url(setting('storefront_display_font', 'Poppins')) }}" onload="this.onload=null;this.rel='stylesheet'">
+        <noscript><link rel="stylesheet" href="{{ font_url(setting('storefront_display_font', 'Poppins')) }}"></noscript>
 
         @include('storefront::public.partials.variables')
 

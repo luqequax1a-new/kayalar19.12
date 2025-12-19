@@ -1,12 +1,12 @@
 <div class="form-group variant-custom-selection">
     <div class="row">
         <div class="col-lg-18">
-            <label>
+            <span>
                 {!!
                     $option->name .
                     ($option->is_required ? '<span>*</span>' : '')
                 !!}
-            </label>
+            </span>
         </div>
 
         <div class="col-lg-18">

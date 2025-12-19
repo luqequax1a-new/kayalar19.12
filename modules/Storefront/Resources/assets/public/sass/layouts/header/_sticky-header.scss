@@ -10,6 +10,20 @@
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         z-index: 180;
 
+        opacity: 1;
+        color: var(--color-black);
+
+        .header-column-right .icon-wrap > svg circle,
+        .header-column-right .icon-wrap > svg path {
+            stroke: var(--color-black) !important;
+            opacity: 1;
+        }
+
+        .sidebar-menu-icon-wrap .sidebar-menu-icon svg path {
+            fill: var(--color-black) !important;
+            opacity: 1;
+        }
+
         > .container {
             padding-top: 4px;
             padding-bottom: 4px;

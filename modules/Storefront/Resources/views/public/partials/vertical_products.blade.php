@@ -13,8 +13,6 @@
             :alt="productName"
             loading="lazy"
         />
-
-        <div class="product-image-layer"></div>
     </a>
 
     <div class="product-info">
@@ -23,7 +21,7 @@
         </a>
 
         <template x-if="hasVisibleRating">
-            @include('storefront::public.partials.product_rating', ['data' => $data ?? null])
+            @include('storefront::public.partials.product_rating', ['data' => $data ?? null, 'showLabel' => false])
         </template>
         
         <div class="product-price" x-html="productPrice"></div>

@@ -1,8 +1,10 @@
 <aside class="left-sidebar">
-    @if (!empty($upSellProducts) && $upSellProducts->isNotEmpty())
+    @if (setting('storefront_product_page_upsell_products_enabled') && !empty($upSellProducts) && $upSellProducts->isNotEmpty())
         <div class="vertical-products" data-upsell-products>
             <div class="vertical-products-header">
-                <div class="section-title">{{ trans('storefront::product.you_might_also_like') }}</div>
+                <div class="section-title">
+                    {{ setting('storefront_product_page_upsell_products_title') ?: trans('storefront::product.you_might_also_like') }}
+                </div>
             </div>
 
             <div class="vertical-products-slider swiper" x-ref="upSellProducts">

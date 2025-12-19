@@ -55,7 +55,7 @@ trait ProductSearch
             $productIds = (clone $query)->select('products.id')->resetOrders();
         }
 
-        $perPage = (int) request('perPage', 30);
+        $perPage = (int) request('perPage', 20);
         $page = max(1, (int) request('page', 1));
 
         $listingQuery = clone $query;
@@ -68,8 +68,13 @@ trait ProductSearch
 
         $listingQuery->with([
             'files' => function ($q) {
-                $q->select(['files.id', 'files.disk', 'files.path'])
-                    ->wherePivot('zone', 'base_image');
+                $q->wherePivotIn('zone', ['base_image', 'additional_images']);
+            },
+            'productMedia' => function ($q) {
+                $q->where('is_active', true)
+                    ->where('type', 'video')
+                    ->orderBy('position')
+                    ->select(['id', 'product_id', 'variant_id', 'type', 'path', 'poster', 'position', 'is_active']);
             },
             'variants' => function ($q) {
                 $q->where('is_active', true)
@@ -91,6 +96,11 @@ trait ProductSearch
                         'in_stock',
                         'is_active',
                         'is_default',
+                    ])
+                    ->with([
+                        'files' => function ($qf) {
+                            $qf->wherePivotIn('zone', ['base_image', 'additional_images']);
+                        },
                     ]);
             },
             'variations' => function ($q) {
@@ -169,6 +179,8 @@ trait ProductSearch
                 $base['base_image_thumb'] = [
                     'path' => media_variant_url($product->base_image, 400)
                 ];
+                $base['additional_images'] = $product->additional_images;
+                $base['videos'] = $this->mapListingVideos($product);
                 $base['tag_badges'] = $tagBadges;
 
                 $avg = (float) ($product->reviews_avg_rating ?? 0);
@@ -205,6 +217,32 @@ trait ProductSearch
             'attributes' => $this->getAttributes($productIds),
             'category' => $categoryData,
         ];
+    }
+
+
+    protected function mapListingVideos(Product $product): array
+    {
+        try {
+            $videos = $product->relationLoaded('productMedia') ? $product->productMedia : collect();
+
+            return $videos
+                ->where('is_active', true)
+                ->where('type', 'video')
+                ->sortBy('position')
+                ->values()
+                ->map(function ($m) use ($product) {
+                    $variantBase = optional($product->variant)->base_image?->path;
+                    $poster = $m->poster ?: ($variantBase ?: ($product->base_image?->path ?? asset('build/assets/image-placeholder.png')));
+                    return [
+                        'variant_id' => $m->variant_id,
+                        'src' => $m->path,
+                        'thumb' => $poster,
+                    ];
+                })
+                ->all();
+        } catch (\Throwable $e) {
+            return [];
+        }
     }
 
 

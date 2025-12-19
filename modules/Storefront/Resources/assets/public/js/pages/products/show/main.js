@@ -20,16 +20,73 @@ function initSizeChartModal() {
 
     const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
 
+    try {
+        modalEl.inert = true;
+        modalEl.removeAttribute('aria-hidden');
+    } catch (_) {}
+
+    let lastTrigger = trigger;
+
+    // Track last trigger (in case of multiple triggers on the page)
+    document.addEventListener('click', (e) => {
+        try {
+            const t = e.target?.closest?.('.size-chart-trigger');
+            if (t) lastTrigger = t;
+        } catch (_) {}
+    });
+
     const restoreFocusToTrigger = () => {
         try {
             const active = document.activeElement;
-            if (active && modalEl.contains(active) && typeof trigger.focus === 'function') {
-                trigger.focus();
+            const focusTarget = lastTrigger || trigger;
+
+            const ariaHidden = modalEl.getAttribute('aria-hidden');
+            const shouldRestore = (active && modalEl.contains(active)) || ariaHidden === 'true' || modalEl.inert === true;
+
+            // If focus is inside the modal, move it back to the trigger.
+            if (shouldRestore) {
+                try {
+                    if (typeof active.blur === 'function') active.blur();
+                } catch (_) {}
+
+                if (typeof focusTarget?.focus === 'function') {
+                    try {
+                        focusTarget.focus({ preventScroll: true });
+                    } catch (_) {
+                        focusTarget.focus();
+                    }
+                }
             }
         } catch (_) {}
     };
 
-    modalEl.addEventListener('hide.bs.modal', restoreFocusToTrigger);
+    const forceHideSafely = () => {
+        // During hide, Bootstrap may set aria-hidden while the modal is still visible.
+        // Ensure focus cannot remain inside the modal at that moment.
+        try { modalEl.inert = true; } catch (_) {}
+        restoreFocusToTrigger();
+    };
+
+    // Use capture so this runs as early as possible during the hide sequence.
+    modalEl.addEventListener('hide.bs.modal', forceHideSafely, true);
+    // Some browsers warn if aria-hidden is left on a visible modal.
+    modalEl.addEventListener('show.bs.modal', () => {
+        try {
+            modalEl.inert = false;
+            modalEl.removeAttribute('aria-hidden');
+        } catch (_) {}
+    });
+    modalEl.addEventListener('shown.bs.modal', () => {
+        try {
+            modalEl.inert = false;
+            modalEl.removeAttribute('aria-hidden');
+        } catch (_) {}
+    });
+    modalEl.addEventListener('hidden.bs.modal', () => {
+        // Ensure focus is not left on an element inside an aria-hidden modal.
+        try { modalEl.inert = true; } catch (_) {}
+        setTimeout(restoreFocusToTrigger, 0);
+    });
 
     const setLoading = () => {
         if (bodyEl) {
@@ -547,6 +604,10 @@ Alpine.data(
         variationImagePath: null,
         showDescriptionContent: false,
         showMore: false,
+        showCustomTabContent: false,
+        showCustomTabMore: false,
+        showCustomTab2Content: false,
+        showCustomTab2More: false,
         fetchingReviews: false,
         reviewsLoaded: false,
         reviews: { data: [], total: 0 },
@@ -731,69 +792,6 @@ Alpine.data(
             } catch (_) {}
         },
 
-        deferUpSellProducts() {
-            try {
-                if (this._upSellProductsRequested) {
-                    return;
-                }
-                this._upSellProductsRequested = true;
-
-                setTimeout(async () => {
-                    try {
-                        const base = (window.FleetCart && FleetCart.baseUrl) ? FleetCart.baseUrl : '';
-                        const res = await axios.get(`${base}/products/${this.product.id}/upsell`);
-                        const items = Array.isArray(res.data) ? res.data : [];
-
-                        if (!items.length) {
-                            const root = document.querySelector('[data-upsell-products]');
-                            if (root) root.classList.add('d-none');
-                            return;
-                        }
-
-                        const wrapper = document.querySelector('[data-upsell-products] .swiper-wrapper');
-                        if (!wrapper) return;
-
-                        wrapper.innerHTML = '';
-
-                        const tpl = document.querySelector('[data-upsell-product-card-template]');
-                        const tplHtml = tpl ? tpl.innerHTML : '';
-                        if (!tplHtml) return;
-
-                        // chunk by 5 to mimic server-side layout
-                        const chunkSize = 5;
-                        for (let i = 0; i < items.length; i += chunkSize) {
-                            const chunk = items.slice(i, i + chunkSize);
-                            const slide = document.createElement('div');
-                            slide.className = 'swiper-slide';
-                            slide.innerHTML = `<div class="vertical-products-slide">${chunk
-                                .map((p) => {
-                                    const safeJson = JSON.stringify(p)
-                                        .replace(/</g, "\\u003c")
-                                        .replace(/>/g, "\\u003e")
-                                        .replace(/&/g, "\\u0026")
-                                        .replace(/'/g, "\\u0027");
-                                    return tplHtml.replace('__PRODUCT__', safeJson);
-                                })
-                                .join('')}</div>`;
-                            wrapper.appendChild(slide);
-
-                            try {
-                                if (window.Alpine && typeof window.Alpine.initTree === 'function') {
-                                    window.Alpine.initTree(slide);
-                                }
-                            } catch (_) {}
-                        }
-
-                        this.$nextTick(() => {
-                            try {
-                                this.initUpSellProductsSlider();
-                            } catch (_) {}
-                        });
-                    } catch (_) {}
-                }, 450);
-            } catch (_) {}
-        },
-
         initReviewsDefer() {
             try {
                 const tabLink = document.querySelector('.product-details-tab a[href="#reviews"]');
@@ -828,8 +826,20 @@ Alpine.data(
         reviewImages: [],
         maxReviewPhotos: 4,
 
+        previewVariantName: null,
+
         get productName() {
-            return this.product.name;
+            const base = this.product?.name || "";
+
+            if (this.previewVariantName) {
+                return `${base} (${this.previewVariantName})`.trim();
+            }
+
+            if (this.hasAnyVariant && this.item?.name) {
+                return `${base} (${this.item.name})`.trim();
+            }
+
+            return base;
         },
 
         get isActiveItem() {
@@ -1066,6 +1076,14 @@ Alpine.data(
         },
 
         init() {
+            try {
+                const pid = FleetCart?.data?.productId;
+                const piw = FleetCart?.data?.productInWishlist;
+                if (pid && typeof piw !== 'undefined') {
+                    this.$store.wishlist.bootstrap(pid, piw);
+                }
+            } catch (_) {}
+
             // URL'den order_id query parametresini oku (yorum kuponu için gerekecek)
             try {
                 const params = new URLSearchParams(window.location.search || "");
@@ -1109,10 +1127,10 @@ Alpine.data(
 
             try {
                 const upsellRoot = document.querySelector('[data-upsell-products]');
-                const upsellHasRealSlides = !!(upsellRoot && upsellRoot.querySelector('.swiper-slide') && !upsellRoot.querySelector('.swiper-slide-skeleton'));
-                const shouldDeferUpsell = !upsellRoot || upsellRoot.classList.contains('d-none') || !upsellHasRealSlides;
-                if (shouldDeferUpsell) {
-                    this.deferUpSellProducts();
+                // Upsell is rendered server-side in the left sidebar (vertical-products).
+                // No deferred fetching/rendering to avoid overriding the default layout.
+                if (!upsellRoot || upsellRoot.classList.contains('d-none')) {
+                    return;
                 }
             } catch (_) {}
             this.setOldMediaLength();
@@ -1120,6 +1138,8 @@ Alpine.data(
             bindGalleryVideoOverlayState();
             this.setActiveVariationsValue();
             this.setDescriptionContentHeight();
+            this.setCustomTabContentHeight();
+            this.setCustomTab2ContentHeight();
             this.initUpSellProductsSlider();
 
             // Yorum görselleri için lightbox başlat
@@ -1528,6 +1548,7 @@ Alpine.data(
 
         setActiveVariationValueLabel(variationIndex) {
             this.variationImagePath = null;
+            this.previewVariantName = null;
 
             const variation = this.product.variations[variationIndex];
             const value = variation.values.find(
@@ -1541,6 +1562,24 @@ Alpine.data(
         setVariationValueLabel(variationIndex, valueIndex) {
             const variation = this.product.variations[variationIndex];
             const value = variation.values[valueIndex];
+
+            try {
+                const nextVariations = {
+                    ...(this.cartItemForm?.variations || {}),
+                    [variation.uid]: value.uid,
+                };
+
+                const selectedUids = Object.values(nextVariations)
+                    .filter(Boolean)
+                    .sort()
+                    .join(".");
+
+                const variant = this.product?.variants?.find((v) => v && v.uids === selectedUids);
+
+                this.previewVariantName = variant?.name || null;
+            } catch (_) {
+                this.previewVariantName = null;
+            }
 
             if (!this.isMobileDevice() && variation.type === "image") {
                 this.variationImagePath = value.image.path;
@@ -1700,6 +1739,7 @@ Alpine.data(
         },
 
         updateVariantDetails() {
+            this.previewVariantName = null;
             this.setOldMediaLength();
             this.setVariant();
             this.resetQuantityToDefault();
@@ -1809,6 +1849,30 @@ Alpine.data(
                     this.$refs.descriptionContent.clientHeight >= 400
                         ? true
                         : false;
+            });
+        },
+
+        setCustomTabContentHeight() {
+            this.$nextTick(() => {
+                const el = this.$refs?.customTabContent || null;
+                if (!el) {
+                    this.showCustomTabMore = false;
+                    return;
+                }
+
+                this.showCustomTabMore = el.clientHeight >= 400 ? true : false;
+            });
+        },
+
+        setCustomTab2ContentHeight() {
+            this.$nextTick(() => {
+                const el = this.$refs?.customTab2Content || null;
+                if (!el) {
+                    this.showCustomTab2More = false;
+                    return;
+                }
+
+                this.showCustomTab2More = el.clientHeight >= 400 ? true : false;
             });
         },
 
@@ -1943,6 +2007,14 @@ Alpine.data(
 
         toggleDescriptionContent() {
             this.showDescriptionContent = !this.showDescriptionContent;
+        },
+
+        toggleCustomTabContent() {
+            this.showCustomTabContent = !this.showCustomTabContent;
+        },
+
+        toggleCustomTab2Content() {
+            this.showCustomTab2Content = !this.showCustomTab2Content;
         },
 
         initReviewLightbox() {
@@ -2142,7 +2214,12 @@ Alpine.data(
             const nextEl = container.querySelector('.swiper-button-next');
             const prevEl = container.querySelector('.swiper-button-prev');
 
-            new Swiper(container, {
+            // Prevent double initialization
+            if (container.classList.contains('swiper-initialized') || container.__swiperInstance) {
+                return;
+            }
+
+            container.__swiperInstance = new Swiper(container, {
                 modules: [Navigation],
                 slidesPerView: 1,
                 navigation: {

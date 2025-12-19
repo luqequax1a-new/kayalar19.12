@@ -54,7 +54,7 @@
                                                     ($card3xAvif ? $card3xAvif.' 780w' : null),
                                                     ($isLcp && $detailAvif ? $detailAvif.' 1000w' : null),
                                                 ])->filter()->unique()->values()->implode(', ')) }}"
-                                                sizes="(max-width: 576px) 92vw, (max-width: 992px) 50vw, 540px"
+                                                sizes="(max-width: 576px) 92vw, (max-width: 992px) 50vw, 650px"
                                                 type="image/avif"
                                             >
                                         @endif
@@ -66,7 +66,7 @@
                                                     ($card2xWebp ? $card2xWebp.' 520w' : null),
                                                     ($card3xWebp ? $card3xWebp.' 780w' : null),
                                                 ])->filter()->unique()->values()->implode(', ')) }}"
-                                                sizes="(max-width: 576px) 92vw, (max-width: 992px) 50vw, 540px"
+                                                sizes="(max-width: 576px) 92vw, (max-width: 992px) 50vw, 650px"
                                                 type="image/webp"
                                             >
                                         @endif
@@ -78,7 +78,7 @@
                                                 ($card2xJpeg ? $card2xJpeg.' 520w' : null),
                                                 ($card3xJpeg ? $card3xJpeg.' 780w' : null),
                                             ])->filter()->unique()->values()->implode(', ')) }}"
-                                            sizes="(max-width: 576px) 92vw, (max-width: 992px) 50vw, 540px"
+                                            sizes="(max-width: 576px) 92vw, (max-width: 992px) 50vw, 650px"
                                             data-zoom="{{ $detailJpeg }}"
                                             alt="{{ $product->name }}"
                                             width="1100"

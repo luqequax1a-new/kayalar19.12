@@ -17,7 +17,7 @@
 
             .product-info {
                 .special-price {
-                    color: var(--color-red);
+                    color: var(--color-black);
                 }
             }
 
@@ -137,6 +137,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
             -webkit-line-clamp: 2;
+            line-clamp: 2;
             -webkit-box-orient: vertical;
             transition: var(--transition-150);
             text-decoration-line: underline;
@@ -159,7 +160,7 @@
 
         .special-price {
             font-size: 20px;
-            color: var(--color-red);
+            color: var(--color-black);
         }
 
         .previous-price {

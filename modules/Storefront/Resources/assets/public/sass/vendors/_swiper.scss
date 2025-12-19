@@ -31,7 +31,7 @@
     }
 }
 
-.swiper-pagination {
+.swiper-pagination:not(.product-card-dots) {
     bottom: 0 !important;
     position: relative;
     padding-top: 20px;

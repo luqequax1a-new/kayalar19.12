@@ -26,6 +26,7 @@ return [
     'specification' => 'Specification',
     'loading' => 'Loading...',
     'reviews' => ':count Reviews',
+    'review_label' => 'reviews',
     'add_a_review' => 'Add a review',
     'review_submitted' => 'Review submitted',
     'review_form' => [

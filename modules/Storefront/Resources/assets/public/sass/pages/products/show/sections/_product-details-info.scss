@@ -148,19 +148,50 @@
     .details-top-bar {
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: flex-start;
         gap: 12px;
         margin: 8px 0 12px;
+        flex-wrap: wrap;
+
+        .product-name {
+            margin-bottom: 0;
+            flex: 0 1 auto;
+            min-width: 0;
+            max-width: calc(100% - 56px);
+        }
+
+        .btn-wishlist {
+            width: 44px;
+            height: 44px;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            color: var(--color-gray-dark);
+            flex: 0 0 auto;
+
+            &:hover {
+                color: var(--color-primary);
+            }
+
+            > svg {
+                margin-right: 0;
+                width: 28px;
+                height: 28px;
+            }
+        }
     }
 
     .product-name {
         font-size: 24px;
         line-height: 30px;
+        margin-bottom: 10px;
     }
 
     .product-rating {
         font-size: 16px;
-        margin-bottom: 9px;
+        margin-bottom: 10px;
 
         .rating-count {
             font-size: 14px;
@@ -168,6 +199,10 @@
         }
 
         & + .brief-description {
+            margin-top: 10px;
+        }
+
+        & + .product-price {
             margin-top: 10px;
         }
 
@@ -219,6 +254,13 @@
             }
         }
 
+        .size-chart-trigger {
+            > svg {
+                width: 20px;
+                height: 20px;
+            }
+        }
+
         .btn-wishlist {
             margin-right: 25px;
         }
@@ -237,33 +279,53 @@
 
     .product-price {
         display: flex;
-        align-items: flex-end;
+        align-items: center;
+        gap: 12px;
         padding-bottom: 18px;
+        padding-top: 10px;
+
+        .product-discount-badge {
+            width: 44px;
+            height: 44px;
+            border-radius: 999px;
+            background: var(--color-red);
+            color: #ffffff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 1;
+            flex: 0 0 auto;
+        }
+
+        .product-price-values {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+        }
 
         .previous-price {
-            font-size: 24px;
-            font-weight: var(--font-medium);
-            line-height: 1;
-            color: var(--color-primary-hover);
-            text-decoration: none;
+            font-size: 16px;
+            font-weight: var(--font-normal);
+            line-height: 1.2;
+            color: #3a3a3a;
+            text-decoration: line-through;
+            white-space: nowrap;
         }
 
         .special-price {
             font-size: 24px;
-            max-width: 100%;
-            display: inline-block;
-            margin-right: 0;
+            font-weight: 700;
+            line-height: 1.1;
+            color: var(--color-red);
             white-space: nowrap;
-            line-height: 1.15;
+        }
 
-            + .previous-price {
-                font-size: 16px;
-                font-weight: var(--font-normal);
-                line-height: 1.25;
-                margin-left: 8px;
-                color: #4c4c4c;
-                text-decoration: line-through;
-            }
+        // Non-discounted price should remain black (default).
+        &:not(.has-special-price) {
+            color: var(--color-black);
         }
     }
 
@@ -355,7 +417,8 @@
         .variant-custom-selection {
             margin-bottom: 10px;
 
-            label {
+            label,
+            > span {
                 font-weight: var(--font-medium);
             }
 
@@ -696,6 +759,10 @@
                 margin-bottom: 0;
             }
 
+            > span {
+                margin-right: 5px;
+            }
+
             a {
                 color: var(--color-primary);
 
@@ -718,7 +785,8 @@
         display: flex;
         align-items: center;
 
-        label {
+        label,
+        > span {
             margin-bottom: 0;
         }
     }

@@ -1,7 +1,9 @@
 @if (!empty($relatedProducts) && $relatedProducts->isNotEmpty())
     <section data-related-products>
         <div class="tab-products-header text-center">
-            <h3 class="section-title section-title--no-divider">{{ trans("storefront::product.related_products") }}</h3>
+            <h3 class="section-title section-title--no-divider">
+                {{ setting('storefront_product_page_related_products_title') ?: trans("storefront::product.related_products") }}
+            </h3>
         </div>
 
         <div class="grid-products products-slider swiper related-products-carousel">

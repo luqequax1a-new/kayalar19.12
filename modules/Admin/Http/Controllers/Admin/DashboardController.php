@@ -3,6 +3,7 @@
 namespace Modules\Admin\Http\Controllers\Admin;
 
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Modules\User\Entities\User;
 use Modules\Order\Entities\Order;
 use Modules\Review\Entities\Review;
@@ -27,6 +28,7 @@ class DashboardController
             'latestSearchTerms' => $this->getLatestSearchTerms(),
             'latestOrders' => $this->getLatestOrders(),
             'latestReviews' => $this->getLatestReviews(),
+            'topCustomers' => $this->getTopCustomers(),
         ]);
     }
 
@@ -48,10 +50,11 @@ class DashboardController
             'id',
             'customer_first_name',
             'customer_last_name',
+            'payment_method',
             'total',
             'status',
             'created_at',
-        ])->latest()->take(5)->get();
+        ])->latest()->take(15)->get();
     }
 
 
@@ -67,5 +70,25 @@ class DashboardController
             ->with('product:id')
             ->limit(5)
             ->get();
+    }
+
+
+    private function getTopCustomers()
+    {
+        return DB::table('orders')
+            ->join('users', 'users.id', '=', 'orders.customer_id')
+            ->whereNotNull('orders.customer_id')
+            ->whereNotIn('orders.status', [Order::CANCELED, Order::REFUNDED])
+            ->groupBy('orders.customer_id', 'users.id', 'users.first_name', 'users.last_name', 'users.email')
+            ->orderByDesc(DB::raw('SUM(orders.total)'))
+            ->limit(10)
+            ->get([
+                'users.id as id',
+                'users.first_name as first_name',
+                'users.last_name as last_name',
+                'users.email as email',
+                DB::raw('COUNT(orders.id) as orders_count'),
+                DB::raw('SUM(orders.total) as total_spent'),
+            ]);
     }
 }

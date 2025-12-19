@@ -7,6 +7,7 @@ use FleetCart\Http\Middleware\TrimStrings;
 use FleetCart\Http\Middleware\TrustProxies;
 use FleetCart\Http\Middleware\EncryptCookies;
 use FleetCart\Http\Middleware\VerifyCsrfToken;
+use FleetCart\Http\Middleware\CaptureOrderAttribution;
 use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Http\Middleware\SetCacheHeaders;
 use Illuminate\Session\Middleware\StartSession;
@@ -35,6 +36,7 @@ class Kernel extends HttpKernel
     protected $middleware = [
         EncryptCookies::class,
         StartSession::class,
+        CaptureOrderAttribution::class,
         CheckForMaintenanceMode::class,
         ValidatePostSize::class,
         TrimStrings::class,

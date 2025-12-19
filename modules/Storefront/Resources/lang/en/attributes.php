@@ -78,6 +78,16 @@ return [
     'storefront_header_custom_text_show_tablet' => 'Show Custom Text on Tablet',
     'storefront_header_custom_text_show_desktop' => 'Show Custom Text on Desktop',
 
+    'storefront_product_page_custom_text_content' => 'Product Page Custom Text Content',
+
+    'storefront_product_page_custom_tab_title' => 'Product Page Custom Tab Title',
+    'storefront_product_page_custom_tab_content' => 'Product Page Custom Tab Content',
+
+    'storefront_product_page_custom_tab_2_title' => 'Product Page Custom Tab 2 Title',
+    'storefront_product_page_custom_tab_2_content' => 'Product Page Custom Tab 2 Content',
+
+    'storefront_product_page_custom_html_content' => 'Product Page Custom HTML Content',
+
     'storefront_home_marquee_enabled' => 'Home Marquee',
     'storefront_home_marquee_text' => 'Marquee Text',
     'storefront_home_marquee_separator' => 'Marquee Separator',

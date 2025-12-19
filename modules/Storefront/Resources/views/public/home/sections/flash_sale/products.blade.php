@@ -26,7 +26,7 @@
                                     </a>
                                 </div>
 
-                                @include('storefront::public.partials.product_rating')
+                                @include('storefront::public.partials.product_rating', ['showLabel' => false])
 
                                 <a :href="productUrl" class="product-name">
                                     <span x-text="productName"></span>

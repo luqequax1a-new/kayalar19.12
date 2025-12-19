@@ -1,6 +1,6 @@
 .product-gallery {
-    width: 550px;
-    min-width: 550px;
+    width: 650px;
+    min-width: 650px;
     padding-right: 15px;
     top: 90px;
     position: sticky !important;
@@ -16,6 +16,11 @@ video.product-main-media--video::-webkit-media-controls-fullscreen-button {
     margin-bottom: 12px;
     border: 1px solid var(--color-gray-lite);
     border-radius: var(--radius-default);
+
+    // Ensure badges stack above the swiper/media.
+    .product-badge-labels {
+        z-index: 10;
+    }
 
     &.visible-variation-image {
         .product-gallery-preview {
@@ -36,11 +41,8 @@ video.product-main-media--video::-webkit-media-controls-fullscreen-button {
         }
     }
 
-    &.is-video-active {
-        .product-badge-labels {
-            display: none;
-        }
-    }
+    // Keep badges visible even when the active slide is a video.
+    // (Previously hidden via display:none which made detail badges appear “missing”.)
 }
 
 // Inline video in main gallery should behave like images: centered inside square box
@@ -239,14 +241,14 @@ video.product-main-media--video::-webkit-media-controls-fullscreen-button {
 }
 
 .product-gallery {
-    width: 500px;
-    min-width: 500px;
+    width: 650px;
+    min-width: 650px;
 }
 
 @media screen and (max-width: 1600px) {
     .product-gallery {
-        width: 500px;
-        min-width: 500px;
+        width: 600px;
+        min-width: 600px;
     }
 }
 

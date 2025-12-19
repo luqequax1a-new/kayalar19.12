@@ -33,13 +33,18 @@
 
 <script type="module">
     if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/serviceworker.js', {
-            scope: '/'
-        }).then(function (registration) {
-            console.log('PWA: ServiceWorker registration successful with scope: ', registration.scope);
-        }, function (err) {
-            console.log('PWA: ServiceWorker registration failed: ', err);
-        });
+        const host = window.location.hostname;
+        const isLocal = host === 'localhost' || host === '127.0.0.1';
+
+        if (!isLocal) {
+            navigator.serviceWorker.register('/serviceworker.js', {
+                scope: '/'
+            }).then(function (registration) {
+                console.log('PWA: ServiceWorker registration successful with scope: ', registration.scope);
+            }, function (err) {
+                console.log('PWA: ServiceWorker registration failed: ', err);
+            });
+        }
     }
 </script>
 

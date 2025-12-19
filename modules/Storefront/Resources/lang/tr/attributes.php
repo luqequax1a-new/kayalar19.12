@@ -78,6 +78,18 @@ return [
     'storefront_header_custom_text_show_tablet' => 'Sabit Yazı Tablette Göster',
     'storefront_header_custom_text_show_desktop' => 'Sabit Yazı Masaüstünde Göster',
 
+    'storefront_product_page_custom_text_content' => 'Ürün Sayfası Özel Metin İçeriği',
+
+    'storefront_product_page_custom_tab_title' => 'Ürün Sayfası Özel Sekme Başlığı',
+
+    'storefront_product_page_custom_tab_content' => 'Ürün Sayfası Özel Sekme İçeriği',
+
+    'storefront_product_page_custom_tab_2_title' => 'Ürün Sayfası Özel Sekme 2 Başlığı',
+
+    'storefront_product_page_custom_tab_2_content' => 'Ürün Sayfası Özel Sekme 2 İçeriği',
+
+    'storefront_product_page_custom_html_content' => 'Ürün Sayfası Özel HTML İçeriği',
+
     'storefront_home_marquee_enabled' => 'Anasayfa Kayan Yazı (Marquee)',
     'storefront_home_marquee_text' => 'Marquee Metni',
     'storefront_home_marquee_separator' => 'Ayırıcı',

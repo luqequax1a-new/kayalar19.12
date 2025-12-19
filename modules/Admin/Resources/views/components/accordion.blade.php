@@ -36,6 +36,14 @@
                                         </button>
                                     </div>
                                 @endif
+
+                                @if ($group === 'product_page_sections')
+                                    <div class="m-t-10 hide" data-product-page-sections-order-actions>
+                                        <button type="button" class="btn btn-primary btn-sm" data-save-product-page-sections-order>
+                                            Sıralamayı Kaydet
+                                        </button>
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>

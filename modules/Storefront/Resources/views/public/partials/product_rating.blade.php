@@ -18,6 +18,10 @@
              : json_encode($data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT));
 @endphp
 
+@php
+    $showLabel = $showLabel ?? true;
+@endphp
+
 <div x-data="ProductRating({{ $xDataParam }})">
     <a
         class="product-rating {{ $serverHasReviews === null ? '' : ($serverHasReviews ? 'has-reviews' : 'no-reviews') }}"
@@ -26,6 +30,9 @@
         @endif
         :href="(typeof productUrl !== 'undefined' ? productUrl : window.location.pathname) + '#reviews'"
         x-on:click.prevent="typeof openReviewsTab==='function' && openReviewsTab()"
+        @if ($showLabel)
+            data-review-label="{{ trans('storefront::product.review_label') }}"
+        @endif
     >
         <div class="back-stars">
             <i class="las la-star"></i>
@@ -44,7 +51,10 @@
         </div>
 
         <template x-if="reviewCount > 0">
-            <span class="rating-count" x-text="'(' + reviewCount + ')' "></span>
+            <span
+                class="rating-count"
+                x-text="'(' + reviewCount + ')' + ($el.closest('a')?.dataset?.reviewLabel ? (' ' + $el.closest('a')?.dataset?.reviewLabel) : '')"
+            ></span>
         </template>
     </a>
 </div>
