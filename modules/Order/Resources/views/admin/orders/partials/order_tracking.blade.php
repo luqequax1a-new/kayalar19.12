@@ -7,20 +7,58 @@
 
         <div class="row">
             <div class="col-lg-5 col-md-8">
-                <label for="tracking_reference">{{ trans('order::orders.tracking_reference') }}</label>
+                <label for="shipping_carrier_name">{{ trans('order::orders.shipping_carrier_name') }}</label>
 
                 <div class="form-group">
                     <input
                         type="text"
-                        name="tracking_reference"
-                        id="tracking_reference"
+                        name="shipping_carrier_name"
+                        id="shipping_carrier_name"
                         data-id="{{ $order->id }}"
-                        class="form-control @error('tracking_reference') is-invalid @enderror"
-                        value="{{ old('tracking_reference', $order->tracking_reference) }}"
-                        placeholder="{{ trans('order::orders.tracking_reference_placeholder') }}"
+                        class="form-control @error('shipping_carrier_name') is-invalid @enderror"
+                        value="{{ old('shipping_carrier_name', $order->shipping_carrier_name) }}"
+                        placeholder="{{ trans('order::orders.shipping_carrier_name_placeholder') }}"
                     >
 
-                    @error('tracking_reference')
+                    @error('shipping_carrier_name')
+                        <span class="help-block text-red">
+                        <span class="invalid-feedback">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <label for="shipping_tracking_number">{{ trans('order::orders.shipping_tracking_number') }}</label>
+
+                <div class="form-group">
+                    <input
+                        type="text"
+                        name="shipping_tracking_number"
+                        id="shipping_tracking_number"
+                        data-id="{{ $order->id }}"
+                        class="form-control @error('shipping_tracking_number') is-invalid @enderror"
+                        value="{{ old('shipping_tracking_number', $order->shipping_tracking_number) }}"
+                        placeholder="{{ trans('order::orders.shipping_tracking_number_placeholder') }}"
+                    >
+
+                    @error('shipping_tracking_number')
+                        <span class="help-block text-red">
+                        <span class="invalid-feedback">{{ $message }}</span>
+                    @enderror
+                </div>
+
+                <label for="shipping_tracking_url">{{ trans('order::orders.shipping_tracking_url') }}</label>
+
+                <div class="form-group">
+                    <input
+                        type="text"
+                        name="shipping_tracking_url"
+                        id="shipping_tracking_url"
+                        data-id="{{ $order->id }}"
+                        class="form-control @error('shipping_tracking_url') is-invalid @enderror"
+                        value="{{ old('shipping_tracking_url', $order->shipping_tracking_url) }}"
+                        placeholder="{{ trans('order::orders.shipping_tracking_url_placeholder') }}"
+                    >
+
+                    @error('shipping_tracking_url')
                         <span class="help-block text-red">
                         <span class="invalid-feedback">{{ $message }}</span>
                     @enderror

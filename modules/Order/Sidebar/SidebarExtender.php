@@ -28,15 +28,7 @@ class SidebarExtender extends BaseSidebarExtender
                     );
                 });
 
-                // Manual Orders menu removed
-
-                $item->item('Sepet Oluştur', function (Item $item) {
-                    $item->weight(15);
-                    $item->route('admin.cart_links.create');
-                    $item->authorize(
-                        $this->auth->hasAccess('admin.cart_links.create')
-                    );
-                });
+                // Manual admin cart-links feature removed.
             });
         });
     }

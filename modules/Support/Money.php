@@ -176,30 +176,37 @@ class Money implements JsonSerializable
         ];
     }
 
+public function format($currency = null, $locale = null)
+{
+    $currency = $currency ?: currency();
+    $locale = $locale ?: locale();
 
-    public function format($currency = null, $locale = null)
-    {
-        $currency = $currency ?: currency();
-        $locale = $locale ?: locale();
+    $numberFormatter = new NumberFormatter($locale, NumberFormatter::CURRENCY);
 
-        $numberFormatter = new NumberFormatter($locale, NumberFormatter::CURRENCY);
+    // ✅ PHP 8.1+ uyumluluk: formatCurrency()'ye null gitmesin
+    $amountValue = $this->amount ?? 0;
+    $amountValue = (float) $amountValue;
 
-        $amount = $numberFormatter->formatCurrency($this->amount, $currency);
+    $amount = $numberFormatter->formatCurrency($amountValue, $currency);
 
-        if (str_contains($amount, $currency)) {
-            $symbol = ($currency === 'TRY') ? '₺' : \Symfony\Component\Intl\Currencies::getSymbol($currency, $locale);
-            $amount = str_replace($currency, $symbol, $amount);
-        }
+    if (str_contains($amount, $currency)) {
+        $symbol = ($currency === 'TRY')
+            ? '₺'
+            : \Symfony\Component\Intl\Currencies::getSymbol($currency, $locale);
 
-        /**
-         * Fix: Hungarian Forint outputs wrong currency format
-         */
-        if (currency() === 'HUF') {
-            $amount = str_replace(',00', '', $amount);
-        }
-
-        return $amount;
+        $amount = str_replace($currency, $symbol, $amount);
     }
+
+    /**
+     * Fix: Hungarian Forint outputs wrong currency format
+     */
+    if (currency() === 'HUF') {
+        $amount = str_replace(',00', '', $amount);
+    }
+
+    return $amount;
+}
+
 
 
     public function KMBTFormat($currency = null, $locale = null, $precision = 2)

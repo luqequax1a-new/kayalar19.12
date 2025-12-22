@@ -126,14 +126,21 @@ class ProductController extends BaseController
                                     $p = $product->clean();
                                     $p['variant_attribute_label'] = $variantLabel;
                                     $p['name'] = $product->name;
+                                    $p['listing_key'] = 'p' . (int) $product->id . '-v' . (int) $variant->id;
                                     $p['variant'] = $variant->toArray();
                                     $p['url'] = $variant->url() ?? $product->url();
                                     $p['base_image'] = ($variant->base_image ?? $product->base_image);
                                     $p['base_image_thumb'] = [
-                                        'path' => media_variant_url(($variant->base_image ?? $product->base_image), 400)
+                                        'path' => media_variant_url(
+                                            ($variant->base_image ?? $product->base_image),
+                                            (int) config('image_optimization.variants.widths.grid', 400)
+                                        )
                                     ];
                                     $p['variant']['base_image_thumb'] = [
-                                        'path' => media_variant_url(($variant->base_image ?? $product->base_image), 80)
+                                        'path' => media_variant_url(
+                                            ($variant->base_image ?? $product->base_image),
+                                            (int) config('image_optimization.variants.widths.thumb', 80)
+                                        )
                                     ];
                                     $p['formatted_price'] = $variant->formatted_price ?? $product->formatted_price;
                                     $p['formatted_price_range'] = null;
@@ -147,10 +154,14 @@ class ProductController extends BaseController
 
                         $base = $product->clean();
                         $base['variant_attribute_label'] = $variantLabel;
+                        $base['listing_key'] = 'p' . (int) $product->id;
                         $base['reviews_count'] = $product->reviews_count ?? ($product->relationLoaded('reviews') ? $product->reviews->count() : 0);
                         $base['rating_percent'] = $product->rating_percent;
                         $base['base_image_thumb'] = [
-                            'path' => media_variant_url($product->base_image, 400)
+                            'path' => media_variant_url(
+                                $product->base_image,
+                                (int) config('image_optimization.variants.widths.grid', 400)
+                            )
                         ];
                         $base['tag_badges'] = $tagBadges;
 
@@ -785,7 +796,10 @@ class ProductController extends BaseController
             $base = $product->clean();
             $base['variant_attribute_label'] = $variantLabel;
             $base['base_image_thumb'] = [
-                'path' => media_variant_url($product->base_image, 400),
+                'path' => media_variant_url(
+                    $product->base_image,
+                    (int) config('image_optimization.variants.widths.grid', 400)
+                ),
             ];
             $base['tag_badges'] = $tagBadges;
 

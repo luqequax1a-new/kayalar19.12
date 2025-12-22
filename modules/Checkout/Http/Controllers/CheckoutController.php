@@ -19,7 +19,6 @@ use Modules\Coupon\Checkers\MaximumSpend;
 use Modules\User\Services\CustomerService;
 use Modules\Checkout\Services\OrderService;
 use Modules\Coupon\Checkers\AlreadyApplied;
-use Modules\Account\Entities\DefaultAddress;
 use Modules\Coupon\Checkers\ExcludedProducts;
 use Modules\Coupon\Checkers\ApplicableProducts;
 use Modules\Coupon\Checkers\ExcludedCategories;
@@ -39,6 +38,7 @@ use Modules\Shipping\Services\SmartShippingCalculator;
 use Modules\Shipping\Method as ShippingMethod;
 use Illuminate\Support\Facades\DB;
 use Modules\Cart\Services\CartUpsellService;
+use Modules\Address\Entities\DefaultAddress;
 
 class CheckoutController extends Controller
 {

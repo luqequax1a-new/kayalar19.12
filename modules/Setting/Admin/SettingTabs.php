@@ -111,7 +111,7 @@ class SettingTabs extends Tabs
         return tap(new Tab('store', trans('setting::settings.tabs.store')), function (Tab $tab) {
             $tab->weight(10);
 
-            $tab->fields(['translatable.store_name', 'translatable.store_tagline', 'store_phone', 'store_email', 'store_address_1', 'store_address_2', 'store_city', 'store_country', 'store_state', 'store_zip']);
+            $tab->fields(['translatable.store_name', 'translatable.store_tagline', 'store_phone', 'store_email', 'store_address_1', 'store_address_2', 'store_city', 'store_country', 'store_state', 'store_zip', 'prices_include_tax']);
 
             $tab->view('setting::admin.settings.tabs.store', [
                 'countries' => Country::all(),

@@ -48,6 +48,8 @@ class Invoice extends Mailable implements ShouldQueue
             'products.product_variant.files',
             'shippingAddress',
             'billingAddress',
+            'billingSnapshot',
+            'shippingSnapshot',
         ]);
 
         return $this->subject('Siparişiniz Başarıyla Oluşturuldu ✅')

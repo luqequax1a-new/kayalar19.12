@@ -2,9 +2,9 @@
 
 return [
     'status_map' => [
-        'New' => 'processing',
+        'New' => 'pending',
         'ReadyToShip' => 'shipped',
-        'PickedUp' => 'processing',
+        'PickedUp' => 'shipped',
         'InTransit' => 'shipped',
         'OutForDelivery' => 'shipped',
         'Delivered' => 'completed',
@@ -13,7 +13,7 @@ return [
         'Out for delivery' => 'shipped',
         'Yolda' => 'shipped',
         'Teslim Edildi' => 'completed',
-        'Exception' => 'on_hold',
+        'Exception' => 'pending',
         'Canceled' => 'canceled',
         'CanceledByCarrier' => 'canceled',
         'PackageAccepted' => 'shipped',

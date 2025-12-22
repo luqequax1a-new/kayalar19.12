@@ -1,4 +1,19 @@
-@if (setting('newsletter_enabled') && json_decode(Cookie::get('show_newsletter_popup', true)))
+@php
+    $showNewsletterPopupCookie = Cookie::get('show_newsletter_popup');
+    $shouldShowNewsletterPopup = is_null($showNewsletterPopupCookie)
+        ? true
+        : filter_var(
+            $showNewsletterPopupCookie,
+            FILTER_VALIDATE_BOOLEAN,
+            FILTER_NULL_ON_FAILURE
+        );
+
+    if (is_null($shouldShowNewsletterPopup)) {
+        $shouldShowNewsletterPopup = true;
+    }
+@endphp
+
+@if (setting('newsletter_enabled') && $shouldShowNewsletterPopup)
     <div x-data="NewsletterPopup" class="modal newsletter-wrap fade" id="newsletterPopup" tabindex="-1" aria-labelledby="newsletterPopup" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">

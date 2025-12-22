@@ -16,7 +16,7 @@ class SendOrderToGeliverOnProcessing
         if ($order->geliver_shipment_id) {
             return;
         }
-        if ($order->status !== Order::PROCESSING) {
+        if ($order->status !== Order::PENDING) {
             return;
         }
 

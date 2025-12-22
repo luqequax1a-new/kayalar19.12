@@ -11,7 +11,7 @@
                 <div class="swiper-wrapper">
                     <template
                         x-for="product in products"
-                        :key="product.id"
+                        :key="product.listing_key || product.id"
                     >
                         <div class="swiper-slide">
                             <div x-data="FlashSaleProductCard(product)" class="daily-deals-inner">

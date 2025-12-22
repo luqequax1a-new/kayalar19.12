@@ -17,7 +17,7 @@
                             @endif
                             <div style="font-family:'Open Sans',sans-serif;font-size:24px;line-height:32px;font-weight:800;color:#fafafa;margin-top:10px;">اكتملت عملية الاسترداد 💸</div>
                             <div style="font-family:'Open Sans',sans-serif;font-size:15px;line-height:22px;font-weight:600;color:#e5e7eb;margin-top:6px;">
-                                #{{ $order->id }}
+                                #{{ $order->displayOrderNumber() }}
                             </div>
                         </td>
                     </tr>
@@ -25,7 +25,7 @@
                     <tr>
                         <td style="padding:16px 20px 8px;">
                             <div style="font-family:'Open Sans',sans-serif;font-size:15px;line-height:20px;color:#374151;text-align:center;">
-                                تم إكمال عملية الاسترداد لطلبك (#{{ $order->id }}).<br/>
+                                تم إكمال عملية الاسترداد لطلبك (#{{ $order->displayOrderNumber() }}).<br/>
                                 طريقة الدفع: <strong>{{ $order->payment_method }}</strong>. تم تنفيذ الاسترداد عبر هذه الطريقة.
                             </div>
                         </td>
@@ -34,7 +34,7 @@
                     <tr>
                         <td style="padding:0 20px 12px;">
                             <div style="font-family:'Open Sans',sans-serif;font-size:14px;line-height:20px;color:#111827;text-align:center;">
-                                <div style="margin:4px 0;">رقم الطلب: #{{ $order->id }}</div>
+                                <div style="margin:4px 0;">رقم الطلب: #{{ $order->displayOrderNumber() }}</div>
                                 <div style="margin:4px 0;">التاريخ: {{ $order->created_at->toFormattedDateString() }}</div>
                                 <div style="margin:4px 0;">الدفع: {{ $order->payment_method }}</div>
                             </div>

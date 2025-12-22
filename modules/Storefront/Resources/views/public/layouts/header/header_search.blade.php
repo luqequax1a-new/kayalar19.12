@@ -307,11 +307,15 @@
                                 >
                                     <div class="product-image">
                                         <img
-                                            :src="baseImage(product)"
+                                            :src="(product.thumb_src || baseImage(product))"
+                                            :srcset="(product.thumb_srcset || null)"
+                                            sizes="60px"
                                             :class="{
                                                 'image-placeholder': !hasBaseImage(product),
                                             }"
                                             :alt="product.name"
+                                            width="60"
+                                            height="60"
                                         />
                                     </div>
 

@@ -15,7 +15,4 @@ Route::get('payment-link/{orderId}', 'PaymentLinkController@show')
     ->name('checkout.payment_link.show')
     ->middleware('signed');
 
-Route::get('cart-link/{token}', 'CartLinkController@show')
-    ->name('checkout.cart_link.show');
-
 Route::any('checkout/{orderId}/payment-canceled', 'PaymentCanceledController@store')->name('checkout.payment_canceled.store')->withoutMiddleware(\FleetCart\Http\Middleware\VerifyCsrfToken::class);

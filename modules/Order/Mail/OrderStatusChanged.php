@@ -60,7 +60,7 @@ class OrderStatusChanged extends Mailable implements ShouldQueue
             return 'Sipariş kargoya verildi, en kısa sürede teslim edilecek.';
         }
         return trans('order::mail.your_order_status_changed_text', [
-            'order_id' => $order->id,
+            'order_id' => $order->displayOrderNumber(),
             'status' => mb_strtolower($order->status()),
         ]);
     }

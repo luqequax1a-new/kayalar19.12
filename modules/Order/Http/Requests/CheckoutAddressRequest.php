@@ -56,6 +56,11 @@ class CheckoutAddressRequest extends Request
         $shippingAddressId = $this->input('shipping_address_id') ?? $this->input('shippingAddressId');
         $billingAddressId = $this->input('billing_address_id') ?? $this->input('billingAddressId');
 
+        if (auth()->guest()) {
+            $shippingAddressId = null;
+            $billingAddressId = null;
+        }
+
         if ($shippingAddressId) {
             try {
                 $addr = UserAddress::query()
@@ -102,6 +107,7 @@ class CheckoutAddressRequest extends Request
                         'tax_number' => $billing['tax_number'] ?? $addr->tax_number,
                         'tax_office' => $billing['tax_office'] ?? $addr->tax_office,
                         'phone' => $billing['phone'] ?? $addr->phone,
+                        'billing_email' => $billing['billing_email'] ?? $addr->billing_email,
                         'address_line' => $billing['address_line'] ?? ($addr->address_line ?? $addr->address_1),
                         'city_id' => $billing['city_id'] ?? $addr->city_id,
                         'district_id' => $billing['district_id'] ?? $addr->district_id,
@@ -118,8 +124,8 @@ class CheckoutAddressRequest extends Request
         $this->merge([
             'shipping' => $shipping,
             'billing' => $billing,
-            'shipping_address_id' => $this->input('shipping_address_id') ?? $this->input('shippingAddressId'),
-            'billing_address_id' => $this->input('billing_address_id') ?? $this->input('billingAddressId'),
+            'shipping_address_id' => $shippingAddressId,
+            'billing_address_id' => $billingAddressId,
         ]);
     }
 
@@ -166,7 +172,8 @@ class CheckoutAddressRequest extends Request
                     'billing.company_name' => ['required', 'string', 'max:255'],
                     'billing.tax_number' => ['required', 'string', 'max:50'],
                     'billing.tax_office' => ['required', 'string', 'max:255'],
-                    'billing.phone' => ['required', 'string', 'max:50'],
+                    'billing.phone' => ['nullable', 'string', 'max:50'],
+                    'billing.billing_email' => ['nullable', 'email', 'max:191'],
                     'billing.city_id' => ['required_without:billing.city', 'nullable', 'integer'],
                     'billing.city' => ['required_without:billing.city_id', 'nullable', 'string', 'max:255'],
                     'billing.district_id' => ['required_without:billing.state', 'nullable', 'integer'],
@@ -195,6 +202,7 @@ class CheckoutAddressRequest extends Request
             'billing.tax_number' => 'Vergi numarası',
             'billing.tax_office' => 'Vergi dairesi',
             'billing.phone' => 'Fatura telefon',
+            'billing.billing_email' => 'Fatura e-posta',
             'billing.city_id' => 'Fatura il',
             'billing.city' => 'Fatura il',
             'billing.district_id' => 'Fatura ilçe',

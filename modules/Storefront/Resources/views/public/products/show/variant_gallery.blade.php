@@ -12,7 +12,7 @@
         ])
 
         <template x-if="hasAnyVariationImage">
-            <img :src="variationImagePath" class="variation-image" :alt="productName">
+            <img :src="variationImagePath" class="variation-image" :alt="productName" fetchpriority="high" decoding="async">
         </template>
 
         <div class="product-gallery-preview swiper">
@@ -43,75 +43,44 @@
                         @php($isLcp = !$lcpAssigned)
                         @php($lcpAssigned = true)
                         @php(
-                            $detailAvif = $media->detail_avif_url ?? $media->grid_avif_url ?? null
-                        )
-                        @php(
-                            $detailWebp = $media->detail_webp_url ?? $media->grid_webp_url ?? null
-                        )
-                        @php($card2xAvif = $media->card_2x_avif_url ?? null)
-                        @php($card2xWebp = $media->card_2x_webp_url ?? null)
-                        @php($card2xJpeg = $media->card_2x_jpeg_url ?? null)
-                        @php($card3xAvif = $media->card_3x_avif_url ?? null)
-                        @php($card3xWebp = $media->card_3x_webp_url ?? null)
-                        @php($card3xJpeg = $media->card_3x_jpeg_url ?? null)
-                        @php(
-                            $gridWebp = $media->grid_webp_url
-                        )
-                        @php(
-                            $gridAvif = $media->grid_avif_url
-                        )
-                        @php(
                             $detailJpeg = $media->detail_jpeg_url
                                 ?? $media->grid_jpeg_url
                                 ?? $media->path
                                 ?? asset('build/assets/image-placeholder.png')
                         )
-                        @php(
-                            $gridJpeg = $media->grid_jpeg_url
-                        )
+                        @php($detailSizes = '(max-width: 576px) 92vw, (max-width: 992px) 50vw, 720px')
                         <div class="swiper-slide">
                             <div class="gallery-preview-slide">
                                 <div class="gallery-preview-item" @click="triggerGalleryPreviewLightbox($event)">
                                     <picture>
-                                        @if ($detailAvif)
+                                        @if ($media->ikas_avif_srcset)
                                             <source
-                                                srcset="{{ trim(collect([
-                                                    ($gridAvif ? $gridAvif.' 400w' : null),
-                                                    ($card2xAvif ? $card2xAvif.' 520w' : null),
-                                                    ($card3xAvif ? $card3xAvif.' 780w' : null),
-                                                    ($isLcp && $detailAvif ? $detailAvif.' 1000w' : null),
-                                                ])->filter()->unique()->values()->implode(', ')) }}"
-                                                sizes="(max-width: 576px) 92vw, (max-width: 992px) 50vw, 650px"
+                                                srcset="{{ $media->ikas_avif_srcset }}"
+                                                sizes="{{ $detailSizes }}"
                                                 type="image/avif"
                                             >
                                         @endif
 
-                                        @if ($detailWebp)
+                                        @if ($media->ikas_webp_srcset)
                                             <source
-                                                srcset="{{ trim(collect([
-                                                    ($gridWebp ? $gridWebp.' 400w' : null),
-                                                    ($card2xWebp ? $card2xWebp.' 520w' : null),
-                                                    ($card3xWebp ? $card3xWebp.' 780w' : null),
-                                                ])->filter()->unique()->values()->implode(', ')) }}"
-                                                sizes="(max-width: 576px) 92vw, (max-width: 992px) 50vw, 650px"
+                                                srcset="{{ $media->ikas_webp_srcset }}"
+                                                sizes="{{ $detailSizes }}"
                                                 type="image/webp"
                                             >
                                         @endif
 
                                         <img
-                                            src="{{ $gridJpeg ?: ($card2xJpeg ?: ($card3xJpeg ?: $detailJpeg)) }}"
-                                            srcset="{{ trim(collect([
-                                                ($gridJpeg ? $gridJpeg.' 400w' : null),
-                                                ($card2xJpeg ? $card2xJpeg.' 520w' : null),
-                                                ($card3xJpeg ? $card3xJpeg.' 780w' : null),
-                                            ])->filter()->unique()->values()->implode(', ')) }}"
-                                            sizes="(max-width: 576px) 92vw, (max-width: 992px) 50vw, 650px"
+                                            src="{{ $detailJpeg }}"
+                                            @if ($media->ikas_jpeg_srcset)
+                                                srcset="{{ $media->ikas_jpeg_srcset }}"
+                                            @endif
+                                            sizes="{{ $detailSizes }}"
                                             data-zoom="{{ $detailJpeg }}"
                                             alt="{{ $product->name }}"
                                             width="1100"
                                             height="1100"
                                             loading="{{ $isLcp ? 'eager' : 'lazy' }}"
-                                            fetchpriority="{{ $isLcp ? 'high' : 'auto' }}"
+                                            fetchpriority="{{ $isLcp ? 'high' : 'low' }}"
                                             decoding="async"
                                         >
                                     </picture>
@@ -128,75 +97,44 @@
                         @php($isLcp = !$lcpAssigned)
                         @php($lcpAssigned = true)
                         @php(
-                            $detailAvif = $media->detail_avif_url ?? $media->grid_avif_url ?? null
-                        )
-                        @php(
-                            $detailWebp = $media->detail_webp_url ?? $media->grid_webp_url ?? null
-                        )
-                        @php($card2xAvif = $media->card_2x_avif_url ?? null)
-                        @php($card2xWebp = $media->card_2x_webp_url ?? null)
-                        @php($card2xJpeg = $media->card_2x_jpeg_url ?? null)
-                        @php($card3xAvif = $media->card_3x_avif_url ?? null)
-                        @php($card3xWebp = $media->card_3x_webp_url ?? null)
-                        @php($card3xJpeg = $media->card_3x_jpeg_url ?? null)
-                        @php(
-                            $gridWebp = $media->grid_webp_url
-                        )
-                        @php(
-                            $gridAvif = $media->grid_avif_url
-                        )
-                        @php(
                             $detailJpeg = $media->detail_jpeg_url
                                 ?? $media->grid_jpeg_url
                                 ?? $media->path
                                 ?? asset('build/assets/image-placeholder.png')
                         )
-                        @php(
-                            $gridJpeg = $media->grid_jpeg_url
-                        )
+                        @php($detailSizes = '(max-width: 576px) 92vw, (max-width: 992px) 50vw, 720px')
                         <div class="swiper-slide">
                             <div class="gallery-preview-slide">
                                 <div class="gallery-preview-item" @click="triggerGalleryPreviewLightbox($event)">
                                     <picture>
-                                        @if ($detailAvif)
+                                        @if ($media->ikas_avif_srcset)
                                             <source
-                                                srcset="{{ trim(collect([
-                                                    ($gridAvif ? $gridAvif.' 400w' : null),
-                                                    ($card2xAvif ? $card2xAvif.' 520w' : null),
-                                                    ($card3xAvif ? $card3xAvif.' 780w' : null),
-                                                    ($isLcp && $detailAvif ? $detailAvif.' 1000w' : null),
-                                                ])->filter()->unique()->values()->implode(', ')) }}"
-                                                sizes="(max-width: 576px) 92vw, (max-width: 992px) 50vw, 650px"
+                                                srcset="{{ $media->ikas_avif_srcset }}"
+                                                sizes="{{ $detailSizes }}"
                                                 type="image/avif"
                                             >
                                         @endif
 
-                                        @if ($detailWebp)
+                                        @if ($media->ikas_webp_srcset)
                                             <source
-                                                srcset="{{ trim(collect([
-                                                    ($gridWebp ? $gridWebp.' 400w' : null),
-                                                    ($card2xWebp ? $card2xWebp.' 520w' : null),
-                                                    ($card3xWebp ? $card3xWebp.' 780w' : null),
-                                                ])->filter()->unique()->values()->implode(', ')) }}"
-                                                sizes="(max-width: 576px) 92vw, (max-width: 992px) 50vw, 650px"
+                                                srcset="{{ $media->ikas_webp_srcset }}"
+                                                sizes="{{ $detailSizes }}"
                                                 type="image/webp"
                                             >
                                         @endif
 
                                         <img
-                                            src="{{ $gridJpeg ?: ($card2xJpeg ?: ($card3xJpeg ?: $detailJpeg)) }}"
-                                            srcset="{{ trim(collect([
-                                                ($gridJpeg ? $gridJpeg.' 400w' : null),
-                                                ($card2xJpeg ? $card2xJpeg.' 520w' : null),
-                                                ($card3xJpeg ? $card3xJpeg.' 780w' : null),
-                                            ])->filter()->unique()->values()->implode(', ')) }}"
-                                            sizes="(max-width: 576px) 92vw, (max-width: 992px) 50vw, 650px"
+                                            src="{{ $detailJpeg }}"
+                                            @if ($media->ikas_jpeg_srcset)
+                                                srcset="{{ $media->ikas_jpeg_srcset }}"
+                                            @endif
+                                            sizes="{{ $detailSizes }}"
                                             data-zoom="{{ $detailJpeg }}"
                                             alt="{{ $product->name }}"
                                             width="1100"
                                             height="1100"
                                             loading="{{ $isLcp ? 'eager' : 'lazy' }}"
-                                            fetchpriority="{{ $isLcp ? 'high' : 'auto' }}"
+                                            fetchpriority="{{ $isLcp ? 'high' : 'low' }}"
                                             decoding="async"
                                         >
                                     </picture>

@@ -22,7 +22,9 @@
                         @if (is_null($logo))
                             <h3>{{ setting('store_name') }}</h3>
                         @else
-                            <img src="{{ $logo }}" alt="{{ setting('store_name') ?? 'Logo' }}">
+                            @php($isAbsoluteLogo = is_string($logo) && (str_starts_with($logo, 'http') || str_starts_with($logo, '//')))
+                            @php($logoSrc = $isAbsoluteLogo ? ((parse_url($logo, PHP_URL_PATH) ?: $logo) . (parse_url($logo, PHP_URL_QUERY) ? '?' . parse_url($logo, PHP_URL_QUERY) : '')) : $logo)
+                            <img src="{{ $logoSrc }}" alt="{{ setting('store_name') ?? 'Logo' }}">
                         @endif
                     </a>
                 </div>

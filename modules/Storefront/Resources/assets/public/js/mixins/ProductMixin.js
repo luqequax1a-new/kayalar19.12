@@ -84,8 +84,14 @@ export default function (product) {
         },
 
         get baseImage() {
+            // Prefer listing/grid variant when available to avoid blurry upscaling.
+            const pt = this.product?.base_image_thumb?.path;
+            const vt = this.item?.base_image_thumb?.path;
             const p = this.product?.base_image?.path;
             const v = this.item?.base_image?.path;
+
+            if (pt) return pt;
+            if (vt) return vt;
             if (p) return p;
             if (v) return v;
             return `${window.location.origin}/build/assets/image-placeholder.png`;

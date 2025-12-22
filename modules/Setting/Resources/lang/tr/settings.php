@@ -77,6 +77,8 @@ return [
         'approve_reviews_automatically' => 'Müşteri yorumlarını otomatik onayla',
         'show_cookie_bar' => 'Sitede çerez bilgilendirme çubuğunu göster',
         'privacy_settings' => 'Privacy Settings',
+        'tax_settings' => 'Vergi Ayarları',
+        'prices_include_tax' => 'Fiyatlar KDV Dahil (KDV toplamın üzerine eklenmez)',
         'hide_store_phone' => 'Hide store phone from the storefront',
         'hide_store_email' => 'Hide store email from the storefront',
         'put_the_application_into_maintenance_mode' => 'Put the application into maintenance mode',

@@ -68,18 +68,21 @@ class GeliverService
             throw new \RuntimeException('Sender Address ID gerekli.');
         }
 
+        $shippingSnapshot = $order->shippingSnapshot;
         $shipping = $order->shippingAddress ?: null;
-        $name = $shipping ? ($shipping->first_name.' '.$shipping->last_name) : ($order->shipping_first_name.' '.$order->shipping_last_name);
+        $name = $shippingSnapshot
+            ? trim((string) (($shippingSnapshot->first_name ?? '') . ' ' . ($shippingSnapshot->last_name ?? '')))
+            : ($shipping ? ($shipping->first_name.' '.$shipping->last_name) : $order->customer_full_name);
         $host = parse_url(config('app.url'), PHP_URL_HOST) ?: 'example.com';
         $defaultEmail = config('services.geliver.default_email') ?: setting('geliver_default_email');
         $email = $order->customer_email ?: ($shipping->email ?? null) ?: ($defaultEmail ?: ('no-reply@' . $host));
-        $phoneRaw = ($shipping ? $shipping->phone : null) ?: $order->customer_phone ?: $order->shipping_phone;
+        $phoneRaw = ($shippingSnapshot?->phone ?: null) ?: ($shipping ? $shipping->phone : null) ?: $order->customer_phone;
         $phone = $this->normalizePhone($phoneRaw);
-        $address1 = $shipping ? $shipping->address_1 : $order->shipping_address_1;
-        $address2 = $shipping ? ($shipping->address_2 ?: null) : ($order->shipping_address_2 ?: null);
-        $cityName = $shipping ? $shipping->city_title : $order->shipping_city;
-        $districtName = $shipping ? $shipping->district_title : null;
-        $zip = $shipping ? $shipping->zip : $order->shipping_zip;
+        $address1 = ($shippingSnapshot?->address_line ?: null) ?: ($shipping ? $shipping->address_1 : null);
+        $address2 = ($shippingSnapshot?->address_2 ?: null) ?: ($shipping ? ($shipping->address_2 ?: null) : null);
+        $cityName = ($shippingSnapshot?->city ?: null) ?: ($shipping ? $shipping->city_title : null);
+        $districtName = ($shippingSnapshot?->district ?: null) ?: ($shipping ? $shipping->district_title : null);
+        $zip = ($shippingSnapshot?->zip ?: null) ?: ($shipping ? $shipping->zip : null);
         $countryCode = 'TR';
         $cityCode = '';
         if (!$cityCode && $cityName) {

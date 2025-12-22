@@ -143,7 +143,7 @@ return [
     |
     */
 
-    'providers' => [
+    'providers' => array_merge([
         /*
          * Laravel Framework Service Providers...
          */
@@ -180,7 +180,9 @@ return [
         FleetCart\Providers\AppServiceProvider::class,
         FleetCart\Providers\RouteServiceProvider::class,
         Nwidart\Modules\LaravelModulesServiceProvider::class,
-    ],
+    ], env('APP_ENV') === 'local' ? [
+        Barryvdh\Debugbar\ServiceProvider::class,
+    ] : []),
 
     /*
     |--------------------------------------------------------------------------

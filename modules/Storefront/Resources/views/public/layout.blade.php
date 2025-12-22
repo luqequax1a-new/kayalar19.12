@@ -39,6 +39,11 @@
 
         @include('storefront::public.partials.variables')
 
+        <style>
+            .header{min-height:60px}
+            .product-card{min-height:260px}
+        </style>
+
         @vite([
             'modules/Storefront/Resources/assets/public/sass/vendors/_bootstrap.scss',
             'modules/Storefront/Resources/assets/public/sass/vendors/_line-awesome.scss',
@@ -124,5 +129,9 @@
         @stack('scripts')
 
         {!! setting('custom_footer_assets') !!}
+
+        @if (app()->environment('local') && app()->bound('debugbar'))
+            {!! app('debugbar')->render() !!}
+        @endif
     </body>
 </html>

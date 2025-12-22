@@ -39,7 +39,7 @@
 
         new DataTable('#orders-table .table', {
             columns: [
-                { data: 'id', width: '5%' },
+                { data: 'order_no', width: '5%' },
                 { data: 'customer_name', orderable: false, searchable: false },
                 { data: 'customer_email' },
                 { data: 'payment_method', name: 'payment_method' },

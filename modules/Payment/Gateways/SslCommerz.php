@@ -53,25 +53,28 @@ class SslCommerz implements GatewayInterface
         $post_data['currency'] = currency();
         $post_data['tran_id'] = uniqid('TRX_');
 
+        $billing = $order->billingSnapshot;
+        $shipping = $order->shippingSnapshot;
+
         # CUSTOMER INFORMATION
         $post_data['cus_name'] = implode(' ', [$order->customer_first_name, $order->customer_last_name]);
         $post_data['cus_email'] = $order->customer_email;
-        $post_data['cus_add1'] = $order->billing_address_1;
-        $post_data['cus_add2'] = $order->billing_address_2;
-        $post_data['cus_city'] = $order->billing_city;
-        $post_data['cus_state'] = $order->billing_state;
-        $post_data['cus_postcode'] = $order->billing_zip;
+        $post_data['cus_add1'] = $billing?->address_line;
+        $post_data['cus_add2'] = $billing?->address_2;
+        $post_data['cus_city'] = $billing?->city;
+        $post_data['cus_state'] = $billing?->district;
+        $post_data['cus_postcode'] = $billing?->zip;
         $post_data['cus_country'] = "Bangladesh";
         $post_data['cus_phone'] = $order->customer_phone;
         $post_data['cus_fax'] = "";
 
         # SHIPMENT INFORMATION
         $post_data['ship_name'] = setting('store_name');
-        $post_data['ship_add1'] = $order->shipping_address_1;
-        $post_data['ship_add2'] = $order->shipping_address_2;
-        $post_data['ship_city'] = $order->shipping_city;
-        $post_data['ship_state'] = $order->shipping_state;
-        $post_data['ship_postcode'] = $order->shipping_zip;
+        $post_data['ship_add1'] = $shipping?->address_line;
+        $post_data['ship_add2'] = $shipping?->address_2;
+        $post_data['ship_city'] = $shipping?->city;
+        $post_data['ship_state'] = $shipping?->district;
+        $post_data['ship_postcode'] = $shipping?->zip;
         $post_data['ship_phone'] = $order->customer_phone;
         $post_data['ship_country'] = "Bangladesh";
 

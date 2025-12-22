@@ -15,6 +15,10 @@ class SaveProductVariations
      */
     public function handle(Product $product): void
     {
+        if (! request()->has('variations')) {
+            return;
+        }
+
         $ids = $this->getDeleteCandidates($product);
 
         if ($ids->isNotEmpty()) {

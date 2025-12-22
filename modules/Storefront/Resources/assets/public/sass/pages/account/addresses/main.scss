@@ -69,7 +69,11 @@
     }
 
     .add-new-address-form {
-        margin-top: -7px;
+        margin-top: 16px;
+        padding: 16px;
+        border: 1px solid #e5e5e5;
+        border-radius: var(--radius-default);
+        background: #ffffff;
 
         .section-title {
             margin-bottom: 25px;
@@ -81,6 +85,10 @@
             margin-right: 12px;
         }
     }
+}
+
+.address-form-panel {
+    scroll-margin-top: 90px;
 }
 
 @media screen and (max-width: 991px) {

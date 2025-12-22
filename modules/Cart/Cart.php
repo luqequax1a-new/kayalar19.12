@@ -495,6 +495,14 @@ class Cart extends DarryldecodeCart implements JsonSerializable
 
     public function addTaxes($addTaxesToCartRequest)
     {
+        // Store prices are VAT-inclusive: do not add taxes on top of total.
+        // Keep cart totals consistent for both guest and logged-in customers.
+        if (setting('prices_include_tax')) {
+            $this->removeTaxes();
+
+            return;
+        }
+
         $this->removeTaxes();
 
         $this->findTaxes(

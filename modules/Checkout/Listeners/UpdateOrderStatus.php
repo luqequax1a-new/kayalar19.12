@@ -24,13 +24,12 @@ class UpdateOrderStatus
             $paymentMethod === 'Bank Transfer' ||
             ($bankLabel !== '' && $paymentMethod === $bankLabel)
         )) {
-            // Banka havalesi siparişleri: şimdi gönderme, PROCESSING'e geçtiğinde gönderilecek
+            $event->order->transitionTo(Order::PENDING_PAYMENT);
             return;
         }
 
         if ($codLabel !== '' && $paymentMethod === $codLabel) {
-            $event->order->transitionTo(Order::PROCESSING);
-            // COD siparişleri: hazırlanıyor'a geçtiğinde otomatik Geliver'e gönder
+            $event->order->transitionTo(Order::PENDING);
             $this->sendToGeliverIfEnabled($event->order);
             return;
         }

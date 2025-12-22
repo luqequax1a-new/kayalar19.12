@@ -12,6 +12,12 @@ use Illuminate\Support\Str;
 
 class File extends Model
 {
+    protected static array $ikasSrcsetCache = [];
+
+    protected static ?array $ikasPoolWidthsCache = null;
+
+    protected static array $ikasFormatAvailableCache = [];
+
     /**
      * The attributes that aren't mass assignable.
      *
@@ -29,6 +35,9 @@ class File extends Model
         'filename',
         'path',
         'url',
+        'ikas_avif_srcset',
+        'ikas_webp_srcset',
+        'ikas_jpeg_srcset',
         'card_webp_url',
         'card_avif_url',
         'card_jpeg_url',
@@ -41,18 +50,33 @@ class File extends Model
         'grid_webp_url',
         'grid_avif_url',
         'grid_jpeg_url',
+        'grid_2x_webp_url',
+        'grid_2x_avif_url',
+        'grid_2x_jpeg_url',
+        'grid_3x_webp_url',
+        'grid_3x_avif_url',
+        'grid_3x_jpeg_url',
         'fast_webp_url',
         'fast_avif_url',
         'thumb_webp_url',
         'thumb_avif_url',
         'thumb_jpeg_url',
+        'thumb_2x_webp_url',
+        'thumb_2x_avif_url',
+        'thumb_2x_jpeg_url',
         'detail_webp_url',
         'detail_avif_url',
         'detail_jpeg_url',
+        'detail_2x_webp_url',
+        'detail_2x_avif_url',
+        'detail_2x_jpeg_url',
     ];
 
     protected $appends = [
         'url',
+        'ikas_avif_srcset',
+        'ikas_webp_srcset',
+        'ikas_jpeg_srcset',
         'card_webp_url',
         'card_avif_url',
         'card_jpeg_url',
@@ -65,16 +89,94 @@ class File extends Model
         'grid_webp_url',
         'grid_avif_url',
         'grid_jpeg_url',
+        'grid_2x_webp_url',
+        'grid_2x_avif_url',
+        'grid_2x_jpeg_url',
+        'grid_3x_webp_url',
+        'grid_3x_avif_url',
+        'grid_3x_jpeg_url',
         'fast_webp_url',
         'fast_avif_url',
         'thumb_webp_url',
         'thumb_avif_url',
         'thumb_jpeg_url',
+        'thumb_2x_webp_url',
+        'thumb_2x_avif_url',
+        'thumb_2x_jpeg_url',
         'detail_webp_url',
         'detail_avif_url',
         'detail_jpeg_url',
+        'detail_2x_webp_url',
+        'detail_2x_avif_url',
+        'detail_2x_jpeg_url',
     ];
 
+    public function getIkasAvifSrcsetAttribute(): string
+    {
+        return $this->buildIkasPoolSrcset('avif');
+    }
+
+    public function getIkasWebpSrcsetAttribute(): string
+    {
+        return $this->buildIkasPoolSrcset('webp');
+    }
+
+    public function getIkasJpegSrcsetAttribute(): string
+    {
+        return $this->buildIkasPoolSrcset('jpg');
+    }
+
+    protected function buildIkasPoolSrcset(string $format): string
+    {
+        $cacheKey = (string) ($this->id ?? '0') . ':' . strtolower($format);
+        if (isset(static::$ikasSrcsetCache[$cacheKey])) {
+            return static::$ikasSrcsetCache[$cacheKey];
+        }
+
+        $format = strtolower($format);
+        if ($format === 'avif' && !(bool) config('image_optimization.ikas_pool.enable_avif', true)) {
+            return static::$ikasSrcsetCache[$cacheKey] = '';
+        }
+
+        // Avoid broken images for legacy media that doesn't have generated variants yet.
+        // If we emit srcset with only non-existing URLs, the browser may pick one and fail hard.
+        $availabilityKey = (string) ($this->id ?? '0') . ':' . $format . ':available';
+        if (!array_key_exists($availabilityKey, static::$ikasFormatAvailableCache)) {
+            $probeWidth = (int) config('image_optimization.variants.widths.thumb', 180);
+            $probe = media_variant_url($this, $probeWidth, $format);
+            static::$ikasFormatAvailableCache[$availabilityKey] = (bool) $probe;
+        }
+
+        if (!static::$ikasFormatAvailableCache[$availabilityKey]) {
+            return static::$ikasSrcsetCache[$cacheKey] = '';
+        }
+
+        if (static::$ikasPoolWidthsCache === null) {
+            $pool = array_merge(
+                (array) config('image_optimization.ikas_pool.widths', []),
+                (array) config('image_optimization.ikas_pool.legacy_widths', [])
+            );
+            $pool = array_values(array_unique(array_filter(array_map('intval', $pool))));
+            sort($pool);
+            static::$ikasPoolWidthsCache = $pool;
+        }
+
+        $pool = static::$ikasPoolWidthsCache;
+
+        $entries = [];
+        foreach ($pool as $w) {
+            if ($w <= 0) continue;
+            if ((bool) config('image_optimization.ikas_pool.srcset_no_exists_check', true)) {
+                $url = media_variant_url_no_check($this, $w, $format);
+            } else {
+                $url = media_variant_url($this, $w, $format);
+            }
+            if (!$url) continue;
+            $entries[] = $url . ' ' . $w . 'w';
+        }
+
+        return static::$ikasSrcsetCache[$cacheKey] = implode(', ', $entries);
+    }
 
     /**
      * Perform any actions required after the model boots.
@@ -273,102 +375,194 @@ class File extends Model
 
     public function getCardWebpUrlAttribute(): ?string
     {
-        return media_variant_url($this, 260, 'webp');
+        $w = (int) config('image_optimization.variants.widths.card', 260);
+        return media_variant_url($this, $w, 'webp');
     }
 
     public function getCardAvifUrlAttribute(): ?string
     {
-        return media_variant_url($this, 260, 'avif');
+        $w = (int) config('image_optimization.variants.widths.card', 260);
+        return media_variant_url($this, $w, 'avif');
     }
 
     public function getCardJpegUrlAttribute(): ?string
     {
-        return media_variant_url($this, 260, null);
+        $w = (int) config('image_optimization.variants.widths.card', 260);
+        return media_variant_url($this, $w, 'jpg');
     }
 
     public function getCard2xWebpUrlAttribute(): ?string
     {
-        return media_variant_url($this, 520, 'webp');
+        $w = (int) config('image_optimization.variants.widths.card_2x', 520);
+        return media_variant_url($this, $w, 'webp');
     }
 
     public function getCard2xAvifUrlAttribute(): ?string
     {
-        return media_variant_url($this, 520, 'avif');
+        $w = (int) config('image_optimization.variants.widths.card_2x', 520);
+        return media_variant_url($this, $w, 'avif');
     }
 
     public function getCard2xJpegUrlAttribute(): ?string
     {
-        return media_variant_url($this, 520, null);
+        $w = (int) config('image_optimization.variants.widths.card_2x', 520);
+        return media_variant_url($this, $w, 'jpg');
     }
 
     public function getCard3xWebpUrlAttribute(): ?string
     {
-        return media_variant_url($this, 780, 'webp');
+        $w = (int) config('image_optimization.variants.widths.card_3x', 780);
+        return media_variant_url($this, $w, 'webp');
     }
 
     public function getCard3xAvifUrlAttribute(): ?string
     {
-        return media_variant_url($this, 780, 'avif');
+        $w = (int) config('image_optimization.variants.widths.card_3x', 780);
+        return media_variant_url($this, $w, 'avif');
     }
 
     public function getCard3xJpegUrlAttribute(): ?string
     {
-        return media_variant_url($this, 780, null);
+        $w = (int) config('image_optimization.variants.widths.card_3x', 780);
+        return media_variant_url($this, $w, 'jpg');
     }
 
     public function getGridWebpUrlAttribute(): ?string
     {
-        return media_variant_url($this, 400, 'webp');
+        $w = (int) config('image_optimization.variants.widths.grid', 400);
+        return media_variant_url($this, $w, 'webp');
     }
 
     public function getGridAvifUrlAttribute(): ?string
     {
-        return media_variant_url($this, 400, 'avif');
+        $w = (int) config('image_optimization.variants.widths.grid', 400);
+        return media_variant_url($this, $w, 'avif');
     }
 
     public function getGridJpegUrlAttribute(): ?string
     {
-        return media_variant_url($this, 400, null);
+        $w = (int) config('image_optimization.variants.widths.grid', 400);
+        return media_variant_url($this, $w, 'jpg');
+    }
+
+    public function getGrid2xWebpUrlAttribute(): ?string
+    {
+        $w = (int) config('image_optimization.variants.widths.grid_2x', 0);
+        return $w > 0 ? media_variant_url($this, $w, 'webp') : null;
+    }
+
+    public function getGrid2xAvifUrlAttribute(): ?string
+    {
+        $w = (int) config('image_optimization.variants.widths.grid_2x', 0);
+        return $w > 0 ? media_variant_url($this, $w, 'avif') : null;
+    }
+
+    public function getGrid2xJpegUrlAttribute(): ?string
+    {
+        $w = (int) config('image_optimization.variants.widths.grid_2x', 0);
+        return $w > 0 ? media_variant_url($this, $w, 'jpg') : null;
+    }
+
+    public function getGrid3xWebpUrlAttribute(): ?string
+    {
+        $w = (int) config('image_optimization.variants.widths.grid_3x', 0);
+        return $w > 0 ? media_variant_url($this, $w, 'webp') : null;
+    }
+
+    public function getGrid3xAvifUrlAttribute(): ?string
+    {
+        $w = (int) config('image_optimization.variants.widths.grid_3x', 0);
+        return $w > 0 ? media_variant_url($this, $w, 'avif') : null;
+    }
+
+    public function getGrid3xJpegUrlAttribute(): ?string
+    {
+        $w = (int) config('image_optimization.variants.widths.grid_3x', 0);
+        return $w > 0 ? media_variant_url($this, $w, 'jpg') : null;
     }
 
     public function getFastWebpUrlAttribute(): ?string
     {
-        return media_variant_url_with_suffix($this, 400, 'webp', 'fast');
+        $w = (int) config('image_optimization.fast_listing.width', config('image_optimization.variants.widths.grid', 400));
+        return media_variant_url_with_suffix($this, $w, 'webp', 'fast');
     }
 
     public function getFastAvifUrlAttribute(): ?string
     {
-        return media_variant_url_with_suffix($this, 400, 'avif', 'fast');
+        $w = (int) config('image_optimization.fast_listing.width', config('image_optimization.variants.widths.grid', 400));
+        return media_variant_url_with_suffix($this, $w, 'avif', 'fast');
     }
 
     public function getThumbWebpUrlAttribute(): ?string
     {
-        return media_variant_url($this, 80, 'webp');
+        $w = (int) config('image_optimization.variants.widths.thumb', 80);
+        return media_variant_url($this, $w, 'webp');
     }
 
     public function getThumbAvifUrlAttribute(): ?string
     {
-        return media_variant_url($this, 80, 'avif');
+        $w = (int) config('image_optimization.variants.widths.thumb', 80);
+        return media_variant_url($this, $w, 'avif');
     }
 
     public function getThumbJpegUrlAttribute(): ?string
     {
-        return media_variant_url($this, 80, null);
+        $w = (int) config('image_optimization.variants.widths.thumb', 80);
+        return media_variant_url($this, $w, 'jpg');
+    }
+
+    public function getThumb2xWebpUrlAttribute(): ?string
+    {
+        $w = (int) config('image_optimization.variants.widths.thumb_2x', 0);
+        return $w > 0 ? media_variant_url($this, $w, 'webp') : null;
+    }
+
+    public function getThumb2xAvifUrlAttribute(): ?string
+    {
+        $w = (int) config('image_optimization.variants.widths.thumb_2x', 0);
+        return $w > 0 ? media_variant_url($this, $w, 'avif') : null;
+    }
+
+    public function getThumb2xJpegUrlAttribute(): ?string
+    {
+        $w = (int) config('image_optimization.variants.widths.thumb_2x', 0);
+        return $w > 0 ? media_variant_url($this, $w, 'jpg') : null;
     }
 
     public function getDetailWebpUrlAttribute(): ?string
     {
-        return media_variant_url($this, 1000, 'webp');
+        $w = (int) config('image_optimization.variants.widths.detail', 1000);
+        return media_variant_url($this, $w, 'webp');
     }
 
     public function getDetailAvifUrlAttribute(): ?string
     {
-        return media_variant_url($this, 1000, 'avif');
+        $w = (int) config('image_optimization.variants.widths.detail', 1000);
+        return media_variant_url($this, $w, 'avif');
     }
 
     public function getDetailJpegUrlAttribute(): ?string
     {
-        return media_variant_url($this, 1000, null);
+        $w = (int) config('image_optimization.variants.widths.detail', 1000);
+        return media_variant_url($this, $w, 'jpg');
+    }
+
+    public function getDetail2xWebpUrlAttribute(): ?string
+    {
+        $w = (int) config('image_optimization.variants.widths.detail_2x', 0);
+        return $w > 0 ? media_variant_url($this, $w, 'webp') : null;
+    }
+
+    public function getDetail2xAvifUrlAttribute(): ?string
+    {
+        $w = (int) config('image_optimization.variants.widths.detail_2x', 0);
+        return $w > 0 ? media_variant_url($this, $w, 'avif') : null;
+    }
+
+    public function getDetail2xJpegUrlAttribute(): ?string
+    {
+        $w = (int) config('image_optimization.variants.widths.detail_2x', 0);
+        return $w > 0 ? media_variant_url($this, $w, 'jpg') : null;
     }
 
 

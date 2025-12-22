@@ -46,7 +46,7 @@ class TicketController
             'user_id' => auth()->id(),
             'order_id' => $data['order_id'] ?? null,
             'subject' => $data['subject'],
-            'status' => 'open',
+            'status' => 'waiting_admin',
             'last_message_at' => now(),
         ]);
 
@@ -103,7 +103,7 @@ class TicketController
         }
 
         $ticket->update([
-            'status' => 'open',
+            'status' => 'waiting_admin',
             'last_message_at' => now(),
         ]);
 

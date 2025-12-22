@@ -22,7 +22,7 @@
                     <tr>
                         <td style="padding:20px;">
                             <div style="font-family:'Open Sans',sans-serif;font-size:14px;line-height:22px;color:#374151;">
-                                Siparişiniz (#{{ $order->id }}) teslim edilmiştir.
+                                Siparişiniz (#{{ $order->displayOrderNumber() }}) teslim edilmiştir.
                             </div>
                         </td>
                     </tr>

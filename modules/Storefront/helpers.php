@@ -97,7 +97,6 @@ if (!function_exists('order_status_badge_class')) {
         $classes = [
             'canceled' => 'badge-danger',
             'completed' => 'badge-success',
-            'on_hold' => 'badge-warning',
             'pending_payment' => 'badge-warning',
             'refunded' => 'badge-danger',
         ];

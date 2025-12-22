@@ -16,16 +16,19 @@ class GenerateResponsiveImagesForMedia implements ShouldQueue
 
     public int $fileId;
 
-    public function __construct(int $fileId)
+    public bool $force;
+
+    public function __construct(int $fileId, bool $force = false)
     {
         $this->fileId = $fileId;
+        $this->force = $force;
     }
 
     public function handle(ResponsiveImageGenerator $generator): void
     {
         $file = MediaFile::find($this->fileId);
         if (!$file) return;
-        $generator->generateVariants($file);
+        $generator->generateVariants($file, $this->force);
     }
 }
 

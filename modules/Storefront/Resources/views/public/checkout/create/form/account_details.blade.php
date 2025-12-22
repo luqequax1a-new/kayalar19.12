@@ -91,4 +91,5 @@
     </div>
 @else
     <input type="hidden" name="customer_email" x-model="form.customer_email">
+    <input type="hidden" name="customer_phone" x-model="form.customer_phone">
 @endguest

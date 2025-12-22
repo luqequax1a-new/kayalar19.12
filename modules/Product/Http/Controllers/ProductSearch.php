@@ -154,8 +154,9 @@ trait ProductSearch
         }
 
         $paginator->setCollection(
-            $products->map(function (Product $product) use ($badgesByTagId) {
+            $products->flatMap(function (Product $product) use ($badgesByTagId) {
                 $tagIds = $product->relationLoaded('tags') ? $product->tags->pluck('id')->all() : [];
+
                 $tagBadges = collect($tagIds)
                     ->flatMap(function ($tagId) use ($badgesByTagId) {
                         return $badgesByTagId->get($tagId, collect());
@@ -172,21 +173,68 @@ trait ProductSearch
                     })
                     ->values();
 
+                $avg = (float) ($product->reviews_avg_rating ?? 0);
+                $ratingPercent = $avg > 0 ? ($avg / 5) * 100 : 0;
+
                 $variantLabel = optional($product->variations->first())->name;
+
+                if ((bool) $product->list_variants_separately) {
+                    $variants = $product->relationLoaded('variants') ? $product->variants : collect();
+                    $actives = $variants->filter(function ($v) {
+                        return (bool) ($v->is_active ?? false);
+                    });
+
+                    if ($actives->isNotEmpty()) {
+                        return $actives->map(function ($variant) use ($product, $tagBadges, $variantLabel, $ratingPercent) {
+                            $variantImage = ($variant->base_image && ($variant->base_image->id ?? null)) ? $variant->base_image : null;
+                            $productImage = ($product->base_image && ($product->base_image->id ?? null)) ? $product->base_image : null;
+                            $image = $variantImage ?: ($productImage ?: $product->base_image);
+
+                            $p = $product->clean();
+                            $p['variant_attribute_label'] = $variantLabel;
+                            $p['name'] = $product->name;
+                            $p['listing_key'] = 'p' . (int) $product->id . '-v' . (int) $variant->id;
+                            $p['variant'] = $variant->toArray();
+                            $p['url'] = $variant->url() ?? $product->url();
+                            $p['base_image'] = $image;
+                            $p['base_image_thumb'] = [
+                                'path' => media_variant_url(
+                                    $image,
+                                    (int) config('image_optimization.variants.widths.grid', 400)
+                                )
+                            ];
+                            $p['variant']['base_image_thumb'] = [
+                                'path' => media_variant_url(
+                                    $image,
+                                    (int) config('image_optimization.variants.widths.thumb', 80)
+                                )
+                            ];
+                            $p['formatted_price'] = $variant->formatted_price ?? $product->formatted_price;
+                            $p['formatted_price_range'] = null;
+                            $p['additional_images'] = $product->additional_images;
+                            $p['videos'] = $this->mapListingVideos($product);
+                            $p['tag_badges'] = $tagBadges;
+                            $p['rating_percent'] = $ratingPercent;
+                            return $p;
+                        });
+                    }
+                }
 
                 $base = $product->clean();
                 $base['variant_attribute_label'] = $variantLabel;
+                $base['listing_key'] = 'p' . (int) $product->id;
                 $base['base_image_thumb'] = [
-                    'path' => media_variant_url($product->base_image, 400)
+                    'path' => media_variant_url(
+                        $product->base_image,
+                        (int) config('image_optimization.variants.widths.grid', 400)
+                    )
                 ];
                 $base['additional_images'] = $product->additional_images;
                 $base['videos'] = $this->mapListingVideos($product);
                 $base['tag_badges'] = $tagBadges;
+                $base['rating_percent'] = $ratingPercent;
 
-                $avg = (float) ($product->reviews_avg_rating ?? 0);
-                $base['rating_percent'] = $avg > 0 ? ($avg / 5) * 100 : 0;
-
-                return $base;
+                return collect([$base]);
             })
         );
 

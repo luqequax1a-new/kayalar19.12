@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Cache;
 use Modules\Category\Entities\Category;
 use Modules\Media\Entities\File;
 use Modules\Storefront\Http\Controllers\CarouselProductController;
+use Modules\Review\Entities\Review;
 
 class HomePageComposer
 {
@@ -313,7 +314,7 @@ class HomePageComposer
         }
 
         return [
-            'items' => collect([1, 2, 3])->map(function ($number) {
+            'items' => collect([1, 2, 3, 4])->map(function ($number) {
                 return [
                     'image' => $this->getMedia(setting("storefront_info_icons_icon_{$number}_image")),
                     'title' => setting("storefront_info_icons_icon_{$number}_title"),

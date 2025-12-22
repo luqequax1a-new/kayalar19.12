@@ -32,7 +32,7 @@ class SendOrderStatusChangedSms
     {
         return trans('sms::messages.order_status_changed', [
             'first_name' => $order->customer_first_name,
-            'order_id' => $order->id,
+            'order_id' => $order->displayOrderNumber(),
             'status' => mb_strtolower($order->status()),
         ]);
     }
