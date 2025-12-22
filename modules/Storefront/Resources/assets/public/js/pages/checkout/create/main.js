@@ -57,6 +57,7 @@ Alpine.data(
                 tax_number: "",
                 tax_office: "",
                 phone: "",
+                billing_email: "",
                 city_id: null,
                 district_id: null,
                 address_line: "",
@@ -132,6 +133,22 @@ Alpine.data(
 
         get hasAddress() {
             return Object.keys(this.addresses).length !== 0;
+        },
+
+        get shippingAddresses() {
+            return Object.values(this.addresses || {}).filter((a) => a && a.type === "shipping");
+        },
+
+        get billingAddresses() {
+            return Object.values(this.addresses || {}).filter((a) => a && a.type === "billing");
+        },
+
+        get hasShippingAddress() {
+            return this.shippingAddresses.length !== 0;
+        },
+
+        get hasBillingAddress() {
+            return this.billingAddresses.length !== 0;
         },
 
         get firstCountry() {
@@ -318,17 +335,27 @@ Alpine.data(
                 if (this._debouncedUpdateCheckout) this._debouncedUpdateCheckout();
             });
 
-            if (this.defaultAddress.address_id) {
-                this.form.billingAddressId = this.defaultAddress.address_id;
-                this.form.shippingAddressId = this.defaultAddress.address_id;
+            const defaultShippingId = this.defaultAddress.default_shipping_address_id || this.defaultAddress.address_id;
+            const defaultBillingId = this.defaultAddress.default_billing_address_id || this.defaultAddress.address_id;
+
+            if (defaultShippingId || defaultBillingId) {
+                if (defaultShippingId) {
+                    this.form.shippingAddressId = defaultShippingId;
+                }
+                if (defaultBillingId) {
+                    this.form.billingAddressId = defaultBillingId;
+                }
 
                 this.mergeSavedBillingAddress();
                 this.mergeSavedShippingAddress();
             }
 
-            if (!this.hasAddress) {
-                this.form.newBillingAddress = true;
+            if (!this.hasShippingAddress) {
                 this.form.newShippingAddress = true;
+            }
+
+            if (!this.hasBillingAddress) {
+                this.form.newBillingAddress = true;
             }
 
             if (this.singleCountry) {
@@ -484,6 +511,9 @@ Alpine.data(
                     tax_office: addr.invoice_tax_office || addr.tax_office || "",
                     tax_number: addr.invoice_tax_number || addr.tax_number || "",
                 };
+                if (!this.form.billing.billing_email) {
+                    this.form.billing.billing_email = addr.billing_email || "";
+                }
             }
         },
 

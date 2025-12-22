@@ -16,6 +16,7 @@ class Address extends Model
 
     protected $fillable = [
         'type',
+        'address_title',
         'customer_id',
         'user_id',
         'first_name',
@@ -36,6 +37,7 @@ class Address extends Model
         'invoice_title',
         'invoice_tax_number',
         'invoice_tax_office',
+        'billing_email',
     ];
 
     protected $appends = ['full_name', 'state_name', 'country_name', 'city_title', 'district_title'];
@@ -136,7 +138,11 @@ class Address extends Model
             'I' => 'ı', 'İ' => 'i', 'Ç' => 'ç', 'Ş' => 'ş', 'Ğ' => 'ğ', 'Ü' => 'ü', 'Ö' => 'ö',
         ];
         $s = strtr($name, $mapUpperToLower);
-        $s = mb_strtolower($s, 'UTF-8');
+        if (function_exists('mb_strtolower')) {
+            $s = mb_strtolower($s, 'UTF-8');
+        } else {
+            $s = strtolower($s);
+        }
         $parts = preg_split('/([\s\-]+)/u', $s, -1, PREG_SPLIT_DELIM_CAPTURE);
         $mapLowerToUpper = [
             'i' => 'İ', 'ı' => 'I', 'ç' => 'Ç', 'ş' => 'Ş', 'ğ' => 'Ğ', 'ü' => 'Ü', 'ö' => 'Ö',
@@ -145,9 +151,18 @@ class Address extends Model
         foreach ($parts as $idx => $p) {
             if ($idx % 2 === 0) {
                 if ($p === '') { $res .= $p; continue; }
-                $first = mb_substr($p, 0, 1, 'UTF-8');
-                $rest = mb_substr($p, 1, null, 'UTF-8');
-                $firstU = $mapLowerToUpper[$first] ?? mb_strtoupper($first, 'UTF-8');
+                if (function_exists('mb_substr')) {
+                    $first = mb_substr($p, 0, 1, 'UTF-8');
+                    $rest = mb_substr($p, 1, null, 'UTF-8');
+                } else {
+                    $first = substr($p, 0, 1);
+                    $rest = substr($p, 1);
+                }
+                if (function_exists('mb_strtoupper')) {
+                    $firstU = $mapLowerToUpper[$first] ?? mb_strtoupper($first, 'UTF-8');
+                } else {
+                    $firstU = $mapLowerToUpper[$first] ?? strtoupper($first);
+                }
                 $res .= $firstU . $rest;
             } else {
                 $res .= $p;

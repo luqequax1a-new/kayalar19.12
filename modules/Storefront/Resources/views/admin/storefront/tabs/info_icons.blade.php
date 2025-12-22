@@ -38,6 +38,16 @@
                     {{ Form::text('storefront_info_icons_icon_3_title', 'Başlık 3', $errors, $settings) }}
 
                     {{ Form::text('storefront_info_icons_icon_3_text', 'Alt Metin 3', $errors, $settings) }}
+
+                    @include('media::admin.image_picker.single', [
+                        'title' => 'İkon 4',
+                        'inputName' => 'storefront_info_icons_icon_4_image',
+                        'file' => $icon4,
+                    ])
+
+                    {{ Form::text('storefront_info_icons_icon_4_title', 'Başlık 4', $errors, $settings) }}
+
+                    {{ Form::text('storefront_info_icons_icon_4_text', 'Alt Metin 4', $errors, $settings) }}
                 </div>
             </div>
         </div>

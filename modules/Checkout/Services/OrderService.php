@@ -10,12 +10,13 @@ use Modules\Coupon\Entities\Coupon;
 use Modules\Address\Entities\Address;
 use Modules\FlashSale\Entities\FlashSale;
 use Modules\Currency\Entities\CurrencyRate;
-use Modules\Account\Entities\DefaultAddress;
+use Modules\Address\Entities\DefaultAddress;
 use Modules\Shipping\Facades\ShippingMethod;
 use Modules\Shipping\SmartShippingCod;
 use Modules\Shipping\Services\SmartShippingCalculator;
 use Modules\Shipping\Method as ShippingMethodModel;
 use Modules\Checkout\Exceptions\CheckoutException;
+use Illuminate\Support\Facades\Log;
 
 class OrderService
 {
@@ -34,8 +35,8 @@ class OrderService
             throw new CheckoutException(trans('checkout::messages.no_shipping_method'));
         }
 
-        return tap($this->store($request), function ($order) {
-            $this->snapshotOrderAddresses($order);
+        return tap($this->store($request), function ($order) use ($request) {
+            $this->snapshotOrderAddresses($order, $request);
             $this->storeOrderProducts($order);
             $this->storeOrderDownloads($order);
             $this->storeFlashSaleProductOrders($order);
@@ -63,9 +64,14 @@ class OrderService
 
     private function mergeShippingAddress($request)
     {
-        $request->merge([
-            'shipping' => $request->ship_to_a_different_address ? $request->shipping : $request->billing,
-        ]);
+        // UI flag means "billing is different".
+        // When billing is NOT different, mirror billing from shipping.
+        // Never overwrite shipping payload, otherwise guest orders can lose shipping address data.
+        if (!$request->boolean('ship_to_a_different_address') && !$request->boolean('has_different_billing')) {
+            $request->merge([
+                'billing' => $request->shipping,
+            ]);
+        }
     }
 
 
@@ -144,6 +150,7 @@ class OrderService
             'invoice_title' => $data['invoice_title'] ?? null,
             'invoice_tax_office' => $data['invoice_tax_office'] ?? null,
             'invoice_tax_number' => $data['invoice_tax_number'] ?? null,
+            'billing_email' => $data['billing_email'] ?? null,
         ];
     }
 
@@ -159,10 +166,13 @@ class OrderService
             return;
         }
 
-        DefaultAddress::create([
-            'address_id' => $address->id,
-            'customer_id' => auth()->id(),
-        ]);
+        DefaultAddress::updateOrCreate(
+            ['customer_id' => auth()->id()],
+            [
+                'default_shipping_address_id' => $address->id,
+                'default_billing_address_id' => $address->id,
+            ]
+        );
     }
 
 
@@ -195,15 +205,6 @@ class OrderService
         $billing = $request->input('billing', []);
         $shipping = $request->input('shipping', []);
 
-        $billingFirstName = $billing['first_name'] ?? ($shipping['first_name'] ?? '');
-        $billingLastName = $billing['last_name'] ?? ($shipping['last_name'] ?? '');
-        $billingAddress1 = $billing['address_1'] ?? ($billing['address_line'] ?? ($shipping['address_1'] ?? ($shipping['address_line'] ?? '')));
-        $billingCity = $billing['city'] ?? ($billing['city_id'] ?? ($shipping['city'] ?? ($shipping['city_id'] ?? '')));
-        $billingState = $billing['state'] ?? ($billing['district_id'] ?? ($shipping['state'] ?? ($shipping['district_id'] ?? '')));
-        $billingCountry = $billing['country'] ?? ($shipping['country'] ?? 'TR');
-        $billingZip = $billing['zip'] ?? ($shipping['zip'] ?? '');
-        $billingPhone = $billing['phone'] ?? ($shipping['phone'] ?? null);
-
         $attribution = $this->orderAttributionFromSession();
         $trafficSource = $this->classifyTrafficSource($attribution);
 
@@ -211,29 +212,8 @@ class OrderService
             'customer_id' => auth()->id(),
             'customer_email' => $request->customer_email,
             'customer_phone' => $request->customer_phone,
-            'customer_first_name' => $shipping['first_name'] ?? $billingFirstName,
-            'customer_last_name' => $shipping['last_name'] ?? $billingLastName,
-            'billing_first_name' => $billingFirstName,
-            'billing_last_name' => $billingLastName,
-            'billing_address_1' => $billingAddress1,
-            'billing_address_2' => $billing['address_2'] ?? null,
-            'billing_city' => $billingCity,
-            'billing_state' => $billingState,
-            'billing_zip' => $billingZip,
-            'billing_country' => $billingCountry,
-            'billing_phone' => $billingPhone,
-            'invoice_title' => $request->invoice['title'] ?? null,
-            'invoice_tax_office' => $request->invoice['tax_office'] ?? null,
-            'invoice_tax_number' => $request->invoice['tax_number'] ?? null,
-            'shipping_first_name' => $shipping['first_name'] ?? '',
-            'shipping_last_name' => $shipping['last_name'] ?? '',
-            'shipping_address_1' => $shipping['address_1'] ?? ($shipping['address_line'] ?? ''),
-            'shipping_address_2' => $shipping['address_2'] ?? null,
-            'shipping_city' => $shipping['city'] ?? ($shipping['city_id'] ?? ''),
-            'shipping_state' => $shipping['state'] ?? ($shipping['district_id'] ?? ''),
-            'shipping_zip' => $shipping['zip'] ?? '',
-            'shipping_country' => $shipping['country'] ?? 'TR',
-            'shipping_phone' => $shipping['phone'] ?? null,
+            'customer_first_name' => $shipping['first_name'] ?? ($billing['first_name'] ?? ''),
+            'customer_last_name' => $shipping['last_name'] ?? ($billing['last_name'] ?? ''),
             'shipping_address_id' => $request->shipping_address_id,
             'billing_address_id' => $request->billing_address_id,
             'sub_total' => Cart::subTotal()->amount(),
@@ -329,8 +309,24 @@ class OrderService
         $billingData = (array) $request->input('billing', []);
         $hasDifferentBilling = $request->boolean('has_different_billing') || $request->boolean('ship_to_a_different_address');
 
+        $invoice = (array) $request->input('invoice', []);
+        if (! empty($invoice)) {
+            $billingData['invoice_title'] = $billingData['invoice_title'] ?? ($invoice['title'] ?? null);
+            $billingData['invoice_tax_office'] = $billingData['invoice_tax_office'] ?? ($invoice['tax_office'] ?? null);
+            $billingData['invoice_tax_number'] = $billingData['invoice_tax_number'] ?? ($invoice['tax_number'] ?? null);
+
+            $billingData['company_name'] = $billingData['company_name'] ?? ($invoice['title'] ?? null);
+            $billingData['tax_office'] = $billingData['tax_office'] ?? ($invoice['tax_office'] ?? null);
+            $billingData['tax_number'] = $billingData['tax_number'] ?? ($invoice['tax_number'] ?? null);
+        }
+
         $shippingAddressId = $request->input('shipping_address_id') ?? $request->input('shippingAddressId');
         $billingAddressId = $request->input('billing_address_id') ?? $request->input('billingAddressId');
+
+        if (auth()->guest()) {
+            $shippingAddressId = null;
+            $billingAddressId = null;
+        }
 
         if ($shippingAddressId) {
             $shippingAddress = Address::where('customer_id', $customer?->id)
@@ -386,9 +382,10 @@ class OrderService
             'state' => $data['state'] ?? '',
             'zip' => '',
             'country' => 'TR',
-            'invoice_title' => '',
-            'invoice_tax_office' => '',
-            'invoice_tax_number' => '',
+            'invoice_title' => $data['invoice_title'] ?? null,
+            'invoice_tax_office' => $data['invoice_tax_office'] ?? null,
+            'invoice_tax_number' => $data['invoice_tax_number'] ?? null,
+            'billing_email' => $data['billing_email'] ?? null,
         ];
 
         if ($customerId === null) {
@@ -398,48 +395,100 @@ class OrderService
         return Address::create($payload);
     }
 
-    private function snapshotOrderAddresses(Order $order): void
+    private function snapshotOrderAddresses(Order $order, $request): void
     {
         try {
+            if (!\Schema::hasTable('order_addresses')) {
+                return;
+            }
+
+            $now = now();
+
             $shipping = $order->shippingAddress;
             $billing = $order->billingAddress;
 
-            if ($shipping) {
-                \DB::table('order_addresses')->insert([
-                    'order_id' => $order->id,
-                    'type' => Address::TYPE_SHIPPING,
-                    'first_name' => $shipping->first_name,
-                    'last_name' => $shipping->last_name,
-                    'company_name' => $shipping->company_name,
-                    'tax_number' => $shipping->tax_number,
-                    'tax_office' => $shipping->tax_office,
-                    'phone' => $shipping->phone,
-                    'city' => $shipping->city,
-                    'district' => $shipping->state,
-                    'address_line' => $shipping->address_line ?? $shipping->address_1,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+            $shippingData = (array) $request->input('shipping', []);
+            $billingData = (array) $request->input('billing', []);
+            $hasDifferentBilling = $request->boolean('ship_to_a_different_address') || $request->boolean('has_different_billing');
+            if (! $hasDifferentBilling) {
+                $billingData = $shippingData;
             }
 
-            if ($billing) {
-                \DB::table('order_addresses')->insert([
-                    'order_id' => $order->id,
-                    'type' => Address::TYPE_BILLING,
-                    'first_name' => $billing->first_name,
-                    'last_name' => $billing->last_name,
-                    'company_name' => $billing->company_name,
-                    'tax_number' => $billing->tax_number,
-                    'tax_office' => $billing->tax_office,
-                    'phone' => $billing->phone,
-                    'city' => $billing->city,
-                    'district' => $billing->state,
-                    'address_line' => $billing->address_line ?? $billing->address_1,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+            // Reset snapshots to prevent duplicates on retries.
+            \DB::table('order_addresses')->where('order_id', $order->id)->delete();
+
+            $resolveCityDistrict = function (array $data, ?Address $addr = null): array {
+                if ($addr) {
+                    return [
+                        'city' => $addr->city_title ?? $addr->city,
+                        'district' => $addr->district_title ?? $addr->state,
+                    ];
+                }
+
+                $tmp = new Address([
+                    'city_id' => $data['city_id'] ?? null,
+                    'district_id' => $data['district_id'] ?? null,
+                    'city' => $data['city'] ?? null,
+                    'state' => $data['state'] ?? null,
+                    'country' => $data['country'] ?? 'TR',
                 ]);
-            }
+
+                return [
+                    'city' => $tmp->city_title ?? ($data['city'] ?? null),
+                    'district' => $tmp->district_title ?? ($data['state'] ?? null),
+                ];
+            };
+
+            $shipLoc = $resolveCityDistrict($shippingData, $shipping);
+            \DB::table('order_addresses')->insert([
+                'order_id' => $order->id,
+                'type' => Address::TYPE_SHIPPING,
+                'first_name' => $shipping?->first_name ?? ($shippingData['first_name'] ?? null),
+                'last_name' => $shipping?->last_name ?? ($shippingData['last_name'] ?? null),
+                'company_name' => $shipping?->company_name ?? ($shippingData['company_name'] ?? null),
+                'tax_number' => $shipping?->tax_number ?? ($shippingData['tax_number'] ?? null),
+                'tax_office' => $shipping?->tax_office ?? ($shippingData['tax_office'] ?? null),
+                'phone' => $shipping?->phone ?? ($shippingData['phone'] ?? null) ?? ($order->customer_phone ?? null),
+                'city' => $shipLoc['city'],
+                'district' => $shipLoc['district'],
+                'zip' => $shipping?->zip ?? ($shippingData['zip'] ?? null),
+                'country' => $shipping?->country ?? ($shippingData['country'] ?? 'TR'),
+                'address_line' => $shipping?->address_line ?? $shipping?->address_1 ?? ($shippingData['address_line'] ?? ($shippingData['address_1'] ?? null)),
+                'address_2' => $shipping?->address_2 ?? ($shippingData['address_2'] ?? null),
+                'billing_email' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+
+            $billLoc = $resolveCityDistrict($billingData, $billing);
+            $billingCompany = $billing?->invoice_title ?: ($billing?->company_name ?? null);
+            $billingTaxNo = $billing?->invoice_tax_number ?: ($billing?->tax_number ?? null);
+            $billingTaxOffice = $billing?->invoice_tax_office ?: ($billing?->tax_office ?? null);
+
+            \DB::table('order_addresses')->insert([
+                'order_id' => $order->id,
+                'type' => Address::TYPE_BILLING,
+                'first_name' => $billing?->first_name ?? ($billingData['first_name'] ?? ($shippingData['first_name'] ?? null)),
+                'last_name' => $billing?->last_name ?? ($billingData['last_name'] ?? ($shippingData['last_name'] ?? null)),
+                'company_name' => $billingCompany ?? ($billingData['invoice_title'] ?? ($billingData['company_name'] ?? null)),
+                'tax_number' => $billingTaxNo ?? ($billingData['invoice_tax_number'] ?? ($billingData['tax_number'] ?? null)),
+                'tax_office' => $billingTaxOffice ?? ($billingData['invoice_tax_office'] ?? ($billingData['tax_office'] ?? null)),
+                'phone' => $billing?->phone ?? ($billingData['phone'] ?? null) ?? ($order->customer_phone ?? null),
+                'city' => $billLoc['city'],
+                'district' => $billLoc['district'],
+                'zip' => $billing?->zip ?? ($billingData['zip'] ?? null),
+                'country' => $billing?->country ?? ($billingData['country'] ?? 'TR'),
+                'address_line' => $billing?->address_line ?? $billing?->address_1 ?? ($billingData['address_line'] ?? ($billingData['address_1'] ?? null)),
+                'address_2' => $billing?->address_2 ?? ($billingData['address_2'] ?? null),
+                'billing_email' => $billing?->billing_email ?? ($billingData['billing_email'] ?? null),
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
         } catch (\Throwable $e) {
+            Log::channel('checkout')->error('checkout.order_address_snapshot_failed', [
+                'order_id' => $order->id,
+                'message' => $e->getMessage(),
+            ]);
         }
     }
 

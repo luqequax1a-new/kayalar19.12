@@ -69,7 +69,7 @@
                 @endphp
 
                 <div
-                    class="grid-products products-slider swiper carousel-products"
+                    class="grid-products products-slider swiper carousel-products grid-view-products"
                     data-autoplay="{{ $autoplay ? 'true' : 'false' }}"
                     data-autoplay-speed="{{ $autoplaySpeed }}"
                     data-per-row-mobile="{{ $perRowMobile }}"
@@ -81,15 +81,15 @@
                     <div class="swiper-wrapper">
                         @foreach(($carouselProducts2['products'] ?? []) as $product)
                             <div class="swiper-slide">
-                                <div class="grid-products-item">
-                                    @include('storefront::public.partials.product_card', ['data' => json_encode($product)])
+                                <div class="grid-view-products-item">
+                                    @include('storefront::public.partials.product_card', ['data' => $product])
                                 </div>
                             </div>
                         @endforeach
                     </div>
 
                     @if ($showDots)
-                        <div class="swiper-pagination"></div>
+                        <div class="swiper-pagination carousel-pagination"></div>
                     @endif
 
                     @if ($showArrows)

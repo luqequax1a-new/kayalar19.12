@@ -21,47 +21,6 @@
             : ($product->base_image?->path ?? asset('build/assets/image-placeholder.png'))
     )
 
-    @php($lcpImage = $product->variant?->base_image ?? $product->base_image)
-    @php($lcpJpeg = $lcpImage?->detail_jpeg_url ?? $lcpImage?->grid_jpeg_url ?? $lcpImage?->path)
-    @php($lcpWebp = $lcpImage?->detail_webp_url ?? $lcpImage?->grid_webp_url)
-    @php($lcpAvif = $lcpImage?->detail_avif_url ?? $lcpImage?->grid_avif_url)
-    @php($lcpGridJpeg = $lcpImage?->grid_jpeg_url)
-    @php($lcpGridWebp = $lcpImage?->grid_webp_url)
-    @php($lcpGridAvif = $lcpImage?->grid_avif_url)
-    @php($lcpCard2xWebp = $lcpImage?->card_2x_webp_url)
-    @php($lcpCard2xAvif = $lcpImage?->card_2x_avif_url)
-    @php($lcpCard2xJpeg = $lcpImage?->card_2x_jpeg_url)
-    @php($lcpCard3xWebp = $lcpImage?->card_3x_webp_url)
-    @php($lcpCard3xAvif = $lcpImage?->card_3x_avif_url)
-    @php($lcpCard3xJpeg = $lcpImage?->card_3x_jpeg_url)
-    @php($lcpPreloadHref = $lcpGridAvif ?? $lcpCard3xAvif ?? $lcpCard2xAvif ?? $lcpAvif ?? null)
-    @php($lcpSrcset = trim(collect([
-        ($lcpGridAvif ? $lcpGridAvif.' 400w' : null),
-        ($lcpCard2xAvif ? $lcpCard2xAvif.' 520w' : null),
-        ($lcpCard3xAvif ? $lcpCard3xAvif.' 780w' : null),
-        ($lcpAvif ? $lcpAvif.' 1000w' : null),
-    ])->filter()->unique()->values()->implode(', ')))
-    @php($lcpSizes = '(max-width: 576px) 92vw, (max-width: 992px) 50vw, 650px')
-
-    @if (!empty($lcpPreloadHref))
-        @php($lcpHost = parse_url($lcpPreloadHref, PHP_URL_HOST))
-        @php($appHost = parse_url(url('/'), PHP_URL_HOST))
-        @if ($lcpHost && $appHost && $lcpHost !== $appHost)
-            <link rel="preconnect" href="{{ (parse_url($lcpPreloadHref, PHP_URL_SCHEME) ?: 'https') . '://' . $lcpHost }}" crossorigin>
-        @endif
-
-        <link
-            rel="preload"
-            as="image"
-            href="{{ $lcpPreloadHref }}"
-            @if (!empty($lcpSrcset))
-                imagesrcset="{{ $lcpSrcset }}"
-                imagesizes="{{ $lcpSizes }}"
-            @endif
-            fetchpriority="high"
-        >
-    @endif
-
     <meta property="og:image" content="{{ $productOgImage }}">
     <meta property="og:locale" content="{{ locale() }}">
 

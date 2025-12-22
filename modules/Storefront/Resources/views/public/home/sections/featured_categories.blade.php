@@ -103,7 +103,7 @@
                         </div>
                     @endforeach
 
-                    <template x-for="product in products" :key="product.id">
+                    <template x-for="product in products" :key="product.listing_key || product.id">
                         <div class="swiper-slide">
                             <div class="grid-products-item">
                                 @include('storefront::public.partials.product_card')

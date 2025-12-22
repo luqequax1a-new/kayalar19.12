@@ -21,6 +21,7 @@ use Modules\Payment\HasTransactionReference;
 use Modules\Shipping\Facades\ShippingMethod;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Transaction\Entities\Transaction;
+use Modules\Order\Entities\OrderAddress;
 
 class Order extends Model
 {
@@ -37,12 +38,10 @@ class Order extends Model
 
     const CANCELED = 'canceled';
     const COMPLETED = 'completed';
-    const ON_HOLD = 'on_hold';
     const ON_THE_WAY = 'on_the_way';
     const OUT_FOR_DELIVERY = 'out_for_delivery';
     const PENDING = 'pending';
     const PENDING_PAYMENT = 'pending_payment';
-    const PROCESSING = 'processing';
     const REFUNDED = 'refunded';
     const SHIPPED = 'shipped';
 
@@ -74,7 +73,7 @@ class Order extends Model
     private function generateOrderNumber(): string
     {
         for ($i = 0; $i < 20; $i++) {
-            $candidate = 'KYM_' . (string) random_int(10000, 99999);
+            $candidate = 'KYM_' . (string) random_int(1000, 9999);
 
             $exists = self::query()
                 ->where('order_number', $candidate)
@@ -170,6 +169,21 @@ class Order extends Model
         return $this->belongsTo(\Modules\Address\Entities\Address::class, 'billing_address_id');
     }
 
+    public function orderAddresses()
+    {
+        return $this->hasMany(OrderAddress::class);
+    }
+
+    public function shippingSnapshot()
+    {
+        return $this->hasOne(OrderAddress::class)->where('type', 'shipping');
+    }
+
+    public function billingSnapshot()
+    {
+        return $this->hasOne(OrderAddress::class)->where('type', 'billing');
+    }
+
 
     public function getSubTotalAttribute($subTotal)
     {
@@ -241,49 +255,119 @@ class Order extends Model
 
     public function getBillingFullNameAttribute()
     {
-        return "{$this->billing_first_name} {$this->billing_last_name}";
+        $s = $this->billingSnapshot;
+        if ($s && ($s->first_name || $s->last_name)) {
+            return trim("{$s->first_name} {$s->last_name}");
+        }
+        $a = $this->billingAddress;
+        if ($a && ($a->first_name || $a->last_name)) {
+            return trim("{$a->first_name} {$a->last_name}");
+        }
+        return (string) ($this->customer_full_name ?? '');
     }
 
 
     public function getShippingFullNameAttribute()
     {
-        return "{$this->shipping_first_name} {$this->shipping_last_name}";
+        $s = $this->shippingSnapshot;
+        if ($s && ($s->first_name || $s->last_name)) {
+            return trim("{$s->first_name} {$s->last_name}");
+        }
+        $a = $this->shippingAddress;
+        if ($a && ($a->first_name || $a->last_name)) {
+            return trim("{$a->first_name} {$a->last_name}");
+        }
+        return (string) ($this->customer_full_name ?? '');
+    }
+
+
+    public function getShippingPhoneAttribute(): ?string
+    {
+        return $this->shippingSnapshot?->phone
+            ?? $this->shippingAddress?->phone
+            ?? ($this->attributes['customer_phone'] ?? null);
+    }
+
+
+    public function getBillingPhoneAttribute(): ?string
+    {
+        return $this->billingSnapshot?->phone
+            ?? $this->billingAddress?->phone
+            ?? ($this->attributes['customer_phone'] ?? null);
     }
 
 
     public function getBillingCountryNameAttribute()
     {
-        return Country::name($this->billing_country);
+        $country = $this->billingSnapshot?->country
+            ?? $this->billingAddress?->country
+            ?? null;
+        return Country::name($country);
     }
 
 
     public function getShippingCountryNameAttribute()
     {
-        return Country::name($this->shipping_country);
+        $country = $this->shippingSnapshot?->country
+            ?? $this->shippingAddress?->country
+            ?? null;
+        return Country::name($country);
     }
 
 
     public function getBillingStateNameAttribute()
     {
-        return $this->formatState(State::name($this->billing_country, $this->billing_state));
+        $snap = $this->billingSnapshot;
+        if ($snap && $snap->district) {
+            return $this->formatState($snap->district);
+        }
+        $a = $this->billingAddress;
+        if ($a && $a->state_name) {
+            return $this->formatState($a->state_name);
+        }
+        return null;
     }
 
 
     public function getShippingStateNameAttribute()
     {
-        return $this->formatState(State::name($this->shipping_country, $this->shipping_state));
+        $snap = $this->shippingSnapshot;
+        if ($snap && $snap->district) {
+            return $this->formatState($snap->district);
+        }
+        $a = $this->shippingAddress;
+        if ($a && $a->state_name) {
+            return $this->formatState($a->state_name);
+        }
+        return null;
     }
 
 
     public function getBillingCityTitleAttribute()
     {
-        return $this->formatState($this->billing_city);
+        $snap = $this->billingSnapshot;
+        if ($snap && $snap->city) {
+            return $this->formatState($snap->city);
+        }
+        $a = $this->billingAddress;
+        if ($a && $a->city_title) {
+            return $this->formatState($a->city_title);
+        }
+        return null;
     }
 
 
     public function getShippingCityTitleAttribute()
     {
-        return $this->formatState($this->shipping_city);
+        $snap = $this->shippingSnapshot;
+        if ($snap && $snap->city) {
+            return $this->formatState($snap->city);
+        }
+        $a = $this->shippingAddress;
+        if ($a && $a->city_title) {
+            return $this->formatState($a->city_title);
+        }
+        return null;
     }
 
 
@@ -374,6 +458,7 @@ class Order extends Model
 
         $query = $this->newQuery()->select([
             'id',
+            'order_number',
             'customer_first_name',
             'customer_last_name',
             'customer_email',

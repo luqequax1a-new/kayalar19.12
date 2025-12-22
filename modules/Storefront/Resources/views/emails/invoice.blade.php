@@ -206,7 +206,7 @@
                                 <td style="padding:12px 14px;">
                                     <p style="margin:2px 0;font-size:14px;color:#111827;">
                                         <strong>{{ trans('storefront::invoice.order_id') }}:</strong>
-                                        &nbsp;#{{ $order->id }}
+                                        &nbsp;#{{ $order->displayOrderNumber() }}
                                     </p>
                                     <p style="margin:2px 0;font-size:14px;color:#111827;">
                                         <strong>{{ trans('storefront::invoice.date') }}:</strong>
@@ -243,6 +243,10 @@
                 <!-- ADRESLER -->
                 <tr>
                     <td class="section">
+                        @php($billing = $order->billingAddress)
+                        @php($shipping = $order->shippingAddress)
+                        @php($shippingSnapshot = $order->shippingSnapshot)
+                        @php($billingSnapshot = $order->billingSnapshot)
                         <table style="border-collapse: collapse; width: 100%;">
                             <tbody>
                             <tr>
@@ -250,20 +254,18 @@
                                 <td class="address-column" style="padding-right:10px;">
                                     <h5 class="section-title" style="margin-bottom:8px; text-align:center;">🚚 {{ trans('storefront::invoice.shipping_address') }}</h5>
                                     <div class="address-block" style="font-size:13px; text-align:center;">
-                                        @if ($order->shippingAddress)
-                                            <span>{{ $order->shippingAddress->first_name }} {{ $order->shippingAddress->last_name }}</span>
-                                            <span>{{ $order->shippingAddress->phone }}</span>
-                                            <span>{{ $order->shippingAddress->address_line ?? $order->shippingAddress->address_1 }}</span>
+                                        @if ($shippingSnapshot || $shipping)
+                                            <span>{{ ($shippingSnapshot->first_name ?? null) ?: ($shipping->first_name ?? '-') }} {{ ($shippingSnapshot->last_name ?? null) ?: ($shipping->last_name ?? '') }}</span>
+                                            <span>{{ ($shippingSnapshot->phone ?? null) ?: (($shipping->phone ?? null) ?: ($order->customer_phone ?: '-')) }}</span>
+                                            <span>{{ ($shippingSnapshot->address_line ?? null) ?: ((($shipping->address_line ?? $shipping->address_1) ?? null) ?: '-') }}</span>
 
-                                            @if ($order->shippingAddress && ($order->shippingAddress->district_title || $order->shippingAddress->city_title))
-                                                <span>
-                                                    {{ $order->shippingAddress->district_title }}
-                                                    @if ($order->shippingAddress->district_title && $order->shippingAddress->city_title)
-                                                        ,
-                                                    @endif
-                                                    {{ $order->shippingAddress->city_title }}
-                                                </span>
-                                            @endif
+                                            <span>
+                                                {{ ($shippingSnapshot->district ?? null) ?: (($shipping->district_title ?? $shipping->state ?? $shipping->district_id) ?? '-') }}
+                                                @if ((($shippingSnapshot->district ?? null) ?: (($shipping->district_title ?? $shipping->state ?? $shipping->district_id) ?? null)) && (($shippingSnapshot->city ?? null) ?: (($shipping->city_title ?? $shipping->city ?? $shipping->city_id) ?? null)))
+                                                    ,
+                                                @endif
+                                                {{ ($shippingSnapshot->city ?? null) ?: (($shipping->city_title ?? $shipping->city ?? $shipping->city_id) ?? '-') }}
+                                            </span>
                                         @endif
                                     </div>
                                 </td>
@@ -272,42 +274,37 @@
                                 <td class="address-column" style="padding-left:10px;">
                                     <h5 class="section-title" style="margin-bottom:8px; text-align:center;">📄 {{ trans('storefront::invoice.billing_address') }}</h5>
                                     <div class="address-block" style="font-size:13px; text-align:center;">
-                                        @if ($order->billingAddress && $order->billing_address_id !== $order->shipping_address_id)
-                                            @if ($order->billingAddress->company_name)
-                                                <span>{{ $order->billingAddress->company_name }}</span>
-                                            @endif
+                                        @if (($billingSnapshot || $billing) && $order->shipping_address_id !== $order->billing_address_id)
+                                            <span><strong>Firma Adı:</strong> {{ $billingSnapshot->company_name ?? (($billing->invoice_title ?? null) ?: (($billing->company_name ?? null) ?: '-')) }}</span>
+                                            <span><strong>Vergi No:</strong> {{ $billingSnapshot->tax_number ?? (($billing->invoice_tax_number ?? null) ?: (($billing->tax_number ?? null) ?: '-')) }}</span>
+                                            <span><strong>Vergi Dairesi:</strong> {{ $billingSnapshot->tax_office ?? (($billing->invoice_tax_office ?? null) ?: (($billing->tax_office ?? null) ?: '-')) }}</span>
+                                            <span><strong>Email:</strong> {{ $billingSnapshot->billing_email ?? (($billing->billing_email ?? null) ?: ($order->customer_email ?: '-')) }}</span>
+                                            <span><strong>Telefon:</strong> {{ $billingSnapshot->phone ?? (($billing->phone ?? null) ?: ($order->customer_phone ?: '-')) }}</span>
+                                            <span><strong>Adres:</strong> {{ $billingSnapshot->address_line ?? ((($billing->address_line ?? $billing->address_1) ?? null) ?: '-') }}</span>
 
-                                            @if ($order->billingAddress->tax_office || $order->billingAddress->tax_number)
-                                                <span>Vergi Dairesi: {{ $order->billingAddress->tax_office }}</span>
-                                                <span>Vergi No: {{ $order->billingAddress->tax_number }}</span>
-                                            @endif
+                                            <span>
+                                                {{ $billingSnapshot->district ?? (($billing->district_title ?? $billing->state ?? $billing->district_id) ?? '-') }}
+                                                @if ((($billingSnapshot->district ?? null) ?: (($billing->district_title ?? $billing->state ?? $billing->district_id) ?? null)) && (($billingSnapshot->city ?? null) ?: (($billing->city_title ?? $billing->city ?? $billing->city_id) ?? null)))
+                                                    ,
+                                                @endif
+                                                {{ $billingSnapshot->city ?? (($billing->city_title ?? $billing->city ?? $billing->city_id) ?? '-') }}
+                                            </span>
+                                        @elseif ($shippingSnapshot || $shipping)
+                                            <span><strong>Firma Adı:</strong> {{ ($billingSnapshot->company_name ?? null) ?: '-' }}</span>
+                                            <span><strong>Vergi No:</strong> {{ ($billingSnapshot->tax_number ?? null) ?: '-' }}</span>
+                                            <span><strong>Vergi Dairesi:</strong> {{ ($billingSnapshot->tax_office ?? null) ?: '-' }}</span>
+                                            <span><strong>Email:</strong> {{ ($billingSnapshot->billing_email ?? null) ?: ($order->customer_email ?: '-') }}</span>
+                                            <span>{{ ($billingSnapshot->first_name ?? null) ?: ($shippingSnapshot->first_name ?? ($shipping->first_name ?? '-')) }} {{ ($billingSnapshot->last_name ?? null) ?: ($shippingSnapshot->last_name ?? ($shipping->last_name ?? '')) }}</span>
+                                            <span><strong>Telefon:</strong> {{ ($billingSnapshot->phone ?? null) ?: (($shippingSnapshot->phone ?? null) ?: (($shipping->phone ?? null) ?: ($order->customer_phone ?: '-'))) }}</span>
+                                            <span><strong>Adres:</strong> {{ ($billingSnapshot->address_line ?? null) ?: (($shippingSnapshot->address_line ?? null) ?: ((($shipping->address_line ?? $shipping->address_1) ?? null) ?: '-')) }}</span>
 
-                                            <span>{{ $order->billingAddress->phone }}</span>
-                                            <span>{{ $order->billingAddress->address_line ?? $order->billingAddress->address_1 }}</span>
-
-                                            @if ($order->billingAddress && ($order->billingAddress->district_title || $order->billingAddress->city_title))
-                                                <span>
-                                                    {{ $order->billingAddress->district_title }}
-                                                    @if ($order->billingAddress->district_title && $order->billingAddress->city_title)
-                                                        ,
-                                                    @endif
-                                                    {{ $order->billingAddress->city_title }}
-                                                </span>
-                                            @endif
-                                        @elseif ($order->shippingAddress)
-                                            <span>{{ $order->shippingAddress->first_name }} {{ $order->shippingAddress->last_name }}</span>
-                                            <span>{{ $order->shippingAddress->phone }}</span>
-                                            <span>{{ $order->shippingAddress->address_line ?? $order->shippingAddress->address_1 }}</span>
-
-                                            @if ($order->shippingAddress && ($order->shippingAddress->district_title || $order->shippingAddress->city_title))
-                                                <span>
-                                                    {{ $order->shippingAddress->district_title }}
-                                                    @if ($order->shippingAddress->district_title && $order->shippingAddress->city_title)
-                                                        ,
-                                                    @endif
-                                                    {{ $order->shippingAddress->city_title }}
-                                                </span>
-                                            @endif
+                                            <span>
+                                                {{ ($billingSnapshot->district ?? null) ?: (($shippingSnapshot->district ?? null) ?: (($shipping->district_title ?? $shipping->state ?? $shipping->district_id) ?? '-')) }}
+                                                @if (((($billingSnapshot->district ?? null) ?: ($shippingSnapshot->district ?? null)) ?: (($shipping->district_title ?? $shipping->state ?? $shipping->district_id) ?? null)) && (((($billingSnapshot->city ?? null) ?: ($shippingSnapshot->city ?? null)) ?: (($shipping->city_title ?? $shipping->city ?? $shipping->city_id) ?? null))))
+                                                    ,
+                                                @endif
+                                                {{ ($billingSnapshot->city ?? null) ?: (($shippingSnapshot->city ?? null) ?: (($shipping->city_title ?? $shipping->city ?? $shipping->city_id) ?? '-')) }}
+                                            </span>
                                         @endif
                                     </div>
                                 </td>

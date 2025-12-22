@@ -80,7 +80,7 @@
                                                 color: #666666;
                                                 display: block;"
                                     >
-                                        {{ trans('checkout::mail.new_order_text', ['order_id' => $order->id]) }}
+                                        {{ trans('checkout::mail.new_order_text', ['order_id' => $order->displayOrderNumber()]) }}
                                     </span>
                                 </td>
                             </tr>

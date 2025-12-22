@@ -3,52 +3,75 @@
 namespace Modules\Account\Entities;
 
 use Illuminate\Database\Eloquent\Model;
+use Modules\Address\Entities\Address;
 
 class DefaultAddress extends Model
 {
     public $timestamps = false;
-    protected $with = ['address'];
-    protected $fillable = ['customer_id', 'address_id'];
+    protected $with = ['shippingAddress', 'billingAddress'];
+    protected $fillable = [
+        'customer_id',
+        'default_shipping_address_id',
+        'default_billing_address_id',
+    ];
 
 
-    public function address()
+    public function shippingAddress()
     {
-        return $this->belongsTo(Address::class);
+        return $this->belongsTo(Address::class, 'default_shipping_address_id');
+    }
+
+
+    public function billingAddress()
+    {
+        return $this->belongsTo(Address::class, 'default_billing_address_id');
+    }
+
+
+    public function getAddressIdAttribute()
+    {
+        return $this->default_shipping_address_id;
+    }
+
+
+    public function getAddressAttribute()
+    {
+        return $this->shippingAddress;
     }
 
 
     public function getAddress1Attribute()
     {
-        return $this->address->address_1;
+        return $this->address?->address_1;
     }
 
 
     public function getAddress2Attribute()
     {
-        return $this->address->address_1;
+        return $this->address?->address_1;
     }
 
 
     public function getCityAttribute()
     {
-        return $this->address->city;
+        return $this->address?->city;
     }
 
 
     public function getStateAttribute()
     {
-        return $this->address->state;
+        return $this->address?->state;
     }
 
 
     public function getZipAttribute()
     {
-        return $this->address->zip;
+        return $this->address?->zip;
     }
 
 
     public function getCountryAttribute()
     {
-        return $this->address->country;
+        return $this->address?->country;
     }
 }

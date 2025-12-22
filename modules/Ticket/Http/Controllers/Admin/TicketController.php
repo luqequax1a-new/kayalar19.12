@@ -56,7 +56,7 @@ class TicketController
         }
 
         $ticket->update([
-            'status' => 'open',
+            'status' => 'waiting_customer',
             'last_message_at' => now(),
         ]);
 

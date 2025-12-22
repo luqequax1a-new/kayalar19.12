@@ -77,6 +77,8 @@ return [
         'approve_reviews_automatically' => 'Customer reviews will be approved automatically',
         'show_cookie_bar' => 'Show cookie bar in your website',
         'privacy_settings' => 'Privacy Settings',
+        'tax_settings' => 'Tax Settings',
+        'prices_include_tax' => 'Prices include tax (VAT is not added on top of totals)',
         'hide_store_phone' => 'Hide store phone from the storefront',
         'hide_store_email' => 'Hide store email from the storefront',
         'put_the_application_into_maintenance_mode' => 'Put the application into maintenance mode',

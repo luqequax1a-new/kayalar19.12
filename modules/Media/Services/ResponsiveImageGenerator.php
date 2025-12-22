@@ -16,6 +16,8 @@ class ResponsiveImageGenerator
 
     protected array $thumbs = [80];
 
+    protected array $poolWidths = [];
+
     protected int $jpegQuality = 88;
 
     protected int $webpQuality = 85;
@@ -35,28 +37,38 @@ class ResponsiveImageGenerator
 
     public function __construct()
     {
+        $pool = array_merge(
+            (array) config('image_optimization.ikas_pool.widths', []),
+            (array) config('image_optimization.ikas_pool.legacy_widths', [])
+        );
+        $this->poolWidths = array_values(array_unique(array_filter(array_map('intval', $pool))));
+
         $widths = (array) config('image_optimization.variants.widths', []);
 
         $thumbWidth = (int) ($widths['thumb'] ?? 80);
+        $thumb2xWidth = (int) ($widths['thumb_2x'] ?? 0);
         $cardWidth = (int) ($widths['card'] ?? 260);
         $card2xWidth = (int) ($widths['card_2x'] ?? 520);
         $card3xWidth = (int) ($widths['card_3x'] ?? 780);
         $gridWidth = (int) ($widths['grid'] ?? 400);
+        $grid2xWidth = (int) ($widths['grid_2x'] ?? 0);
+        $grid3xWidth = (int) ($widths['grid_3x'] ?? 0);
         $detailWidth = (int) ($widths['detail'] ?? 1000);
+        $detail2xWidth = (int) ($widths['detail_2x'] ?? 0);
 
         $this->presets = [
             'card' => [$cardWidth],
             'card_retina' => array_values(array_filter([$card2xWidth, $card3xWidth])),
-            'grid' => [$gridWidth],
-            'detail' => [$detailWidth],
+            'grid' => array_values(array_filter([$gridWidth, $grid2xWidth, $grid3xWidth])),
+            'detail' => array_values(array_filter([$detailWidth, $detail2xWidth])),
         ];
 
-        $this->thumbs = [$thumbWidth];
+        $this->thumbs = array_values(array_filter([$thumbWidth, $thumb2xWidth]));
 
         $this->jpegQuality = (int) config('image_optimization.variants.jpeg_quality', 88);
-        $this->webpQuality = (int) config('image_optimization.variants.webp_quality', 85);
-        $this->avifQuality = (int) config('image_optimization.variants.avif_quality', 85);
-        $this->enableAvif = (bool) config('image_optimization.variants.enable_avif', true);
+        $this->webpQuality = (int) config('image_optimization.ikas_pool.webp_quality', config('image_optimization.variants.webp_quality', 85));
+        $this->avifQuality = (int) config('image_optimization.ikas_pool.avif_quality', config('image_optimization.variants.avif_quality', 85));
+        $this->enableAvif = (bool) config('image_optimization.ikas_pool.enable_avif', config('image_optimization.variants.enable_avif', true));
 
         $this->fastListingWidth = (int) config('image_optimization.fast_listing.width', $gridWidth);
         $this->fastWebpQuality = (int) config('image_optimization.fast_listing.webp_quality', 65);
@@ -64,7 +76,7 @@ class ResponsiveImageGenerator
         $this->enableFastAvif = (bool) config('image_optimization.fast_listing.enable_avif', true);
     }
 
-    public function generateVariants(MediaFile $file): void
+    public function generateVariants(MediaFile $file, bool $force = false): void
     {
         if (!$file->isImage()) return;
 
@@ -72,6 +84,39 @@ class ResponsiveImageGenerator
         $disk = $file->disk;
         $source = $file->realPath();
         if (!$source || !is_file($source)) return;
+
+        $hasImagick = class_exists('\\Imagick');
+        $thumbsRequireImagick = (bool) config('image_optimization.variants.thumbs_require_imagick', false);
+
+        $pool = $this->poolWidths;
+        if (empty($pool)) {
+            $pool = array_merge(...array_values($this->presets));
+            $pool = array_merge($pool, $this->thumbs, [$this->fastListingWidth]);
+            $pool = array_values(array_unique($pool));
+            $pool = array_values(array_filter(array_map('intval', $pool)));
+        }
+
+        if ($hasImagick) {
+            foreach ($pool as $w) {
+                if ($w <= 0) continue;
+                $this->writeVariantWithImagick($disk, $raw, $source, $w, 'jpg', '', null, $force);
+                $this->writeVariantWithImagick($disk, $raw, $source, $w, 'webp', '', null, $force);
+                if ($this->enableAvif) {
+                    $this->writeVariantWithImagick($disk, $raw, $source, $w, 'avif', '', null, $force);
+                }
+            }
+
+            // Fast listing variants (separate filenames) for LCP candidates.
+            $w = (int) $this->fastListingWidth;
+            if ($w > 0) {
+                $this->writeVariantWithImagick($disk, $raw, $source, $w, 'webp', 'fast', $this->fastWebpQuality, $force);
+                if ($this->enableAvif && $this->enableFastAvif) {
+                    $this->writeVariantWithImagick($disk, $raw, $source, $w, 'avif', 'fast', $this->fastAvifQuality, $force);
+                }
+            }
+
+            return;
+        }
 
         $binary = @file_get_contents($source);
         $img = ($binary !== false) ? @imagecreatefromstring($binary) : false;
@@ -95,34 +140,106 @@ class ResponsiveImageGenerator
 
         $ext = strtolower($file->extension ?: pathinfo($raw, PATHINFO_EXTENSION));
 
-        foreach ($this->presets as $sizes) {
-            foreach ($sizes as $w) {
-                $this->writeVariant($disk, $raw, $img, $ext, $w, null);
-                $this->writeVariant($disk, $raw, $img, $ext, $w, 'webp');
-                if ($this->enableAvif) {
-                    $this->writeVariant($disk, $raw, $img, $ext, $w, 'avif');
-                }
+        foreach ($pool as $w) {
+            if ($w <= 0) continue;
+            $this->writeVariant($disk, $raw, $img, $ext, $w, 'jpg', '', null, $force);
+            $this->writeVariant($disk, $raw, $img, $ext, $w, 'webp', '', null, $force);
+            if ($this->enableAvif) {
+                $this->writeVariant($disk, $raw, $img, $ext, $w, 'avif', '', null, $force);
             }
         }
 
-        foreach ($this->thumbs as $tw) {
-            $this->writeVariant($disk, $raw, $img, $ext, $tw, null);
-            $this->writeVariant($disk, $raw, $img, $ext, $tw, 'webp');
-            if ($this->enableAvif) {
-                $this->writeVariant($disk, $raw, $img, $ext, $tw, 'avif');
-            }
+        if ($thumbsRequireImagick) {
+            // no-op: thumbs are part of the pool; when Imagick is required but missing we only do GD fallback above.
         }
 
         // Fast listing variants (separate filenames) for LCP candidates.
         $w = (int) $this->fastListingWidth;
         if ($w > 0) {
-            $this->writeVariant($disk, $raw, $img, $ext, $w, 'webp', 'fast', $this->fastWebpQuality);
+            $this->writeVariant($disk, $raw, $img, $ext, $w, 'webp', 'fast', $this->fastWebpQuality, $force);
             if ($this->enableAvif && $this->enableFastAvif) {
-                $this->writeVariant($disk, $raw, $img, $ext, $w, 'avif', 'fast', $this->fastAvifQuality);
+                $this->writeVariant($disk, $raw, $img, $ext, $w, 'avif', 'fast', $this->fastAvifQuality, $force);
             }
         }
 
         imagedestroy($img);
+    }
+
+    protected function writeVariantWithImagick(
+        string $disk,
+        string $rawPath,
+        string $sourcePath,
+        int $width,
+        string $format,
+        string $suffix = '',
+        ?int $qualityOverride = null,
+        bool $force = false
+    ): void
+    {
+        if (!class_exists('\\Imagick')) return;
+
+        $targetRel = $this->buildVariantRelativePath($rawPath, $width, $format, $suffix);
+        if (!$force && Storage::disk($disk)->exists($targetRel)) return;
+        if ($force && Storage::disk($disk)->exists($targetRel)) {
+            Storage::disk($disk)->delete($targetRel);
+        }
+
+        try {
+            $im = new \Imagick($sourcePath);
+            $im->autoOrient();
+
+            $srcW = (int) $im->getImageWidth();
+            if ($srcW > 0 && $width > $srcW) {
+                $width = $srcW;
+            }
+
+            $im->resizeImage($width, 0, \Imagick::FILTER_LANCZOS, 1);
+
+            $finalW = (int) $im->getImageWidth();
+            if ($finalW > 0 && $finalW <= 600) {
+                $im->unsharpMaskImage(0.25, 0.25, 0.5, 0.02);
+            }
+
+            $fmt = strtolower($format);
+            $jpegQ = $qualityOverride ?? $this->jpegQuality;
+            $webpQ = $qualityOverride ?? $this->webpQuality;
+            $avifQ = $qualityOverride ?? $this->avifQuality;
+
+            if (method_exists($im, 'stripImage')) {
+                $im->stripImage();
+            }
+
+            if (in_array($fmt, ['jpg', 'jpeg'], true)) {
+                $im->setImageFormat('jpeg');
+                if (method_exists($im, 'setInterlaceScheme')) {
+                    $im->setInterlaceScheme(\Imagick::INTERLACE_PLANE);
+                }
+                if (method_exists($im, 'setSamplingFactors')) {
+                    $im->setSamplingFactors(['1x1', '1x1', '1x1']);
+                }
+                $im->setImageCompressionQuality(max(0, min(100, $jpegQ)));
+            } elseif ($fmt === 'webp') {
+                $im->setImageFormat('webp');
+                $im->setOption('webp:method', '6');
+                $im->setImageCompressionQuality(max(0, min(100, $webpQ)));
+            } elseif ($fmt === 'avif') {
+                $im->setImageFormat('avif');
+                $im->setOption('avif:speed', '6');
+                $im->setImageCompressionQuality(max(0, min(100, $avifQ)));
+            } else {
+                $im->setImageFormat($fmt);
+            }
+
+            $blob = $im->getImageBlob();
+            $im->clear();
+            $im->destroy();
+
+            if (is_string($blob) && strlen($blob) > 0) {
+                Storage::disk($disk)->put($targetRel, $blob);
+            }
+        } catch (\Throwable $e) {
+            return;
+        }
     }
 
     protected function writeVariant(
@@ -133,14 +250,47 @@ class ResponsiveImageGenerator
         int $width,
         ?string $format,
         string $suffix = '',
-        ?int $qualityOverride = null
+        ?int $qualityOverride = null,
+        bool $force = false
     ): void
     {
-        $targetRel = $this->buildVariantRelativePath($rawPath, $width, $format ?? $originalExt, $suffix);
-        if (Storage::disk($disk)->exists($targetRel)) return;
+        $srcW = imagesx($img);
+        if ($srcW > 0 && $width > $srcW) {
+            $width = $srcW;
+        }
 
-        $scaled = imagescale($img, $width);
+        $targetRel = $this->buildVariantRelativePath($rawPath, $width, $format ?? $originalExt, $suffix);
+        if (!$force && Storage::disk($disk)->exists($targetRel)) return;
+        if ($force && Storage::disk($disk)->exists($targetRel)) {
+            Storage::disk($disk)->delete($targetRel);
+        }
+
+        $scaled = null;
+        if (function_exists('imagescale')) {
+            $scaled = imagescale($img, $width, -1, defined('IMG_BICUBIC_FIXED') ? IMG_BICUBIC_FIXED : IMG_BILINEAR_FIXED);
+        }
         if ($scaled === false) return;
+
+        if ($scaled === null) {
+            $srcW = imagesx($img);
+            $srcH = imagesy($img);
+            if ($srcW <= 0 || $srcH <= 0) return;
+            $dstW = max(1, $width);
+            $dstH = max(1, (int) round(($srcH / $srcW) * $dstW));
+            $scaled = imagecreatetruecolor($dstW, $dstH);
+            if ($scaled === false) return;
+            imagealphablending($scaled, false);
+            imagesavealpha($scaled, true);
+            if (!imagecopyresampled($scaled, $img, 0, 0, 0, 0, $dstW, $dstH, $srcW, $srcH)) {
+                imagedestroy($scaled);
+                return;
+            }
+        }
+
+        $finalW = imagesx($scaled);
+        if ($finalW > 0 && $finalW <= 600 && function_exists('imageconvolution')) {
+            @imageconvolution($scaled, [[0, -1, 0], [-1, 5, -1], [0, -1, 0]], 1, 0);
+        }
 
         ob_start();
         $ok = false;

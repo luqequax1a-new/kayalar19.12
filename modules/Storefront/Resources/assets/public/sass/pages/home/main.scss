@@ -14,7 +14,7 @@
 @import "sections/_faq";
 
 .tab-content {
-    .swiper {
+    > .swiper {
         padding-bottom: 50px;
         margin-bottom: -50px;
         padding-top: 20px;
@@ -23,9 +23,8 @@
 
 @media screen and (max-width: 767px) {
     .tab-content {
-        .swiper {
+        > .swiper {
             padding-top: 10px;
         }
     }
 }
-

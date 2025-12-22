@@ -27,7 +27,7 @@ class OrderTable extends AdminTable
     public function make()
     {
         return $this->newTable()
-            ->editColumn('id', function ($order) {
+            ->addColumn('order_no', function ($order) {
                 return $order->displayOrderNumber();
             })
             ->addColumn('customer_name', function ($order) {

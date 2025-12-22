@@ -15,46 +15,51 @@
         <div class="panel-body" style="padding:0">
             <style>
                 .chat-wrapper{width:100%;margin:0;padding:12px}
-                .chat-card{background:#fff;border-radius:0;box-shadow:0 6px 20px rgba(0,0,0,0.08);overflow:hidden}
-                .chat-container{display:flex;flex-direction:column;min-height:60vh;background:#fff}
-                .chat-header{padding:20px 20px;border-bottom:1px solid #e5e7eb;background:#fff;min-height:64px}
-                .chat-wrap{overflow:visible;padding:16px;display:flex;flex-direction:column;gap:12px}
-                .msg{max-width:92%;padding:12px 14px;border-radius:16px;position:relative;line-height:1.7;font-size:15px;background:#fff;border:1px solid #e5e7eb}
-                .msg-user{margin-left:auto;background:#fff;color:#222;border:1px solid #e5e7eb}
-                .msg-admin{margin-right:auto;background:#fff;color:#222;border:1px solid #e5e7eb}
-                .msg-author{font-size:12px;color:#666;margin-bottom:6px}
+                .chat-card{background:#fff;border-radius:14px;box-shadow:0 10px 30px rgba(15,23,42,.10);overflow:hidden;border:1px solid #eef2f7}
+                .chat-container{display:flex;flex-direction:column;min-height:70vh;background:#f8fafc}
+                .chat-header{position:sticky;top:0;z-index:5;padding:14px 16px;border-bottom:1px solid #eef2f7;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);min-height:64px}
+                .chat-wrap{padding:16px;display:flex;flex-direction:column;gap:12px;overflow:auto}
+                .msg{max-width:78%;padding:12px 14px;border-radius:16px;position:relative;line-height:1.6;font-size:14px;box-shadow:0 6px 18px rgba(15,23,42,.06)}
+                .msg-user{margin-left:auto;background:linear-gradient(135deg,#4f46e5,#6d28d9);border:1px solid rgba(255,255,255,.15);color:#fff}
+                .msg-admin{margin-right:auto;background:#ffffff;border:1px solid #e2e8f0;color:#0f172a}
+                .msg-author{font-size:12px;font-weight:600;opacity:.9;margin-bottom:6px}
+                .msg-group{display:flex;flex-direction:column;gap:6px;max-width:78%}
+                .msg-group-user{margin-left:auto;align-items:flex-end}
+                .msg-group-admin{margin-right:auto;align-items:flex-start}
+                .bubble{width:100%}
+                .bubble .attachments{margin-top:0}
                 .msg-attach{background:transparent;border:none;box-shadow:none;padding:0;margin:0}
-                .attachments{display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 0}
-                .attachments .item{border-radius:10px;overflow:hidden;max-width:280px}
-                .attachments .item img{display:block;width:100%;height:auto}
+                .attachments{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:10px 0 0}
+                .attachments .item{border-radius:12px;overflow:hidden;border:1px solid rgba(226,232,240,.9);background:#fff}
+                .attachments .item img{display:block;width:100%;height:120px;object-fit:cover}
                 .attachments-user{justify-content:flex-end}
                 .attachments-admin{justify-content:flex-start}
-                .msg-time{font-size:11px;color:#888;margin-top:6px;text-align:right}
-                .chat-composer{padding:12px;border-top:1px solid #e5e7eb;background:#fff}
-                .chat-composer-inner{display:grid;grid-template-columns:1fr 44px;gap:12px;border:1px solid #e5e7eb;border-radius:9999px;background:#fff;padding:8px 10px;width:100%;align-items:center}
+                .msg-time{font-size:11px;opacity:.75;margin-top:8px;text-align:right}
+                .chat-composer{padding:12px;border-top:1px solid #eef2f7;background:#fff}
+                .chat-composer-inner{display:grid;grid-template-columns:1fr 44px;gap:10px;border:1px solid #e2e8f0;border-radius:14px;background:#fff;padding:10px;width:100%;align-items:end}
                 .chat-composer .field{flex:1;position:relative}
                 .chat-composer .actions{display:flex;gap:8px;align-items:center}
                 .icon-btn{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border:1px solid #e5e7eb;border-radius:8px;background:#fff}
-                .send-btn{height:44px;width:44px;border-radius:9999px;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;background:#6f63ff;color:#fff}
-                .file-count{font-size:12px;color:#666}
+                .send-btn{height:44px;width:44px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;background:#4f46e5;color:#fff;border:none}
+                .file-count{font-size:12px;color:#64748b}
                 .file-input{display:none}
-                .chat-composer textarea{min-height:56px;max-height:220px;resize:none;border:none;border-radius:9999px;outline:none;padding:12px 14px;overflow-y:auto;width:100%;word-break:break-word}
+                .chat-composer textarea{min-height:44px;max-height:220px;resize:none;border:none;outline:none;padding:10px 12px;overflow-y:auto;width:100%;word-break:break-word;background:transparent;font-size:14px;line-height:1.6;color:#0f172a}
                 .composer-top{display:flex;gap:10px;align-items:center;margin-bottom:12px}
-                .upload-btn{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;cursor:pointer}
-                .status-chip{display:inline-block;font-size:14px}
-                .status-open{color:#0f5132}
-                .status-closed{color:#842029}
+                .upload-btn{display:inline-flex;gap:6px;align-items:center;padding:8px 12px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;cursor:pointer;color:#0f172a}
+                .status-chip{display:inline-flex;align-items:center;gap:8px;font-size:12px;padding:6px 10px;border-radius:9999px;border:1px solid #e2e8f0;background:#fff;color:#0f172a}
+                .dot{width:8px;height:8px;border-radius:50%}
+                .dot-waiting-admin{background:#f59e0b}
+                .dot-waiting-customer{background:#3b82f6}
+                .dot-open{background:#10b981}
+                .dot-closed{background:#ef4444}
                 @media (max-width: 768px){
                     .chat-wrapper{width:100%;padding:8px}
                     .chat-container{min-height:calc(100vh - 160px)}
                     .chat-wrap{padding:12px}
-                    .msg{max-width:96%;font-size:15px;border-radius:12px}
-                    .attachments .item{max-width:100%}
-                    .attachments .item img{width:100%;height:auto}
+                    .msg{max-width:92%}
+                    .attachments{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
+                    .attachments .item img{height:110px}
                     .chat-composer{padding:8px}
-                    .chat-composer-inner{grid-template-columns:1fr 44px}
-                    .chat-composer-inner{border-radius:0}
-                    .chat-composer textarea{border-radius:0}
                     .chat-composer textarea{min-height:40px;max-height:160px}
                     .send-btn{height:40px;width:40px}
                 }
@@ -62,27 +67,44 @@
             <div class="chat-wrapper"><div class="chat-card"><div class="chat-container">
                 <div class="chat-header d-flex justify-content-between align-items-center">
                     <div></div>
-                    <div class="status-chip">Ticket Durumu: <span class="{{ $ticket->status === 'closed' ? 'status-closed' : 'status-open' }}">{{ $ticket->status === 'closed' ? 'Kapalı' : 'Açık' }}</span></div>
+                    <div class="status-chip">
+                        @php($s = (string) $ticket->status)
+                        <span class="dot {{ $s === 'closed' ? 'dot-closed' : ($s === 'waiting_admin' ? 'dot-waiting-admin' : ($s === 'waiting_customer' ? 'dot-waiting-customer' : 'dot-open')) }}"></span>
+                        <span>
+                            {{ $s === 'closed' ? 'Kapalı' : ($s === 'waiting_admin' ? 'Admin Bekleniyor' : ($s === 'waiting_customer' ? 'Cevabınız Bekleniyor' : 'Açık')) }}
+                        </span>
+                    </div>
                 </div>
                 <div class="chat-wrap">
                     @foreach($ticket->messages as $m)
                         @if($m->is_internal)
                             @continue
                         @endif
-                        <div class="msg {{ $m->sender_type === 'user' ? 'msg-user' : 'msg-admin' }}">
-                            <div class="msg-author">{{ $m->sender_type === 'admin' ? 'Admin' : trans('storefront::account.pages.my_profile') }}</div>
+                        <div class="msg-group {{ $m->sender_type === 'admin' ? 'msg-group-admin' : 'msg-group-user' }}">
+                            <div class="msg-author">
+                                {{ $m->sender_type === 'admin' ? 'Admin' : optional(auth()->user())->full_name }}
+                            </div>
+
                             @if($m->attachments->isNotEmpty())
-                                <div class="attachments">
-                                    @foreach($m->attachments as $a)
-                                        <div class="item">
-                                            <a href="{{ $a->url }}" class="ticket-lightbox" data-gallery="ticket-{{ $ticket->id }}">
-                                                <img src="{{ $a->url }}" alt="attachment">
-                                            </a>
-                                        </div>
-                                    @endforeach
+                                <div class="msg {{ $m->sender_type === 'admin' ? 'msg-admin' : 'msg-user' }} bubble">
+                                    <div class="attachments">
+                                        @foreach($m->attachments as $a)
+                                            <div class="item">
+                                                <a href="{{ $a->url }}" class="ticket-lightbox" data-gallery="ticket-{{ $ticket->id }}">
+                                                    <img src="{{ $a->url }}" alt="attachment">
+                                                </a>
+                                            </div>
+                                        @endforeach
+                                    </div>
                                 </div>
                             @endif
-                            <div>{{ $m->body }}</div>
+
+                            @if(trim((string) $m->body) !== '')
+                                <div class="msg {{ $m->sender_type === 'admin' ? 'msg-admin' : 'msg-user' }} bubble">
+                                    <div>{{ $m->body }}</div>
+                                </div>
+                            @endif
+
                             <div class="msg-time">{{ optional($m->created_at)->format('Y-m-d H:i') }}</div>
                         </div>
                     @endforeach

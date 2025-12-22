@@ -34,7 +34,7 @@
             'faq',
             'blogs',
             'html_blog',
-        ]
+            ]
     )
 
     @php(

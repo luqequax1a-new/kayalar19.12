@@ -21,7 +21,8 @@ return [
     'store_city' => 'Store City',
     'store_country' => 'Store Country',
     'store_state' => 'Store State',
-    'store_zip' => 'Store Zip',
+    'store_zip' => 'Zip',
+    'prices_include_tax' => 'Tax Inclusive Pricing',
     'store_phone_hide' => 'Hide Store Phone',
     'store_email_hide' => 'Hide Store Email',
 

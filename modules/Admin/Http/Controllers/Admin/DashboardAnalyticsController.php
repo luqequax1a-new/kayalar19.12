@@ -306,11 +306,17 @@ class DashboardAnalyticsController
                 }
 
                 if (!$imageUrl && $variant) {
-                    $imageUrl = media_variant_url($variant->base_image, 80) ?: $this->normalizeImageUrl($variant->base_image?->path ?: null);
+                    $imageUrl = media_variant_url(
+                        $variant->base_image,
+                        (int) config('image_optimization.variants.widths.thumb', 80)
+                    ) ?: $this->normalizeImageUrl($variant->base_image?->path ?: null);
                 }
 
                 if (!$imageUrl && $product) {
-                    $imageUrl = media_variant_url($product->base_image, 80) ?: $this->normalizeImageUrl($product->base_image?->path ?: null);
+                    $imageUrl = media_variant_url(
+                        $product->base_image,
+                        (int) config('image_optimization.variants.widths.thumb', 80)
+                    ) ?: $this->normalizeImageUrl($product->base_image?->path ?: null);
                 }
 
                 $imageUrl = $this->makeRelativeUrl($imageUrl);

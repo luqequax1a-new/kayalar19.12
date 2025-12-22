@@ -70,7 +70,7 @@
                                                 </div>
 
                                                 <p style="margin:3px 0;font-size:13px;color:#111827;">
-                                                    <strong>Sipariş:</strong> #{{ $order->id }}
+                                                    <strong>Sipariş:</strong> #{{ $order->displayOrderNumber() }}
                                                 </p>
 
                                                 <p style="margin:3px 0;font-size:13px;color:#111827;">

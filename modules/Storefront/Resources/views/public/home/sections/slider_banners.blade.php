@@ -1,10 +1,10 @@
 <div class="home-banner-wrap">
     @php(
-        $b1Avif = $sliderBanners['banner_1']->image->detail_avif_url
+        $b1AvifSrcset = $sliderBanners['banner_1']->image->ikas_avif_srcset
             ?? null
     )
     @php(
-        $b1Webp = $sliderBanners['banner_1']->image->detail_webp_url
+        $b1WebpSrcset = $sliderBanners['banner_1']->image->ikas_webp_srcset
             ?? null
     )
     @php(
@@ -17,16 +17,20 @@
         target="{{ $sliderBanners['banner_1']->open_in_new_window ? '_blank' : '_self' }}"
     >
         <picture>
-            @if ($b1Avif)
-                <source srcset="{{ $b1Avif }}" type="image/avif">
+            @if ($b1AvifSrcset)
+                <source srcset="{{ $b1AvifSrcset }}" sizes="100vw" type="image/avif">
             @endif
 
-            @if ($b1Webp)
-                <source srcset="{{ $b1Webp }}" type="image/webp">
+            @if ($b1WebpSrcset)
+                <source srcset="{{ $b1WebpSrcset }}" sizes="100vw" type="image/webp">
             @endif
 
             <img
                 src="{{ $b1Jpeg }}"
+                @if ($sliderBanners['banner_1']->image->ikas_jpeg_srcset)
+                    srcset="{{ $sliderBanners['banner_1']->image->ikas_jpeg_srcset }}"
+                @endif
+                sizes="100vw"
                 alt="Banner"
                 loading="lazy"
                 decoding="async"
@@ -35,11 +39,11 @@
     </a>
 
     @php(
-        $b2Avif = $sliderBanners['banner_2']->image->detail_avif_url
+        $b2AvifSrcset = $sliderBanners['banner_2']->image->ikas_avif_srcset
             ?? null
     )
     @php(
-        $b2Webp = $sliderBanners['banner_2']->image->detail_webp_url
+        $b2WebpSrcset = $sliderBanners['banner_2']->image->ikas_webp_srcset
             ?? null
     )
     @php(
@@ -52,16 +56,20 @@
         target="{{ $sliderBanners['banner_2']->open_in_new_window ? '_blank' : '_self' }}"
     >
         <picture>
-            @if ($b2Avif)
-                <source srcset="{{ $b2Avif }}" type="image/avif">
+            @if ($b2AvifSrcset)
+                <source srcset="{{ $b2AvifSrcset }}" sizes="100vw" type="image/avif">
             @endif
 
-            @if ($b2Webp)
-                <source srcset="{{ $b2Webp }}" type="image/webp">
+            @if ($b2WebpSrcset)
+                <source srcset="{{ $b2WebpSrcset }}" sizes="100vw" type="image/webp">
             @endif
 
             <img
                 src="{{ $b2Jpeg }}"
+                @if ($sliderBanners['banner_2']->image->ikas_jpeg_srcset)
+                    srcset="{{ $sliderBanners['banner_2']->image->ikas_jpeg_srcset }}"
+                @endif
+                sizes="100vw"
                 alt="Banner"
                 loading="lazy"
                 decoding="async"

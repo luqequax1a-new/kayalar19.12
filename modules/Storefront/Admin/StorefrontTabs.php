@@ -865,12 +865,16 @@ class StorefrontTabs extends Tabs
                 'storefront_info_icons_icon_3_image',
                 'storefront_info_icons_icon_3_title',
                 'storefront_info_icons_icon_3_text',
+                'storefront_info_icons_icon_4_image',
+                'storefront_info_icons_icon_4_title',
+                'storefront_info_icons_icon_4_text',
             ]);
 
             $tab->view('storefront::admin.storefront.tabs.info_icons', [
                 'icon1' => $this->getMedia(setting('storefront_info_icons_icon_1_image')),
                 'icon2' => $this->getMedia(setting('storefront_info_icons_icon_2_image')),
                 'icon3' => $this->getMedia(setting('storefront_info_icons_icon_3_image')),
+                'icon4' => $this->getMedia(setting('storefront_info_icons_icon_4_image')),
             ]);
         });
     }

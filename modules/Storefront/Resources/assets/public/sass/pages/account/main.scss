@@ -12,6 +12,108 @@
     }
 }
 
+.my-orders {
+    .my-orders-cards {
+        display: none;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .my-order-card {
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        overflow: hidden;
+        background: var(--color-white);
+    }
+
+    .my-order-card-header {
+        padding: 14px 14px 10px;
+        display: grid;
+        gap: 10px;
+        background: var(--color-white-lite);
+    }
+
+    .my-order-card-title,
+    .my-order-card-status {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        align-items: center;
+        text-align: center;
+    }
+
+    .my-order-card-label {
+        font-size: 13px;
+        line-height: 1.2;
+        color: var(--color-gray);
+        font-weight: var(--font-medium);
+    }
+
+    .my-order-card-value {
+        font-size: 16px;
+        line-height: 1.2;
+        color: var(--color-black);
+        font-weight: 700;
+    }
+
+    .my-order-card-body {
+        padding: 10px 14px 6px;
+    }
+
+    .my-order-card-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 0;
+
+        & + .my-order-card-row {
+            border-top: 1px dashed var(--border-color);
+        }
+    }
+
+    .my-order-card-row-label {
+        font-size: 14px;
+        color: var(--color-gray);
+    }
+
+    .my-order-card-row-value {
+        font-size: 14px;
+        color: var(--color-black);
+        font-weight: var(--font-medium);
+        text-align: right;
+        max-width: 60%;
+    }
+
+    .my-order-card-row-value--strong {
+        font-weight: 800;
+    }
+
+    .my-order-card-footer {
+        padding: 12px 14px 14px;
+    }
+
+    .my-order-card-btn {
+        width: 100%;
+        height: 44px;
+        border-radius: 12px;
+        background: #0e1627;
+        color: #ffffff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 14px;
+        line-height: 1;
+        padding: 0 16px;
+
+        &:hover,
+        &:focus {
+            background: #0b1220;
+            color: #ffffff;
+        }
+    }
+}
+
 .account-wrap-inner {
     display: flex;
 
@@ -185,6 +287,16 @@
 
     .account-wrap-inner {
         flex-direction: column;
+    }
+
+    .my-orders {
+        .my-orders-cards {
+            display: flex;
+        }
+
+        .my-orders-table-wrap {
+            display: none;
+        }
     }
 
     .account-sidebar {

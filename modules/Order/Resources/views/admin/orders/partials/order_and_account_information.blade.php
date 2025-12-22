@@ -117,7 +117,7 @@
 
                             <tr>
                                 <td>{{ trans('order::orders.customer_phone') }}</td>
-                                <td>{{ $order->shipping_phone }}</td>
+                                <td>{{ $order->shipping_phone ?: '-' }}</td>
                             </tr>
 
                             <tr>

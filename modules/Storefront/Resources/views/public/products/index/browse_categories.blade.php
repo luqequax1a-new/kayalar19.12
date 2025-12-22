@@ -1,5 +1,10 @@
 <ul class="list-inline browse-categories">
     @foreach ($categories as $category)
+        @php
+            $categoryBannerPayload = [
+                'path' => optional($category->banner)->path,
+            ];
+        @endphp
         <li :class="{ active: queryParams.category === '{{ $category->slug }}' }">
             @if ($category->items->isNotEmpty())
                 <i
@@ -15,14 +20,12 @@
             <a
                 href="{{ route('products.index', ['category' => $category->slug]) }}"
                 title="{{ $category->name }}"
-                @click.prevent='
-                    changeCategory({
-                        name: "{{ addslashes($category->name) }}",
-                        banner: {{ $category->banner }},
-                        slug: "{{ $category->slug }}",
-                        meta_title: "{{ addslashes($category->meta_title ?: ($category->name . ' | ' . setting('store_name'))) }}"
-                    })
-                '
+                @click.prevent='changeCategory({
+                    name: "{{ addslashes($category->name) }}",
+                    banner: @json($categoryBannerPayload),
+                    slug: "{{ $category->slug }}",
+                    meta_title: "{{ addslashes($category->meta_title ?: ($category->name . ' | ' . setting('store_name'))) }}"
+                })'
             >
                 {{ $category->name }}
             </a>

@@ -71,6 +71,11 @@ class PayPal implements GatewayInterface
 
     private function buildRequestBody($order)
     {
+        $billing = $order->billingSnapshot;
+        $shipping = $order->shippingSnapshot;
+        $billingCountry = $billing?->country ?? 'TR';
+        $shippingCountry = $shipping?->country ?? $billingCountry;
+
         return [
             'intent' => 'CAPTURE',
             'payer' => [
@@ -80,12 +85,12 @@ class PayPal implements GatewayInterface
                 ],
                 'email_address' => $order->customer_email,
                 'address' => [
-                    'address_line_1' => $order->billing_address_1,
-                    'address_line_2' => $order->billing_address_2,
-                    'admin_area_2' => $order->billing_city,
-                    'admin_area_1' => $order->billing_state,
-                    'postal_code' => $order->billing_zip,
-                    'country_code' => $order->billing_country,
+                    'address_line_1' => $billing?->address_line ?? '',
+                    'address_line_2' => $billing?->address_2,
+                    'admin_area_2' => $billing?->city,
+                    'admin_area_1' => $billing?->district,
+                    'postal_code' => $billing?->zip,
+                    'country_code' => $billingCountry,
                 ],
             ],
             'purchase_units' => [
@@ -100,12 +105,12 @@ class PayPal implements GatewayInterface
                             'full_name' => $order->customer_full_name,
                         ],
                         'address' => [
-                            'address_line_1' => $order->shipping_address_1,
-                            'address_line_2' => $order->shipping_address_2,
-                            'admin_area_2' => $order->shipping_city,
-                            'admin_area_1' => $order->shipping_state,
-                            'postal_code' => $order->shipping_zip,
-                            'country_code' => $order->shipping_country,
+                            'address_line_1' => $shipping?->address_line ?? ($billing?->address_line ?? ''),
+                            'address_line_2' => $shipping?->address_2,
+                            'admin_area_2' => $shipping?->city ?? $billing?->city,
+                            'admin_area_1' => $shipping?->district ?? $billing?->district,
+                            'postal_code' => $shipping?->zip ?? $billing?->zip,
+                            'country_code' => $shippingCountry,
                         ],
                     ],
                 ],

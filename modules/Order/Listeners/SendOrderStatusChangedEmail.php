@@ -17,15 +17,12 @@ class SendOrderStatusChangedEmail
      */
     public function handle(OrderStatusChanged $event)
     {
-        $codLabel = (string) setting('cod_label');
-        if ($codLabel !== '' && (string) $event->order->payment_method === $codLabel) {
-            if ($event->order->status !== \Modules\Order\Entities\Order::SHIPPED) {
-                return;
-            }
-        }
+        $allowed = [
+            \Modules\Order\Entities\Order::CANCELED,
+            \Modules\Order\Entities\Order::REFUNDED,
+        ];
 
-        $statuses = setting('email_order_statuses', []);
-        if (!in_array($event->order->status, $statuses) && $event->order->status !== \Modules\Order\Entities\Order::SHIPPED) {
+        if (!in_array($event->order->status, $allowed)) {
             return;
         }
 

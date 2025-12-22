@@ -16,7 +16,7 @@ class OrderPrintController
      */
     public function show(Order $order)
     {
-        $order->load('products', 'coupon', 'taxes');
+        $order->load('products', 'coupon', 'taxes', 'billingSnapshot', 'shippingSnapshot');
 
         return view('order::admin.orders.print.show', compact('order'));
     }

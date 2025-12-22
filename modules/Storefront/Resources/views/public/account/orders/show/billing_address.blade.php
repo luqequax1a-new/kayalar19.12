@@ -13,6 +13,9 @@
             @if ($billing->tax_office)
                 <span>Vergi Dairesi: {{ $billing->tax_office }}</span>
             @endif
+            @if ($billing->billing_email)
+                <span>{{ $billing->billing_email }}</span>
+            @endif
             <span>{{ $billing->address_line ?? $billing->address_1 }}</span>
             <span>{{ $billing->city ?? $billing->city_id }} / {{ $billing->state ?? $billing->district_id }}</span>
             @if ($billing->phone)
