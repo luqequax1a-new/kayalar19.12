@@ -23,6 +23,12 @@
         </div>
 
         <div class="box-content clearfix">
+            <h4 class="section-title">{{ trans('setting::settings.form.tax_settings') }}</h4>
+
+            {{ Form::checkbox('prices_include_tax', trans('setting::attributes.prices_include_tax'), trans('setting::settings.form.prices_include_tax'), $errors, $settings) }}
+        </div>
+
+        <div class="box-content clearfix">
             <h4 class="section-title">{{ trans('setting::settings.form.privacy_settings') }}</h4>
 
             {{ Form::checkbox('store_phone_hide', trans('setting::attributes.store_phone_hide'), trans('setting::settings.form.hide_store_phone'), $errors, $settings) }}

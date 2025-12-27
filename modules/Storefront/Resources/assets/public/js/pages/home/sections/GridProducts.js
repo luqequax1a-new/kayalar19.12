@@ -1,4 +1,4 @@
-import { Grid, Navigation, Pagination } from "swiper/modules";
+import { Navigation, Pagination } from "swiper/modules";
 import ProductTabsMixin from "../../../mixins/ProductTabsMixin";
 import "../../../components/ProductCard";
 
@@ -19,11 +19,8 @@ Alpine.data("GridProducts", (tabs) => ({
 
     swiperOptions() {
         return {
-            modules: [Grid, Navigation, Pagination],
+            modules: [Navigation, Pagination],
             slidesPerView: 2,
-            grid: {
-                rows: 2,
-            },
             navigation: {
                 nextEl: ".swiper-button-next",
                 prevEl: ".swiper-button-prev",

@@ -37,7 +37,7 @@ class SendNewOrderSms
 
     private function adminMessage(Order $order)
     {
-        return trans('sms::messages.new_order', ['order_id' => $order->id]);
+        return trans('sms::messages.new_order', ['order_id' => $order->displayOrderNumber()]);
     }
 
 
@@ -58,7 +58,7 @@ class SendNewOrderSms
     {
         return trans('sms::messages.order_has_been_placed', [
             'first_name' => $order->customer_first_name,
-            'order_id' => $order->id,
+            'order_id' => $order->displayOrderNumber(),
         ]);
     }
 }

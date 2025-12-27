@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Session;
 
 class Database
 {
+    private static array $rowCache = [];
+
     private function normalizeKey(string $key): string
     {
         $sessionId = Session::getId();
@@ -27,11 +29,17 @@ class Database
     {
         $normalizedKey = $this->normalizeKey($key);
 
-        if ($this->has($normalizedKey)) {
-            return new CartCollection(Cart::find($normalizedKey)->data);
-        } else {
-            return [];
+        if (!array_key_exists($normalizedKey, self::$rowCache)) {
+            self::$rowCache[$normalizedKey] = Cart::find($normalizedKey);
         }
+
+        $row = self::$rowCache[$normalizedKey];
+
+        if ($row) {
+            return new CartCollection($row->data);
+        }
+
+        return [];
     }
 
     public function put($key, $value)
@@ -40,17 +48,38 @@ class Database
 
         if ($row = Cart::find($normalizedKey)) {
             $row->data = $value;
+            $row->user_id = auth()->id();
+            
+            if (auth()->check()) {
+                $row->customer_email = auth()->user()->email;
+                $row->customer_first_name = auth()->user()->first_name;
+                $row->customer_last_name = auth()->user()->last_name;
+                $row->customer_phone = auth()->user()->phone;
+            }
+            
             $row->save();
         } else {
-            Cart::create([
+            $data = [
                 'id' => $normalizedKey,
                 'data' => $value,
-            ]);
+                'user_id' => auth()->id(),
+            ];
+
+            if (auth()->check()) {
+                $data['customer_email'] = auth()->user()->email;
+                $data['customer_first_name'] = auth()->user()->first_name;
+                $data['customer_last_name'] = auth()->user()->last_name;
+                $data['customer_phone'] = auth()->user()->phone;
+            }
+
+            Cart::create($data);
         }
+
+        unset(self::$rowCache[$normalizedKey]);
     }
 
     private function has($key)
     {
-        return Cart::find($key);
+        return Cart::query()->whereKey($key)->exists();
     }
 }

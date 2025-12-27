@@ -34,22 +34,34 @@ if (!function_exists('resolve_theme_color')) {
 if (!function_exists('storefront_theme_color')) {
     function storefront_theme_color()
     {
-        if (setting('storefront_theme_color') === 'custom_color') {
-            return setting('storefront_custom_theme_color', '#0068e1');
+        $themeColor = setting('storefront_theme_color');
+
+        if ($themeColor === 'custom_color') {
+            $color = setting('storefront_custom_theme_color');
+        } else {
+            $color = resolve_theme_color($themeColor);
         }
 
-        return resolve_theme_color(setting('storefront_theme_color'));
+        $color = trim((string) $color);
+
+        return $color !== '' ? $color : '#0068e1';
     }
 }
 
 if (!function_exists('mail_theme_color')) {
     function mail_theme_color()
     {
-        if (setting('storefront_mail_theme_color') === 'custom_color') {
-            return setting('storefront_custom_mail_theme_color', '#0068e1');
+        $themeColor = setting('storefront_mail_theme_color');
+
+        if ($themeColor === 'custom_color') {
+            $color = setting('storefront_custom_mail_theme_color');
+        } else {
+            $color = resolve_theme_color($themeColor);
         }
 
-        return resolve_theme_color(setting('storefront_mail_theme_color'));
+        $color = trim((string) $color);
+
+        return $color !== '' ? $color : '#0068e1';
     }
 }
 
@@ -97,7 +109,6 @@ if (!function_exists('order_status_badge_class')) {
         $classes = [
             'canceled' => 'badge-danger',
             'completed' => 'badge-success',
-            'on_hold' => 'badge-warning',
             'pending_payment' => 'badge-warning',
             'refunded' => 'badge-danger',
         ];

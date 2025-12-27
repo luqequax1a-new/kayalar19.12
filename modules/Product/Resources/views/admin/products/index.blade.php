@@ -9,7 +9,11 @@
 @component('admin::components.page.index_table')
     @slot('buttons')
         <a href="{{ route('admin.products.create') }}" class="btn btn-primary btn-actions btn-create">
-            {{ trans('admin::resource.create', ['resource' => trans('product::products.product')]) }}
+            <i class="fa fa-plus"></i> {{ trans('admin::resource.create', ['resource' => trans('product::products.product')]) }}
+        </a>
+
+        <a href="{{ route('admin.products.bulk_editor') }}" class="btn btn-success btn-actions">
+            <i class="fa fa-magic"></i> Toplu Yönetim
         </a>
 
         <div class="btn-group">
@@ -151,7 +155,6 @@
         const pricingDrawerContent = document.getElementById('pricing-drawer-content');
         const pricingDrawerTitle = document.getElementById('pricing-drawer-title');
         const pricingDrawerSave = document.getElementById('pricing-drawer-save');
-        const pricingDrawerClose = document.getElementById('pricing-drawer-close');
         let currentPricingProductId = null;
 
         function openPricingDrawer() {
@@ -167,7 +170,8 @@
             pricingDrawerTitle.textContent = '';
         }
 
-        pricingDrawerClose.addEventListener('click', closePricingDrawer);
+        const pricingDrawerCloseButtons = document.querySelectorAll('.pricing-close-trigger');
+        pricingDrawerCloseButtons.forEach(btn => btn.addEventListener('click', closePricingDrawer));
         pricingDrawerBackdrop.addEventListener('click', closePricingDrawer);
 
         function buildPricingItems(product) {
@@ -181,7 +185,7 @@
                     items.push(`
                         <div class="inv-item inv-price-item">
                             <div class="inv-info">
-                                <div class="inv-media"><img src="${img}" alt="" /></div>
+                                <div class="inv-media"><div class="thumbnail-holder"><img src="${img}" alt="" /></div></div>
                                 <div class="inv-text">
                                     <div class="inv-name">${_.escape(v.name || '')}</div>
                                 </div>
@@ -206,7 +210,7 @@
                 items.push(`
                     <div class="inv-item inv-single inv-price-item">
                         <div class="inv-info">
-                            <div class="inv-media"><img src="${img}" alt="" /></div>
+                            <div class="inv-media"><div class="thumbnail-holder"><img src="${img}" alt="" /></div></div>
                             <div class="inv-text">
                                 <div class="inv-name">${_.escape(product.name || '')}</div>
                             </div>
@@ -405,7 +409,6 @@
         const drawerContent = document.getElementById('inventory-drawer-content');
         const drawerTitle = document.getElementById('inventory-drawer-title');
         const drawerSave = document.getElementById('inventory-drawer-save');
-        const drawerClose = document.getElementById('inventory-drawer-close');
         let currentProductId = null;
         let currentRowEl = null;
         function mediaUrl(obj) {
@@ -432,7 +435,7 @@
                     items.push(`
                         <div class="inv-item">
                             <div class="inv-info">
-                                <div class="inv-media"><img src="${img}" alt="" /></div>
+                                <div class="inv-media"><div class="thumbnail-holder"><img src="${img}" alt="" /></div></div>
                                 <div class="inv-text">
                                     <div class="inv-name">${_.escape(v.name || '')}</div>
                                     ${sku ? `<div class="inv-sku">${_.escape(sku)}</div>` : ''}
@@ -452,7 +455,7 @@
                 items.push(`
                     <div class="inv-item inv-single">
                         <div class="inv-info">
-                            <div class="inv-media"><img src="${img}" alt="" /></div>
+                            <div class="inv-media"><div class="thumbnail-holder"><img src="${img}" alt="" /></div></div>
                             <div class="inv-text">
                                 <div class="inv-name">${_.escape(product.name || '')}</div>
                                 ${sku ? `<div class="inv-sku">${_.escape(sku)}</div>` : ''}
@@ -484,7 +487,8 @@
             drawerTitle.textContent = '';
         }
 
-        drawerClose.addEventListener('click', closeDrawer);
+        const drawerCloseButtons = document.querySelectorAll('.drawer-close-trigger');
+        drawerCloseButtons.forEach(btn => btn.addEventListener('click', closeDrawer));
         drawerBackdrop.addEventListener('click', closeDrawer);
 
         $(document).on('click', '#products-table .table tbody tr td.stock-cell', function () {
@@ -1179,54 +1183,353 @@
 
     @push('styles')
     <style>
-        .actions-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 24px);
-            grid-auto-rows: 24px;
-            gap: 6px;
-            justify-content: center;
+        .table-responsive {
+            border: none !important;
+            padding: 10px;
         }
 
-        .actions-grid a,
-        .actions-grid button {
+        #products-table .table {
+            border-collapse: separate;
+            border-spacing: 0 10px;
+            background: transparent;
+        }
+
+        #products-table .table thead th {
+            border: none;
+            background: transparent;
+            color: #909399;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            padding: 10px 15px;
+        }
+
+        #products-table .table tbody tr {
+            background: #ffffff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+            transition: all 0.3s ease;
+        }
+
+        #products-table .table tbody tr:hover {
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            background: #fff !important;
+        }
+
+        #products-table .table tbody td {
+            border: none;
+            padding: 15px;
+            vertical-align: middle;
+        }
+
+        #products-table .table tbody td:first-child { border-radius: 12px 0 0 12px; }
+        #products-table .table tbody td:last-child { border-radius: 0 12px 12px 0; }
+
+        .image-cell img {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            object-fit: cover;
+            background: #f5f7fa;
+            border: 1px solid #efefef;
+        }
+
+        .product-name-link {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .product-name-link:hover {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+
+        .price-text {
+            font-weight: 700;
+            color: #1a1a1a;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .price-text:hover { background: #f0f7ff; color: #3b82f6; }
+
+        .stock-badge {
             display: inline-flex;
             align-items: center;
-            justify-content: center;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #f0fdf4;
+            color: #166534;
+            cursor: pointer;
         }
 
+        .stock-badge.out-of-stock {
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        .actions-grid {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .btn-action-round {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #e5e7eb;
+            background: #fff;
+            color: #6b7280;
+            transition: all 0.2s;
+        }
+
+        .btn-action-round:hover {
+            background: #f9fafb;
+            color: #111827;
+            border-color: #d1d5db;
+        }
+
+        .btn-action-round.delete:hover {
+            background: #fef2f2;
+            color: #dc2626;
+            border-color: #fecaca;
+        }
+
+        /* Status Switch styling */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 36px;
+            height: 20px;
+        }
+
+        .switch input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background-color: #e5e7eb;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider { background-color: #10b981; }
+        input:checked + .slider:before { transform: translateX(16px); }
+
         #inventory-drawer-backdrop,
-        #pricing-drawer-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.35); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 1040; }
+        #pricing-drawer-backdrop { 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(255, 255, 255, 0); 
+            backdrop-filter: none; 
+            opacity: 0; 
+            pointer-events: none; 
+            transition: opacity .2s; 
+            z-index: 1040; 
+        }
         #inventory-drawer-backdrop.open,
         #pricing-drawer-backdrop.open { opacity: 1; pointer-events: auto; }
+        
         #inventory-drawer,
-        #pricing-drawer { position: fixed; top: 0; right: -480px; width: 480px; height: 100%; background: #fff; box-shadow: -2px 0 8px rgba(0,0,0,0.15); z-index: 1050; transition: right .25s; display: flex; flex-direction: column; }
+        #pricing-drawer { 
+            position: fixed; 
+            top: 20px; 
+            right: -500px; 
+            width: 480px; 
+            height: calc(100% - 40px); 
+            background: #fff; 
+            box-shadow: -10px 0 50px rgba(0,0,0,0.1); 
+            z-index: 1050; 
+            transition: right .4s cubic-bezier(0.4, 0, 0.2, 1); 
+            border-radius: 20px 0 0 20px; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden;
+            border: 1px solid #eef2f7;
+            border-right: none;
+        }
         #inventory-drawer.open,
         #pricing-drawer.open { right: 0; }
-        #inventory-drawer .drawer-header,
-        #pricing-drawer .drawer-header { padding: 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee; }
-        #inventory-drawer .drawer-body,
-        #pricing-drawer .drawer-body { padding: 12px 16px; overflow-y: auto; flex: 1; }
-        #inventory-drawer .drawer-footer,
-        #pricing-drawer .drawer-footer { padding: 12px 16px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 8px; }
-        .inv-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px; margin-bottom: 6px; border-radius: 8px; border: 1px solid #e5e7eb; background: #ffffff; box-shadow: 0 1px 2px rgba(15,23,42,0.02); }
-        .inv-item:hover { border-color: #d1d5db; box-shadow: 0 2px 4px rgba(15,23,42,0.05); }
-        .inv-info { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
-        .inv-media img { width: 40px; height: 40px; object-fit: cover; border-radius: 8px; background: #f9fafb; display: block; border: 1px solid #e5e7eb; }
-        .inv-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-        .inv-name { font-weight: 600; color: #111827; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
-        .inv-sku { font-size: 11px; color: #6b7280; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .inv-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-        .inv-actions .inv-inline-save { padding: 4px 10px; font-size: 11px; line-height: 1; border-radius: 4px; height: 30px; display: inline-flex; align-items: center; }
-        .inv-input-wrap { display: flex; align-items: center; }
-        .inv-input { width: 70px; height: 30px; appearance: textfield; -moz-appearance: textfield; text-align: center; border-radius: 6px; border: 1px solid #e5e7eb; background: #f9fafb; color: #111; padding: 0 6px; font-size: 12px; }
-        .inv-input::-webkit-outer-spin-button,
-        .inv-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        .inv-input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); background: #fff; }
-        @media (max-width: 480px) {
-            .inv-item { gap: 8px; }
-            .inv-input { width: 130px; height: 34px; }
-            .inv-single .inv-input { max-width: 200px; }
+
+        .drawer-header {
+            padding: 24px;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fff;
         }
+
+        #inventory-drawer-title, #pricing-drawer-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: #1e293b;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding-right: 20px;
+        }
+
+        .drawer-header .close-btn {
+            background: #f1f5f9;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .drawer-header .close-btn:hover {
+            background: #e2e8f0;
+            color: #1e293b;
+        }
+
+        .drawer-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            background: #fcfdfe;
+        }
+
+        .drawer-footer {
+            padding: 20px 24px;
+            border-top: 1px solid #f1f5f9;
+            background: #fff;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .inv-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border-radius: 14px;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            margin-bottom: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .inv-item:hover {
+            border-color: #0ea5e9;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+
+        .inv-info {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex: 1;
+        }
+
+        .inv-media img {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            object-fit: cover;
+            border: 1px solid #f1f5f9;
+            background: #f8fafc;
+        }
+
+        .inv-text {
+            flex: 1;
+        }
+
+        .inv-name {
+            font-weight: 600;
+            color: #334155;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .inv-sku {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-top: 2px;
+            font-family: inherit;
+        }
+
+        .inv-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .inv-input-wrap {
+            width: 80px;
+        }
+
+        .inv-input {
+            width: 100%;
+            height: 38px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            background: #fff;
+            padding: 0 10px;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+            color: #1e293b;
+            transition: all 0.2s;
+        }
+
+        .inv-input:focus {
+            outline: none;
+            border-color: #0ea5e9;
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+        }
+
+        .btn-save-inline {
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 700;
+            border-radius: 8px;
+        }
+
+        .inv-media .thumbnail-holder {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            border: 1px solid #f1f5f9;
+            background: #f8fafc;
+            margin: 0;
+        }
+
+        .drawer-body::-webkit-scrollbar { width: 5px; }
+        .drawer-body::-webkit-scrollbar-track { background: transparent; }
+        .drawer-body::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
     </style>
     @endpush
 
@@ -1234,24 +1537,24 @@
     <div id="inventory-drawer-backdrop"></div>
     <div id="inventory-drawer">
         <div class="drawer-header">
-            <div id="inventory-drawer-title"></div>
-            <button id="inventory-drawer-close" class="btn btn-default">×</button>
+            <h4 id="inventory-drawer-title"></h4>
+            <button class="close-btn drawer-close-trigger">×</button>
         </div>
         <div class="drawer-body" id="inventory-drawer-content"></div>
         <div class="drawer-footer">
-            <button class="btn btn-default" id="inventory-drawer-close">{{ trans('admin::admin.buttons.cancel') }}</button>
+            <button class="btn btn-default drawer-close-trigger">{{ trans('admin::admin.buttons.cancel') }}</button>
             <button class="btn btn-primary" id="inventory-drawer-save">{{ trans('admin::admin.buttons.save') }}</button>
         </div>
     </div>
     <div id="pricing-drawer-backdrop"></div>
     <div id="pricing-drawer">
         <div class="drawer-header">
-            <div id="pricing-drawer-title"></div>
-            <button id="pricing-drawer-close" class="btn btn-default">×</button>
+            <h4 id="pricing-drawer-title"></h4>
+            <button class="close-btn pricing-close-trigger">×</button>
         </div>
         <div class="drawer-body" id="pricing-drawer-content"></div>
         <div class="drawer-footer">
-            <button class="btn btn-default" id="pricing-drawer-close">{{ trans('admin::admin.buttons.cancel') }}</button>
+            <button class="btn btn-default pricing-close-trigger">{{ trans('admin::admin.buttons.cancel') }}</button>
             <button class="btn btn-primary" id="pricing-drawer-save">{{ trans('admin::admin.buttons.save') }}</button>
         </div>
     </div>

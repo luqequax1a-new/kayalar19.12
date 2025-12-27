@@ -6,12 +6,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Modules\Support\Money;
+use Modules\Order\Entities\Order;
 
 class CartActivityController
 {
     public function index(Request $request)
     {
-        $payload = Cache::remember('admin:dashboard:cart_activity:v1', now()->addSeconds(60), function () {
+        $payload = Cache::remember('admin:dashboard:cart_activity:v2', now()->addSeconds(20), function () {
             $base = DB::table('carts')
                 ->where('id', 'like', '%_cart_items');
 
@@ -51,6 +52,39 @@ class CartActivityController
             $last60 = $computeWindow($now->copy()->subHour());
             $today = $computeWindow($now->copy()->startOfDay());
 
+            $computeVisits = function ($since) {
+                return (int) DB::table('page_views')
+                    ->where('created_at', '>=', $since)
+                    ->distinct('fingerprint')
+                    ->count('fingerprint');
+            };
+
+            $computeOrders = function ($since) {
+                $rows = Order::query()
+                    ->withoutCanceledOrders()
+                    ->where('created_at', '>=', $since)
+                    ->selectRaw('COUNT(*) as orders')
+                    ->selectRaw('SUM(total) as revenue')
+                    ->first();
+
+                $orders = (int) ($rows->orders ?? 0);
+                $revenue = (float) ($rows->revenue ?? 0);
+
+                return [
+                    'orders' => $orders,
+                    'revenue' => $revenue,
+                    'revenue_formatted' => Money::inDefaultCurrency($revenue)->format(),
+                ];
+            };
+
+            $visitsLast30 = $computeVisits($now->copy()->subMinutes(30));
+            $visitsLast60 = $computeVisits($now->copy()->subHour());
+            $visitsToday = $computeVisits($now->copy()->startOfDay());
+
+            $ordersLast30 = $computeOrders($now->copy()->subMinutes(30));
+            $ordersLast60 = $computeOrders($now->copy()->subHour());
+            $ordersToday = $computeOrders($now->copy()->startOfDay());
+
             $recentRows = (clone $base)
                 ->orderByDesc('updated_at')
                 ->limit(5)
@@ -77,6 +111,16 @@ class CartActivityController
                     'last_60_min' => $last60,
                     'today' => $today,
                 ],
+                'visits' => [
+                    'last_30_min' => $visitsLast30,
+                    'last_60_min' => $visitsLast60,
+                    'today' => $visitsToday,
+                ],
+                'orders' => [
+                    'last_30_min' => $ordersLast30,
+                    'last_60_min' => $ordersLast60,
+                    'today' => $ordersToday,
+                ],
                 'recent_carts' => $recentCarts,
             ];
         });
@@ -91,7 +135,36 @@ class CartActivityController
         $preview = [];
 
         try {
-            $decoded = @unserialize($serialized);
+            $decoded = null;
+
+            if (is_string($serialized)) {
+                $decoded = @unserialize($serialized);
+
+                if ($decoded === false && trim($serialized) !== 'b:0;') {
+                    try {
+                        $maybeJson = json_decode($serialized, true);
+                        if (is_array($maybeJson)) {
+                            $decoded = $maybeJson;
+                        }
+                    } catch (\Throwable $e) {
+                    }
+                }
+            } else {
+                $decoded = $serialized;
+            }
+
+            if ($decoded instanceof \Darryldecode\Cart\CartCollection) {
+                $decoded = $decoded->all();
+            } elseif ($decoded instanceof \Illuminate\Support\Collection) {
+                $decoded = $decoded->all();
+            } elseif ($decoded instanceof \Traversable) {
+                $decoded = iterator_to_array($decoded);
+            } elseif (is_object($decoded) && method_exists($decoded, 'toArray')) {
+                try {
+                    $decoded = $decoded->toArray();
+                } catch (\Throwable $e) {
+                }
+            }
 
             if (!is_array($decoded)) {
                 return [

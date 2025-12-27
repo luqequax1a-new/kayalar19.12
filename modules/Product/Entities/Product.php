@@ -263,12 +263,10 @@ class Product extends Model implements Sitemapable
             'translations',
             'categories',
             'files',
-            'in_stock',
             'brand_id',
             'tax_class',
             'tax_class_id',
             'viewed',
-            'is_active',
             'created_at',
             'updated_at',
             'deleted_at',
@@ -485,8 +483,20 @@ class Product extends Model implements Sitemapable
 
     public function getEffectiveUnit(): Unit
     {
+        static $unitCache = [];
+
         if ($this->sale_unit_id) {
-            $unit = $this->relationLoaded('saleUnit') ? $this->saleUnit : $this->saleUnit()->first();
+            $unitId = (int) $this->sale_unit_id;
+
+            if ($unitId > 0 && array_key_exists($unitId, $unitCache)) {
+                $unit = $unitCache[$unitId];
+            } else {
+                $unit = $this->relationLoaded('saleUnit') ? $this->saleUnit : $this->saleUnit()->first();
+
+                if ($unitId > 0) {
+                    $unitCache[$unitId] = $unit;
+                }
+            }
 
             if ($unit) {
                 return $unit;

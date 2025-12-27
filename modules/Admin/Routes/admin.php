@@ -6,7 +6,7 @@ Route::get('/', 'DashboardController@index')->name('admin.dashboard.index');
 
 Route::get('dashboard/analytics', [
     'as' => 'admin.dashboard.analytics.index',
-    'uses' => 'DashboardAnalyticsController@index',
+    'uses' => 'EnhancedDashboardAnalyticsController@index',
     'middleware' => 'can:admin.orders.index',
 ]);
 

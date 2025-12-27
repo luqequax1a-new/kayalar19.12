@@ -240,21 +240,18 @@ class WebhookController
             'yolda',
             'ontheway',
             'intheway',
+            'intransit',
         ];
         $outForDeliveryNorms = [
             'outfordelivery',
             'dagitimda',
+            'dagıtımda',
         ];
         $deliveredNorms = [
             'delivered',
             'teslimedildi',
         ];
         $inTransitNorms = [
-            'yolda',
-            'intheway',
-            'ontheway',
-            'intransit',
-            'outfordelivery',
             'readytoship',
             'packageaccepted',
             'shipped',

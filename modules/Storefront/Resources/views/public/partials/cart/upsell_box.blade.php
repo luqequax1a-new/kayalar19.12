@@ -36,7 +36,7 @@
             'image'                  => $image,
             'has_discount'           => $hasDiscount,
             'countdown_seconds'      => $rule->has_countdown && $rule->countdown_minutes
-                ? max(((int) $rule->countdown_minutes) * 60, 0)
+                ? max(((int) round((float) $rule->countdown_minutes)) * 60, 0)
                 : null,
         ];
     @endphp

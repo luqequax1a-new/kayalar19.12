@@ -244,18 +244,21 @@ Alpine.data(
         },
 
         hasBaseImage(product) {
+            const t = product?.thumb_src;
             const p = product?.base_image?.path;
             const pm0 = product?.media?.[0];
             const pm = (typeof pm0 === 'string') ? pm0 : (pm0 && pm0.path);
             const v = product?.variant?.base_image?.path;
-            return !!(p || pm || v);
+            return !!(t || p || pm || v);
         },
 
         baseImage(product) {
+            const t = product?.thumb_src;
             const p = product?.base_image?.path;
             const pm0 = product?.media?.[0];
             const pm = (typeof pm0 === 'string') ? pm0 : (pm0 && pm0.path);
             const v = product?.variant?.base_image?.path;
+            if (t) return t;
             if (p) return p;
             if (pm) return pm;
             if (v) return v;

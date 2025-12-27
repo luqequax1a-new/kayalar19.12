@@ -1,0 +1,131 @@
+.dashboard-panel.dashboard-analytics {
+    .dashboard-analytics-tabs {
+        .tab {
+            &.active {
+                background: #0e1e3e;
+                border-color: #0e1e3e;
+                color: #ffffff;
+            }
+        }
+    }
+
+    .dashboard-analytics-tab-panels {
+        .tab-panel {
+            .canvas {
+                height: 320px;
+                
+                &.conversion-chart-container {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    height: 200px;
+                    
+                    canvas {
+                        max-width: 200px;
+                        max-height: 200px;
+                    }
+                }
+            }
+        }
+        
+        .conversion-metrics {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            padding: 20px;
+            
+            .metric {
+                text-align: center;
+                
+                .label {
+                    display: block;
+                    font-size: 12px;
+                    font-weight: 600;
+                    color: #737881;
+                    margin-bottom: 5px;
+                }
+                
+                .value {
+                    display: block;
+                    font-size: 18px;
+                    font-weight: 700;
+                    color: #0e1e3e;
+                }
+            }
+        }
+    }
+}
+
+@media screen and (max-width: 991px) {
+    .dashboard-panel.dashboard-analytics {
+        .dashboard-analytics-tabs {
+            .tab {
+                padding: 0 10px;
+                font-size: 11px;
+                height: 28px;
+            }
+        }
+    }
+}
+
+@media screen and (max-width: 767px) {
+    .dashboard-panel.dashboard-analytics {
+        .dashboard-analytics-kpis {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            
+            .kpi {
+                .label {
+                    font-size: 11px;
+                }
+                
+                .value {
+                    font-size: 14px;
+                }
+            }
+        }
+        
+        .dashboard-analytics-tabs {
+            .tab {
+                padding: 0 8px;
+                font-size: 10px;
+                height: 26px;
+            }
+        }
+    }
+}
+
+@media screen and (max-width: 575px) {
+    .dashboard-panel.dashboard-analytics {
+        .dashboard-analytics-tab-panels {
+            .tab-panel {
+                .canvas {
+                    height: 280px;
+                    
+                    &.conversion-chart-container {
+                        height: 180px;
+                        
+                        canvas {
+                            max-width: 180px;
+                            max-height: 180px;
+                        }
+                    }
+                }
+            }
+            
+            .conversion-metrics {
+                flex-direction: column;
+                gap: 15px;
+                
+                .metric {
+                    .label {
+                        font-size: 11px;
+                    }
+                    
+                    .value {
+                        font-size: 16px;
+                    }
+                }
+            }
+        }
+    }
+}

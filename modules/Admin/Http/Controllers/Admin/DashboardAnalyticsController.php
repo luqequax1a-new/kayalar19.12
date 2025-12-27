@@ -124,7 +124,7 @@ class DashboardAnalyticsController
         ]);
     }
 
-    private function trafficBreakdown(Carbon $start, Carbon $end): array
+    protected function trafficBreakdown(Carbon $start, Carbon $end): array
     {
         $rows = Order::query()
             ->withoutCanceledOrders()
@@ -185,7 +185,7 @@ class DashboardAnalyticsController
         return $out;
     }
 
-    private function dailyOrdersRevenue(Carbon $start, Carbon $end, string $group)
+    protected function dailyOrdersRevenue(Carbon $start, Carbon $end, string $group)
     {
         $dateExpr = $group === 'month'
             ? "DATE_FORMAT(created_at, '%Y-%m')"
@@ -202,31 +202,40 @@ class DashboardAnalyticsController
             ->get();
     }
 
-    private function newVsReturningCustomers(Carbon $start, Carbon $end, string $group)
+    protected function newVsReturningCustomers(Carbon $start, Carbon $end, string $group)
     {
-        $sub = Order::query()
+        $customerKeyExpr = "COALESCE(CAST(customer_id AS CHAR), CONCAT('email:', customer_email))";
+
+        $firstOrdersSub = Order::query()
             ->withoutCanceledOrders()
-            ->selectRaw("COALESCE(CAST(customer_id AS CHAR), CONCAT('email:', customer_email)) as customer_key")
+            ->selectRaw("{$customerKeyExpr} as customer_key")
             ->selectRaw('MIN(created_at) as first_order_at')
-            ->selectRaw('MAX(created_at) as last_order_at')
-            ->groupBy('customer_key');
+            ->groupBy(DB::raw($customerKeyExpr));
 
         $dateExpr = $group === 'month'
-            ? "DATE_FORMAT(c.last_order_at, '%Y-%m')"
-            : 'DATE(c.last_order_at)';
+            ? "DATE_FORMAT(o.created_at, '%Y-%m')"
+            : 'DATE(o.created_at)';
 
-        return DB::query()
-            ->fromSub($sub, 'c')
-            ->whereBetween('c.last_order_at', [$start, $end])
+        $isNewExpr = $group === 'month'
+            ? "DATE_FORMAT(o.created_at, '%Y-%m') = DATE_FORMAT(c.first_order_at, '%Y-%m')"
+            : "DATE(o.created_at) = DATE(c.first_order_at)";
+
+        return DB::table('orders as o')
+            ->joinSub($firstOrdersSub, 'c', function ($join) use ($customerKeyExpr) {
+                $join->on(DB::raw($customerKeyExpr), '=', 'c.customer_key');
+            })
+            ->whereNull('o.deleted_at')
+            ->whereNotIn('o.status', [Order::CANCELED, Order::REFUNDED])
+            ->whereBetween('o.created_at', [$start, $end])
             ->selectRaw("{$dateExpr} as date")
-            ->selectRaw('SUM(CASE WHEN c.first_order_at >= ? THEN 1 ELSE 0 END) as new_customers', [$start])
-            ->selectRaw('SUM(CASE WHEN c.first_order_at < ? THEN 1 ELSE 0 END) as returning_customers', [$start])
+            ->selectRaw("COUNT(DISTINCT CASE WHEN {$isNewExpr} THEN c.customer_key END) as new_customers")
+            ->selectRaw("COUNT(DISTINCT CASE WHEN NOT ({$isNewExpr}) THEN c.customer_key END) as returning_customers")
             ->groupBy(DB::raw($dateExpr))
             ->orderBy(DB::raw($dateExpr))
             ->get();
     }
 
-    private function topProducts(Carbon $start, Carbon $end, int $limit = 10): array
+    protected function topProducts(Carbon $start, Carbon $end, int $limit = 10): array
     {
         $items = DB::table('order_products as op')
             ->join('orders as o', 'o.id', '=', 'op.order_id')
@@ -261,7 +270,7 @@ class DashboardAnalyticsController
             ->selectRaw('MAX(x.variant_label) as variant_label')
             ->selectRaw('SUM(x.qty) as orders_qty')
             ->selectRaw('SUM(x.line_total) as revenue')
-            ->groupBy('x.product_id', 'x.product_variant_id', 'x.variant_label')
+            ->groupBy('x.product_id', 'x.product_variant_id')
             ->orderByDesc('orders_qty')
             ->limit($limit)
             ->get();
@@ -294,7 +303,8 @@ class DashboardAnalyticsController
                 $variantLabel = (string) ($row->variant_label ?? '');
 
                 $displayName = $productName;
-                $displayVariant = $variantLabel !== '' ? $variantLabel : $variantName;
+                // Prefer clean variant name (e.g. "v1") over concatenated attributes
+                $displayVariant = $variantName !== '' ? $variantName : $variantLabel;
 
                 $product = $productId ? $productsById->get($productId) : null;
                 $variant = $variantId ? $variantsById->get($variantId) : null;
@@ -306,11 +316,17 @@ class DashboardAnalyticsController
                 }
 
                 if (!$imageUrl && $variant) {
-                    $imageUrl = media_variant_url($variant->base_image, 80) ?: $this->normalizeImageUrl($variant->base_image?->path ?: null);
+                    $imageUrl = media_variant_url(
+                        $variant->base_image,
+                        (int) config('image_optimization.variants.widths.thumb', 80)
+                    ) ?: $this->normalizeImageUrl($variant->base_image?->path ?: null);
                 }
 
                 if (!$imageUrl && $product) {
-                    $imageUrl = media_variant_url($product->base_image, 80) ?: $this->normalizeImageUrl($product->base_image?->path ?: null);
+                    $imageUrl = media_variant_url(
+                        $product->base_image,
+                        (int) config('image_optimization.variants.widths.thumb', 80)
+                    ) ?: $this->normalizeImageUrl($product->base_image?->path ?: null);
                 }
 
                 $imageUrl = $this->makeRelativeUrl($imageUrl);
@@ -336,7 +352,7 @@ class DashboardAnalyticsController
             ->all();
     }
 
-    private function normalizeImageUrl(?string $path): ?string
+    protected function normalizeImageUrl(?string $path): ?string
     {
         if (!$path) {
             return null;
@@ -351,7 +367,7 @@ class DashboardAnalyticsController
         return $this->makeRelativeUrl($path);
     }
 
-    private function makeRelativeUrl(?string $urlOrPath): ?string
+    protected function makeRelativeUrl(?string $urlOrPath): ?string
     {
         if (!$urlOrPath) {
             return null;
@@ -386,7 +402,7 @@ class DashboardAnalyticsController
         return '/storage/' . ltrim($urlOrPath, '/');
     }
 
-    private function onlyIfPublicStorageFileExists(?string $url): ?string
+    protected function onlyIfPublicStorageFileExists(?string $url): ?string
     {
         if (!$url) {
             return null;

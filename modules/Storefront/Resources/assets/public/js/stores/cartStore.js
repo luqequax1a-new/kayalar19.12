@@ -26,8 +26,10 @@ Alpine.store("cart", {
     },
 
     get isEmpty() {
+        if (!this.cart.items) return true;
         return Object.keys(this.cart.items).length === 0;
     },
+
 
     get shippingCost() {
         return this.cart.shippingCost?.inCurrentCurrency?.amount || 0;
@@ -106,9 +108,11 @@ Alpine.store("cart", {
 
     updateCart(cart) {
         this.cart = { ...cart };
+        this.fetched = true;
 
         this.setCoupon(cart);
     },
+
 
     updateCartItemQty({ id, qty }) {
         this.cart.items[id].qty = qty;

@@ -206,9 +206,11 @@ class LayoutComposer
 
     private function getCopyrightText()
     {
-        return strtr(setting('storefront_copyright_text'), [
+        $text = (string) (setting('storefront_copyright_text') ?? '');
+
+        return strtr($text, [
             '{{ store_url }}' => route('home'),
-            '{{ store_name }}' => setting('store_name'),
+            '{{ store_name }}' => (string) (setting('store_name') ?? ''),
             '{{ year }}' => date('Y'),
         ]);
     }

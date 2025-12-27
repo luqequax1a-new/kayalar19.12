@@ -130,6 +130,14 @@ class CheckoutCompleteController
             }
         }
 
+        if (request()->query('paymentMethod') === 'paytr') {
+            \Modules\Cart\Facades\Cart::clear();
+            
+            session(['placed_order_id' => $orderId]);
+
+            return redirect()->route('checkout.complete.show', ['orderId' => $orderId]);
+        }
+
         $order = Order::findOrFail($orderId);
 
         $gateway = Gateway::get(request('paymentMethod'));
@@ -145,6 +153,21 @@ class CheckoutCompleteController
         }
 
         $order->storeTransaction($response);
+
+        // Deactivate abandoned cart coupon if used
+        try {
+            if ($order->hasCoupon()) {
+                $coupon = $order->coupon;
+                // Check if it's an abandoned cart coupon (starts with SEPET-)
+                // Or simply deactivate it if it's a generic single-use coupon logic
+                if ($coupon && str_starts_with($coupon->code, 'SEPET-')) {
+                    $coupon->update(['is_active' => false]);
+                    Log::info('Abandoned cart coupon deactivated: ' . $coupon->code);
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to deactivate coupon: ' . $e->getMessage());
+        }
 
         event(new OrderPlaced($order));
 

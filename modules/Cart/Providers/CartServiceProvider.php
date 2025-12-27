@@ -27,4 +27,15 @@ class CartServiceProvider extends ServiceProvider
 
         $this->app->alias(Cart::class, 'cart');
     }
+
+
+    /**
+     * Bootstrap the application services.
+     *
+     * @return void
+     */
+    public function boot()
+    {
+
+    }
 }

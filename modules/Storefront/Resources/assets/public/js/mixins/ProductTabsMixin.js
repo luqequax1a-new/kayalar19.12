@@ -37,7 +37,7 @@ export default function (tabs) {
         },
 
         hideSkeletons() {
-            const skeletons = document.querySelectorAll(
+            const skeletons = this.$root.querySelectorAll(
                 `${this.selector()} .swiper-slide-skeleton`
             );
 
@@ -56,14 +56,24 @@ export default function (tabs) {
 
                 this.products = response.data;
 
-                setTimeout(() => {
-                    if (this.products.length !== 0) {
-                        this.swiper = new Swiper(
-                            this.selector(),
-                            this.swiperOptions()
-                        );
-                    }
-                }, 0);
+                // Wait for Alpine to render new slides before initializing Swiper.
+                if (typeof this.$nextTick === "function") {
+                    await this.$nextTick();
+                }
+
+                if (this.products.length !== 0) {
+                    const selector = this.selector();
+                    const element = this.$root.querySelector(selector);
+                    
+                    this.swiper = new Swiper(element, this.swiperOptions());
+
+                    // Ensure IKAS-style lazy injection rescans newly added slides.
+                    try {
+                        if (typeof window.__fleetcartIkasRescan === "function") {
+                            window.__fleetcartIkasRescan(element);
+                        }
+                    } catch (e) {}
+                }
             } catch (error) {
                 // handle error
             } finally {

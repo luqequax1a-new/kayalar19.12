@@ -15,6 +15,7 @@
             'featured_categories',
             'info_icons',
             'koleysiyon_grid',
+            'koleysiyon_grid_2',
             'category_grid_banners',
             'content_banner',
             'content_banner_2',
@@ -34,7 +35,7 @@
             'faq',
             'blogs',
             'html_blog',
-        ]
+            ]
     )
 
     @php(
@@ -81,6 +82,10 @@
         @elseif ($section === 'koleysiyon_grid')
             @if (setting('storefront_koleysiyon_grid_enabled'))
                 @include('storefront::public.home.sections.koleysiyon_grid')
+            @endif
+        @elseif ($section === 'koleysiyon_grid_2')
+            @if (setting('storefront_koleysiyon_grid_2_enabled'))
+                @include('storefront::public.home.sections.koleysiyon_grid_2')
             @endif
         @elseif ($section === 'category_grid_banners')
             @if (setting('storefront_category_grid_banners_enabled'))

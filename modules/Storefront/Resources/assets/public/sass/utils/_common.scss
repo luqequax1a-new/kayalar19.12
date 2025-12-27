@@ -5,6 +5,10 @@
 @import "common/_vertical-products";
 @import "common/_landscape-products";
 
+[x-cloak] {
+    display: none !important;
+}
+
 .wrapper {
     position: relative;
     background: var(--color-white);

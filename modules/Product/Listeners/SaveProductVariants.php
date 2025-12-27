@@ -15,10 +15,17 @@ class SaveProductVariants
      */
     public function handle($product)
     {
+        if (! request()->has('variants')) {
+            return;
+        }
+
         $ids = $this->getDeleteCandidates($product);
 
         if ($ids->isNotEmpty()) {
-            $product->variants()->forceDelete($ids);
+            $product->variants()
+                ->withoutGlobalScope('active')
+                ->whereIn('id', $ids->all())
+                ->forceDelete();
         }
 
         $this->saveVariants($product);

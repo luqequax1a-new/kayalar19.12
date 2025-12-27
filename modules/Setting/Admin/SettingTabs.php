@@ -12,6 +12,7 @@ use Modules\User\Entities\Role;
 use Modules\Media\Entities\File;
 use Modules\Payment\Gateways\Iyzico;
 use Illuminate\Support\Facades\Cache;
+use Modules\Payment\Gateways\Paytr;
 use Modules\Payment\Gateways\MercadoPago;
 
 class SettingTabs extends Tabs
@@ -34,6 +35,8 @@ class SettingTabs extends Tabs
             ->add($this->sms())
             ->add($this->mail())
             ->add($this->newsletter())
+            ->add($this->reviewCampaign())
+            ->add($this->abandonedCart())
             ->add($this->googleRecaptcha())
             ->add($this->customCssJs());
 
@@ -62,6 +65,7 @@ class SettingTabs extends Tabs
             ->add($this->bKashPayment())
             ->add($this->nagadPayment())
             ->add($this->sslCommerz())
+            ->add($this->paytr())
             ->add($this->cod())
             ->add($this->bankTransfer())
             ->add($this->checkPayment());
@@ -111,7 +115,7 @@ class SettingTabs extends Tabs
         return tap(new Tab('store', trans('setting::settings.tabs.store')), function (Tab $tab) {
             $tab->weight(10);
 
-            $tab->fields(['translatable.store_name', 'translatable.store_tagline', 'store_phone', 'store_email', 'store_address_1', 'store_address_2', 'store_city', 'store_country', 'store_state', 'store_zip']);
+            $tab->fields(['translatable.store_name', 'translatable.store_tagline', 'store_phone', 'store_email', 'store_address_1', 'store_address_2', 'store_city', 'store_country', 'store_state', 'store_zip', 'prices_include_tax']);
 
             $tab->view('setting::admin.settings.tabs.store', [
                 'countries' => Country::all(),
@@ -213,7 +217,7 @@ class SettingTabs extends Tabs
         return tap(new Tab('sms', trans('setting::settings.tabs.sms')), function (Tab $tab) {
             $tab->weight(25);
 
-            $tab->fields(['sms_service', 'vonage_key', 'vonage_secret', 'twilio_sid', 'twilio_token', 'sms_order_statuses']);
+            $tab->fields(['sms_service', 'vonage_key', 'vonage_secret', 'twilio_sid', 'twilio_token', 'netgsm_username', 'netgsm_password', 'netgsm_header', 'sms_order_statuses']);
 
             $tab->view('setting::admin.settings.tabs.sms', [
                 'smsServices' => $this->getSmsServices(),
@@ -293,6 +297,24 @@ class SettingTabs extends Tabs
             ]);
 
             $tab->view('setting::admin.settings.tabs.review_campaign');
+        });
+    }
+
+
+    private function abandonedCart()
+    {
+        return tap(new Tab('abandoned_cart', 'Terk Edilmiş Sepet Ayarları'), function (Tab $tab) {
+            $tab->weight(34);
+
+            $tab->fields([
+                'abandoned_cart_reminder_enabled',
+                'abandoned_cart_reminder_delay_hours',
+                'abandoned_cart_coupon_enabled',
+                'abandoned_cart_coupon_discount_percent',
+                'abandoned_cart_coupon_valid_days',
+            ]);
+
+            $tab->view('setting::admin.settings.tabs.abandoned_cart');
         });
     }
 
@@ -390,6 +412,11 @@ class SettingTabs extends Tabs
                 'smart_shipping_description',
                 'smart_shipping_base_rate',
                 'smart_shipping_free_threshold',
+                'smart_shipping_show_progress_bar',
+                'smart_shipping_button_1_text',
+                'smart_shipping_button_1_link',
+                'smart_shipping_button_2_text',
+                'smart_shipping_button_2_link',
             ]);
 
             $tab->view('setting::admin.settings.tabs.smart_shipping');
@@ -611,6 +638,26 @@ class SettingTabs extends Tabs
         });
     }
 
+
+
+    private function paytr()
+    {
+        return tap(new Tab('paytr', trans('setting::settings.tabs.paytr')), function (Tab $tab) {
+            $tab->weight(71);
+
+            $tab->fields([
+                'paytr_enabled',
+                'translatable.paytr_label',
+                'translatable.paytr_description',
+                'paytr_test_mode',
+                'paytr_merchant_id',
+                'paytr_merchant_key',
+                'paytr_merchant_salt'
+            ]);
+
+            $tab->view('setting::admin.settings.tabs.paytr');
+        });
+    }
 
 
     private function cod()

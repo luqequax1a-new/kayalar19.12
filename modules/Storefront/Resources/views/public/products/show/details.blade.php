@@ -7,7 +7,8 @@
     </script>
     <div class="details-info-top" style="min-height: 150px;">
         <div class="details-top-bar">
-            <h1 class="product-name" x-text="productName"></h1>
+            @php($serverTitle = $product->name . (((string) ($item->name ?? '')) !== '' && (string) ($item->name ?? '') !== (string) $product->name ? (' (' . $item->name . ')') : ''))
+            <h1 class="product-name" x-text="productName || $el.textContent">{{ $serverTitle }}</h1>
 
             <button
                 class="btn btn-wishlist"
@@ -31,58 +32,79 @@
             </button>
         </div>
 
-        @if (setting('reviews_enabled'))
-            <div x-show="reviewCount > 0">
-                @include('storefront::public.partials.product_rating', ['data' => 'product'])
-            </div>
+        @if (setting('reviews_enabled') && (int) ($review->count ?? 0) > 0)
+            @include('storefront::public.partials.product_rating', ['data' => 'product'])
         @endif
 
+        @php($unitSuffixText = $product->unit_suffix ? (' /' . $product->unit_suffix) : '')
+        @php($serverRegularAmount = (float) optional($item->price)->convertToCurrentCurrency()->amount())
+        @php($serverSpecialAmount = (float) ((method_exists($item, 'hasSpecialPrice') && $item->hasSpecialPrice()) ? $item->getSpecialPrice()->convertToCurrentCurrency()->amount() : $serverRegularAmount))
+        @php($serverRegularFormatted = optional(optional($item->price)->convertToCurrentCurrency())->format())
+        @php($serverSpecialFormatted = (method_exists($item, 'hasSpecialPrice') && $item->hasSpecialPrice()) ? $item->getSpecialPrice()->convertToCurrentCurrency()->format() : $serverRegularFormatted)
+        @php($hasServerDiscount = $serverSpecialAmount < $serverRegularAmount)
+
         @if ($product->variant)
-            <template x-if="isActiveItem">
-                <div class="product-price">
-                    <template x-if="specialPrice < regularPrice">
-                        <span
-                            class="product-discount-badge"
-                            x-text="'%' + Math.round((1 - (specialPrice / regularPrice)) * 100)"
-                        ></span>
-                    </template>
-
-                    <div class="product-price-values">
-                        <template x-if="specialPrice < regularPrice">
-                            <span class="previous-price" x-text="formatCurrency(regularPrice) + (product.unit_suffix ? ' /' + product.unit_suffix : '')"></span>
-                        </template>
-
-                        <template x-if="specialPrice < regularPrice">
-                            <span class="special-price" x-text="formatCurrency(specialPrice) + (product.unit_suffix ? ' /' + product.unit_suffix : '')"></span>
-                        </template>
-
-                        <template x-if="!(specialPrice < regularPrice)">
-                            <span class="special-price" x-text="formatCurrency(regularPrice) + (product.unit_suffix ? ' /' + product.unit_suffix : '')"></span>
-                        </template>
-                    </div>
-                </div>
-            </template>
-        @else
-            <div class="product-price">
-                <template x-if="specialPrice < regularPrice">
-                    <span
-                        class="product-discount-badge"
-                        x-text="'%' + Math.round((1 - (specialPrice / regularPrice)) * 100)"
-                    ></span>
-                </template>
+            <div class="product-price" x-show="isActiveItem">
+                <span
+                    class="product-discount-badge"
+                    x-show="specialPrice < regularPrice"
+                    x-text="'%' + Math.round((1 - (specialPrice / regularPrice)) * 100)"
+                    style="{{ $hasServerDiscount ? '' : 'display:none' }}"
+                >{{ $serverRegularAmount > 0 ? ('%' . (string) (int) round((1 - ($serverSpecialAmount / $serverRegularAmount)) * 100)) : '' }}</span>
 
                 <div class="product-price-values">
-                    <template x-if="specialPrice < regularPrice">
-                        <span class="previous-price" x-text="formatCurrency(regularPrice) + (product.unit_suffix ? ' /' + product.unit_suffix : '')"></span>
-                    </template>
+                    <span
+                        class="previous-price"
+                        x-show="specialPrice < regularPrice"
+                        x-text="formatCurrency(regularPrice) + (product.unit_suffix ? ' /' + product.unit_suffix : '')"
+                        style="{{ $hasServerDiscount ? '' : 'display:none' }}"
+                    >{{ ($serverRegularFormatted ?: '') . $unitSuffixText }}</span>
 
-                    <template x-if="specialPrice < regularPrice">
-                        <span class="special-price" x-text="formatCurrency(specialPrice) + (product.unit_suffix ? ' /' + product.unit_suffix : '')"></span>
-                    </template>
+                    <span
+                        class="special-price"
+                        x-show="specialPrice < regularPrice"
+                        x-text="formatCurrency(specialPrice) + (product.unit_suffix ? ' /' + product.unit_suffix : '')"
+                        style="{{ $hasServerDiscount ? '' : 'display:none' }}"
+                    >{{ ($serverSpecialFormatted ?: '') . $unitSuffixText }}</span>
 
-                    <template x-if="!(specialPrice < regularPrice)">
-                        <span class="special-price" x-text="formatCurrency(regularPrice) + (product.unit_suffix ? ' /' + product.unit_suffix : '')"></span>
-                    </template>
+                    <span
+                        class="special-price"
+                        x-show="!(specialPrice < regularPrice)"
+                        x-text="formatCurrency(regularPrice) + (product.unit_suffix ? ' /' + product.unit_suffix : '')"
+                        style="{{ $hasServerDiscount ? 'display:none' : '' }}"
+                    >{{ ($serverRegularFormatted ?: '') . $unitSuffixText }}</span>
+                </div>
+            </div>
+        @else
+            <div class="product-price">
+                <span
+                    class="product-discount-badge"
+                    x-show="specialPrice < regularPrice"
+                    x-text="'%' + Math.round((1 - (specialPrice / regularPrice)) * 100)"
+                    style="{{ $hasServerDiscount ? '' : 'display:none' }}"
+                >{{ $serverRegularAmount > 0 ? ('%' . (string) (int) round((1 - ($serverSpecialAmount / $serverRegularAmount)) * 100)) : '' }}</span>
+
+                <div class="product-price-values">
+                    <span
+                        class="previous-price"
+                        x-show="specialPrice < regularPrice"
+                        x-text="formatCurrency(regularPrice) + (product.unit_suffix ? ' /' + product.unit_suffix : '')"
+                        style="{{ $hasServerDiscount ? '' : 'display:none' }}"
+                    >{{ ($serverRegularFormatted ?: '') . $unitSuffixText }}</span>
+
+                    <span
+                        class="special-price"
+                        x-show="specialPrice < regularPrice"
+                        x-text="formatCurrency(specialPrice) + (product.unit_suffix ? ' /' + product.unit_suffix : '')"
+                        style="{{ $hasServerDiscount ? '' : 'display:none' }}"
+                    >{{ ($serverSpecialFormatted ?: '') . $unitSuffixText }}</span>
+
+                    <span
+                        class="special-price"
+                        x-show="!(specialPrice < regularPrice)"
+                        x-text="formatCurrency(regularPrice) + (product.unit_suffix ? ' /' + product.unit_suffix : '')"
+                        style="{{ $hasServerDiscount ? 'display:none' : '' }}"
+                    >{{ ($serverRegularFormatted ?: '') . $unitSuffixText }}</span>
                 </div>
             </div>
         @endif

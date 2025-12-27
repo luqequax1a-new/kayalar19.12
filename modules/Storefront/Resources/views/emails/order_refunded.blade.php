@@ -23,7 +23,7 @@
                     <tr>
                         <td style="padding:16px 20px 8px;">
                             <div style="font-family:'Open Sans',sans-serif;font-size:15px;line-height:20px;color:#374151;text-align:center;">
-                                Siparişiniz (#{{ $order->id }}) için iade işlemi tamamlandı.<br/>
+                                Siparişiniz (#{{ $order->displayOrderNumber() }}) için iade işlemi tamamlandı.<br/>
                                 Ödeme yöntemi: <strong>{{ $order->payment_method }}</strong>. İade, bu yöntem üzerinden gerçekleştirildi.
                             </div>
                         </td>
@@ -32,7 +32,7 @@
                     <tr>
                         <td style="padding:0 20px 12px;">
                             <div style="font-family:'Open Sans',sans-serif;font-size:14px;line-height:20px;color:#111827;text-align:center;">
-                                <div style="margin:4px 0;">Sipariş No: #{{ $order->id }}</div>
+                                <div style="margin:4px 0;">Sipariş No: #{{ $order->displayOrderNumber() }}</div>
                                 <div style="margin:4px 0;">Tarih: {{ $order->created_at->toFormattedDateString() }}</div>
                                 <div style="margin:4px 0;">Ödeme: {{ $order->payment_method }}</div>
                             </div>

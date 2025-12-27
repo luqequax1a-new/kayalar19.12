@@ -5,6 +5,7 @@ namespace Modules\Sms\Providers;
 use Modules\Sms\Facades\Gateway;
 use Modules\Sms\Gateways\Twilio;
 use Modules\Sms\Gateways\Vonage;
+use Modules\Sms\Gateways\Netgsm;
 use Illuminate\Support\ServiceProvider;
 
 class SmsServiceProvider extends ServiceProvider
@@ -22,5 +23,6 @@ class SmsServiceProvider extends ServiceProvider
 
         Gateway::register('vonage', new Vonage);
         Gateway::register('twilio', new Twilio);
+        Gateway::register('netgsm', new Netgsm);
     }
 }

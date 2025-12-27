@@ -121,4 +121,4 @@ self.addEventListener("fetch", (event) => {
     );
 });
 
-const pwaVersion = 1765567626;
+const pwaVersion = 1766360891;

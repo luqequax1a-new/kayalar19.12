@@ -7,6 +7,7 @@ use Modules\Order\Entities\Order;
 use Modules\Address\Entities\Address;
 use Modules\Geliver\Services\GeliverService;
 use Modules\User\Entities\User;
+use Illuminate\Support\Facades\DB;
 
 class CreateGeliverTestOrder extends Command
 {
@@ -69,22 +70,6 @@ class CreateGeliverTestOrder extends Command
             'customer_phone' => $phone,
             'customer_first_name' => $first,
             'customer_last_name' => $last,
-            'billing_first_name' => $first,
-            'billing_last_name' => $last,
-            'billing_address_1' => 'Rıhtım Caddesi No:1',
-            'billing_address_2' => null,
-            'billing_city' => $city,
-            'billing_state' => $city,
-            'billing_zip' => $zip,
-            'billing_country' => $country,
-            'shipping_first_name' => $first,
-            'shipping_last_name' => $last,
-            'shipping_address_1' => 'Rıhtım Caddesi No:1',
-            'shipping_address_2' => null,
-            'shipping_city' => $city,
-            'shipping_state' => $city,
-            'shipping_zip' => $zip,
-            'shipping_country' => $country,
             'sub_total' => 100,
             'shipping_method' => 'flat_rate',
             'shipping_cost' => 0,
@@ -102,6 +87,48 @@ class CreateGeliverTestOrder extends Command
             'shipping_address_id' => $address->id,
             'billing_address_id' => $address->id,
         ])->save();
+
+        $now = now();
+        DB::table('order_addresses')->insert([
+            [
+                'order_id' => $order->id,
+                'type' => 'shipping',
+                'first_name' => $first,
+                'last_name' => $last,
+                'company_name' => null,
+                'tax_number' => null,
+                'tax_office' => null,
+                'phone' => $phone,
+                'city' => $city,
+                'district' => $district,
+                'zip' => $zip,
+                'country' => $country,
+                'address_line' => 'Rıhtım Caddesi No:1',
+                'address_2' => null,
+                'billing_email' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'order_id' => $order->id,
+                'type' => 'billing',
+                'first_name' => $first,
+                'last_name' => $last,
+                'company_name' => null,
+                'tax_number' => null,
+                'tax_office' => null,
+                'phone' => $phone,
+                'city' => $city,
+                'district' => $district,
+                'zip' => $zip,
+                'country' => $country,
+                'address_line' => 'Rıhtım Caddesi No:1',
+                'address_2' => null,
+                'billing_email' => null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+        ]);
 
         $svc = app(GeliverService::class);
         try {

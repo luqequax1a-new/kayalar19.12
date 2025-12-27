@@ -23,7 +23,7 @@ function initSizeChartModal() {
     try {
         modalEl.inert = true;
         modalEl.removeAttribute('aria-hidden');
-    } catch (_) {}
+    } catch (_) { }
 
     let lastTrigger = trigger;
 
@@ -32,7 +32,7 @@ function initSizeChartModal() {
         try {
             const t = e.target?.closest?.('.size-chart-trigger');
             if (t) lastTrigger = t;
-        } catch (_) {}
+        } catch (_) { }
     });
 
     const restoreFocusToTrigger = () => {
@@ -47,7 +47,7 @@ function initSizeChartModal() {
             if (shouldRestore) {
                 try {
                     if (typeof active.blur === 'function') active.blur();
-                } catch (_) {}
+                } catch (_) { }
 
                 if (typeof focusTarget?.focus === 'function') {
                     try {
@@ -57,13 +57,13 @@ function initSizeChartModal() {
                     }
                 }
             }
-        } catch (_) {}
+        } catch (_) { }
     };
 
     const forceHideSafely = () => {
         // During hide, Bootstrap may set aria-hidden while the modal is still visible.
         // Ensure focus cannot remain inside the modal at that moment.
-        try { modalEl.inert = true; } catch (_) {}
+        try { modalEl.inert = true; } catch (_) { }
         restoreFocusToTrigger();
     };
 
@@ -74,17 +74,17 @@ function initSizeChartModal() {
         try {
             modalEl.inert = false;
             modalEl.removeAttribute('aria-hidden');
-        } catch (_) {}
+        } catch (_) { }
     });
     modalEl.addEventListener('shown.bs.modal', () => {
         try {
             modalEl.inert = false;
             modalEl.removeAttribute('aria-hidden');
-        } catch (_) {}
+        } catch (_) { }
     });
     modalEl.addEventListener('hidden.bs.modal', () => {
         // Ensure focus is not left on an element inside an aria-hidden modal.
-        try { modalEl.inert = true; } catch (_) {}
+        try { modalEl.inert = true; } catch (_) { }
         setTimeout(restoreFocusToTrigger, 0);
     });
 
@@ -125,14 +125,14 @@ function initSizeChartModal() {
         try {
             if (!tabsEl) return;
             tabsEl.style.display = visible ? '' : 'none';
-        } catch (_) {}
+        } catch (_) { }
     };
 
     const clearTabs = () => {
         try {
             if (!tabsEl) return;
             tabsEl.innerHTML = '';
-        } catch (_) {}
+        } catch (_) { }
     };
 
     const renderTabs = (charts, activeId) => {
@@ -161,7 +161,7 @@ function initSizeChartModal() {
                     `;
                 })
                 .join('');
-        } catch (_) {}
+        } catch (_) { }
     };
 
     const renderHtml = (html) => {
@@ -329,7 +329,7 @@ function setVideoControls(video, enabled) {
         }
 
         video.controls = !!enabled;
-    } catch (_) {}
+    } catch (_) { }
 }
 
 function setGalleryVideoOverlayGlyph(wrapper, glyph) {
@@ -337,7 +337,7 @@ function setGalleryVideoOverlayGlyph(wrapper, glyph) {
         const el = wrapper.querySelector('.fc-video-play-icon');
         if (!el) return;
         el.textContent = glyph;
-    } catch (_) {}
+    } catch (_) { }
 }
 
 function bindGalleryVideoOverlayState() {
@@ -363,7 +363,7 @@ function bindGalleryVideoOverlayState() {
                         const playing = (!video.paused && !video.ended);
                         wrapper.dataset.playing = playing ? 'true' : 'false';
                         setVideoControls(video, playing);
-                    } catch (_) {}
+                    } catch (_) { }
                 };
 
                 // If metadata loads after binding, ensure state is still correct
@@ -386,9 +386,9 @@ function bindGalleryVideoOverlayState() {
                     setVideoControls(video, false);
                     setGalleryVideoOverlayGlyph(wrapper, '▶');
                 });
-            } catch (_) {}
+            } catch (_) { }
         });
-    } catch (_) {}
+    } catch (_) { }
 }
 
 // Global helper: product header'daki rating'e tıklayınca yorumlar sekmesine git.
@@ -411,7 +411,7 @@ window.openReviewsTab = function openReviewsTab() {
                 target.scrollIntoView(true);
             }
         }, 150);
-    } catch (_) {}
+    } catch (_) { }
 };
 
 function handleGalleryVideoTap(e) {
@@ -431,7 +431,7 @@ function handleGalleryVideoTap(e) {
             if (typeof e.clientX === 'number' && typeof e.clientY === 'number') {
                 return { x: e.clientX, y: e.clientY };
             }
-        } catch (_) {}
+        } catch (_) { }
         return null;
     };
 
@@ -491,7 +491,7 @@ function handleGalleryVideoTap(e) {
                 try {
                     setGalleryVideoOverlayGlyph(wrapper, '▶');
                     if (wrapper.dataset.flash === 'pause') delete wrapper.dataset.flash;
-                } catch (_) {}
+                } catch (_) { }
             }, 650);
         } else {
             pauseAllGalleryVideos(wrapper);
@@ -501,7 +501,7 @@ function handleGalleryVideoTap(e) {
                 try {
                     setGalleryVideoOverlayGlyph(wrapper, '▶');
                     if (wrapper.dataset.flash === 'play') delete wrapper.dataset.flash;
-                } catch (_) {}
+                } catch (_) { }
             }, 650);
             if (p && typeof p.then === 'function') {
                 p.then(() => {
@@ -521,14 +521,14 @@ function handleGalleryVideoTap(e) {
                 wrapper.dataset.playing = 'false';
             }, { once: true });
         }
-    } catch (_) {}
+    } catch (_) { }
 
     try {
         const wrap = document.querySelector('.product-gallery-preview-wrap');
         if (wrap && wrap.classList.contains('visible-variation-image')) {
             wrap.classList.remove('visible-variation-image');
         }
-    } catch (_) {}
+    } catch (_) { }
 }
 
 function pauseAllGalleryVideos(exceptWrapper = null) {
@@ -540,9 +540,9 @@ function pauseAllGalleryVideos(exceptWrapper = null) {
                 if (!v.paused) v.pause();
                 setVideoControls(v, false);
                 if (w) w.dataset.playing = 'false';
-            } catch (_) {}
+            } catch (_) { }
         });
-    } catch (_) {}
+    } catch (_) { }
 }
 
 let __galleryTouch = { x: 0, y: 0, moved: false };
@@ -555,7 +555,7 @@ document.addEventListener(
             __galleryTouch.x = t.clientX;
             __galleryTouch.y = t.clientY;
             __galleryTouch.moved = false;
-        } catch (_) {}
+        } catch (_) { }
     },
     { passive: true }
 );
@@ -571,7 +571,7 @@ document.addEventListener(
             if (dx > 10 || dy > 10) {
                 __galleryTouch.moved = true;
             }
-        } catch (_) {}
+        } catch (_) { }
     },
     { passive: true }
 );
@@ -591,6 +591,41 @@ document.addEventListener(
 let galleryPreviewSlider;
 let galleryPreviewLightbox;
 let galleryPreviewZoomInstances = [];
+let galleryPreviewPaginationObserver;
+
+function attachReviewsTabListener() {
+    const bind = () => {
+        const tabLink = document.querySelector('.product-details-tab a[href="#reviews"]');
+        if (!tabLink) {
+            return;
+        }
+
+        const triggerFetch = () => {
+            try {
+                window.FleetCart?.page?.fetchReviews?.();
+            } catch (_) { }
+        };
+
+        const onShown = () => {
+            triggerFetch();
+            tabLink.removeEventListener("shown.bs.tab", onShown);
+        };
+
+        tabLink.addEventListener("shown.bs.tab", onShown);
+
+        if (tabLink.classList.contains("active")) {
+            triggerFetch();
+        }
+    };
+
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", bind, { once: true });
+    } else {
+        bind();
+    }
+}
+
+attachReviewsTabListener();
 
 Alpine.data(
     "ProductShow",
@@ -598,8 +633,15 @@ Alpine.data(
         product: product,
         item: variant || product,
         optionPrices: {},
+        errors: new Errors(),
         addingToCart: false,
         oldMediaLength: null,
+        cartItemForm: {
+            product_id: product.id,
+            qty: getDefaultQty(product),
+            variations: {},
+            options: {},
+        },
         activeVariationValues: {},
         variationImagePath: null,
         showDescriptionContent: false,
@@ -616,18 +658,16 @@ Alpine.data(
         // Rating dağılımı (yorum istatistikleri)
         ratingBreakdown: ratingBreakdown || { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
         addingNewReview: false,
-        reviewForm: {},
+        _reviewsObserverInitialized: false,
+        reviewForm: {
+            rating: null,
+            reviewer_name: "",
+            comment: "",
+        },
         currentPage: 1,
 
         // Review kuponu için: review request mailinden gelen order_id query parametresi
         orderIdFromQuery: null,
-        cartItemForm: {
-            product_id: product.id,
-            // Qty başlangıcı tamamen unit modülüne bağlı: önce unit_default_qty, sonra unit_min; yoksa 1
-            qty: getDefaultQty(product),
-            variations: {},
-            options: {},
-        },
 
         prefetchVariantMedia(variationIndex, valueIndex) {
             try {
@@ -658,7 +698,7 @@ Alpine.data(
                 [...firstMedia, ...fallbackMedia].forEach((m) => {
                     if (!m) return;
 
-                    const main = m.detail_webp_url || m.detail_jpeg_url || m.grid_webp_url || m.grid_jpeg_url || m.path;
+                    const main = m.grid_webp_url || m.grid_jpeg_url || m.detail_webp_url || m.detail_jpeg_url || m.path;
                     const thumb = m.thumb_webp_url || m.thumb_jpeg_url || m.grid_webp_url || m.grid_jpeg_url || m.path;
 
                     if (main) urls.push(main);
@@ -674,7 +714,7 @@ Alpine.data(
                     img.decoding = "async";
                     img.src = u;
                 });
-            } catch (_) {}
+            } catch (_) { }
         },
 
         prefetchPopularVariantMedia() {
@@ -699,17 +739,24 @@ Alpine.data(
                 const maxTotal = 8;
 
                 for (let i = 0; i < variants.length && i < maxVariants; i++) {
+                    if (totalQueued >= maxTotal) break;
+
                     const v = variants[i];
                     const media = Array.isArray(v?.media) ? v.media : [];
-                    const first = media.slice(0, maxPerVariant);
+                    if (!media.length) continue;
 
-                    for (const m of first) {
+                    let queuedThisVariant = 0;
+                    for (let mi = 0; mi < media.length && queuedThisVariant < maxPerVariant; mi++) {
+                        if (totalQueued >= maxTotal) break;
+
+                        const m = media[mi];
                         if (!m) continue;
+
                         const url =
-                            m.detail_webp_url ||
-                            m.detail_jpeg_url ||
                             m.grid_webp_url ||
                             m.grid_jpeg_url ||
+                            m.detail_webp_url ||
+                            m.detail_jpeg_url ||
                             m.path;
 
                         if (!url || seen[url]) continue;
@@ -719,13 +766,11 @@ Alpine.data(
                         img.decoding = "async";
                         img.src = url;
 
+                        queuedThisVariant += 1;
                         totalQueued += 1;
-                        if (totalQueued >= maxTotal) {
-                            return;
-                        }
                     }
                 }
-            } catch (_) {}
+            } catch (_) { }
         },
 
         deferRelatedProducts() {
@@ -735,15 +780,15 @@ Alpine.data(
                 }
                 this._relatedProductsRequested = true;
 
-                setTimeout(async () => {
+                const load = async () => {
                     try {
                         const base = (window.FleetCart && FleetCart.baseUrl) ? FleetCart.baseUrl : '';
                         const res = await axios.get(`${base}/products/${this.product.id}/related`);
                         const items = Array.isArray(res.data)
                             ? res.data
                             : Array.isArray(res.data?.data)
-                              ? res.data.data
-                              : [];
+                                ? res.data.data
+                                : [];
 
                         const root = document.querySelector('[data-related-products]');
                         if (!items.length) {
@@ -760,7 +805,6 @@ Alpine.data(
                         const tplHtml = tpl ? tpl.innerHTML : '';
                         if (!tplHtml) return;
 
-                        // remove skeletons
                         wrapper.querySelectorAll('.swiper-slide-skeleton').forEach((el) => el.remove());
                         wrapper.querySelectorAll('[data-related-products-placeholder]').forEach((el) => el.remove());
 
@@ -779,41 +823,40 @@ Alpine.data(
                                 if (window.Alpine && typeof window.Alpine.initTree === 'function') {
                                     window.Alpine.initTree(slide);
                                 }
-                            } catch (_) {}
+                            } catch (_) { }
                         });
 
                         this.$nextTick(() => {
                             try {
                                 this.initRelatedProductsSlider();
-                            } catch (_) {}
+                            } catch (_) { }
                         });
-                    } catch (_) {}
-                }, 350);
-            } catch (_) {}
+                    } catch (_) { }
+                };
+
+                try {
+                    const root = document.querySelector('[data-related-products]');
+                    if (root && typeof IntersectionObserver !== 'undefined') {
+                        const io = new IntersectionObserver((entries) => {
+                            const hit = entries && entries[0] && entries[0].isIntersecting;
+                            if (!hit) return;
+                            try { io.disconnect(); } catch (_) { }
+                            load();
+                        }, { rootMargin: '600px 0px' });
+                        io.observe(root);
+                        return;
+                    }
+                } catch (_) { }
+
+                try {
+                    if ('requestIdleCallback' in window) {
+                        window.requestIdleCallback(() => load(), { timeout: 2000 });
+                    } else {
+                        setTimeout(() => load(), 900);
+                    }
+                } catch (_) { }
+            } catch (_) { }
         },
-
-        initReviewsDefer() {
-            try {
-                const tabLink = document.querySelector('.product-details-tab a[href="#reviews"]');
-
-                if (!tabLink) {
-                    return;
-                }
-
-                tabLink.addEventListener(
-                    "shown.bs.tab",
-                    () => {
-                        if (!this.reviewsLoaded) {
-                            this.fetchReviews();
-                        }
-                    },
-                    { passive: true }
-                );
-            } catch (_) {}
-        },
-        errors: new Errors(),
-
-        // ---- Qty input state (tamamen unit tabanlı) ----
         isEditingQty: false,
         qtyInput: "",
         // Min qty: sadece unit_min'den okunur; yoksa güvenli default 1
@@ -835,7 +878,7 @@ Alpine.data(
                 return `${base} (${this.previewVariantName})`.trim();
             }
 
-            if (this.hasAnyVariant && this.item?.name) {
+            if (this.hasAnyVariant && this.item?.name && String(this.item.name) !== String(this.product.name)) {
                 return `${base} (${this.item.name})`.trim();
             }
 
@@ -866,7 +909,7 @@ Alpine.data(
 
                     try {
                         str = str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                    } catch (_) {}
+                    } catch (_) { }
 
                     str = str
                         .replace(/[^a-z0-9\s-]/g, " ")
@@ -1082,7 +1125,12 @@ Alpine.data(
                 if (pid && typeof piw !== 'undefined') {
                     this.$store.wishlist.bootstrap(pid, piw);
                 }
-            } catch (_) {}
+            } catch (_) { }
+
+            try {
+                window.FleetCart = window.FleetCart || {};
+                window.FleetCart.page = this;
+            } catch (_) { }
 
             // URL'den order_id query parametresini oku (yorum kuponu için gerekecek)
             try {
@@ -1100,7 +1148,25 @@ Alpine.data(
 
             galleryPreviewSlider = this.initGalleryPreviewSlider();
             galleryPreviewLightbox = this.initGalleryPreviewLightbox();
-            
+
+            // On first load, Swiper may render pagination before we can hide it.
+            // Run the pagination visibility check multiple times to be safe.
+            try {
+                this.updateGalleryPaginationVisibility();
+            } catch (_) { }
+            this.$nextTick(() => {
+                try {
+                    this.updateGalleryPaginationVisibility();
+                } catch (_) { }
+                try {
+                    setTimeout(() => {
+                        try {
+                            this.updateGalleryPaginationVisibility();
+                        } catch (_) { }
+                    }, 80);
+                } catch (_) { }
+            });
+
 
             this.initReviewsDefer();
             try {
@@ -1114,7 +1180,7 @@ Alpine.data(
                     this.$nextTick(() => {
                         try {
                             this.initRelatedProductsSlider();
-                        } catch (_) {}
+                        } catch (_) { }
                     });
                 } else {
                     const relatedHasRealSlides = !!(relatedRoot && relatedRoot.querySelector('.swiper-slide') && !relatedRoot.querySelector('.swiper-slide-skeleton'));
@@ -1123,7 +1189,7 @@ Alpine.data(
                         this.deferRelatedProducts();
                     }
                 }
-            } catch (_) {}
+            } catch (_) { }
 
             try {
                 const upsellRoot = document.querySelector('[data-upsell-products]');
@@ -1132,11 +1198,12 @@ Alpine.data(
                 if (!upsellRoot || upsellRoot.classList.contains('d-none')) {
                     return;
                 }
-            } catch (_) {}
+            } catch (_) { }
             this.setOldMediaLength();
             this.initGalleryPreviewZoom();
             bindGalleryVideoOverlayState();
             this.setActiveVariationsValue();
+            this.setVariant(); // Ensure item matches variations on load
             this.setDescriptionContentHeight();
             this.setCustomTabContentHeight();
             this.setCustomTab2ContentHeight();
@@ -1144,6 +1211,7 @@ Alpine.data(
 
             // Yorum görselleri için lightbox başlat
             this.initReviewLightbox();
+            this.fetchReviews();
             this.updateBadgeVisibilityForActiveSlide();
 
             try {
@@ -1153,7 +1221,7 @@ Alpine.data(
                 } else {
                     setTimeout(run, 700);
                 }
-            } catch (_) {}
+            } catch (_) { }
         },
 
         syncWishlist() {
@@ -1175,7 +1243,7 @@ Alpine.data(
                 modules: [Manipulation, Navigation, Pagination],
                 slidesPerView: 1,
                 // Masaüstünde oklarla, mobilde parmakla kaydırma
-                allowTouchMove: this.isMobileDevice(),
+                allowTouchMove: this.shouldAllowGalleryTouchMove(),
                 navigation: {
                     nextEl: ".swiper-button-next",
                     prevEl: ".swiper-button-prev",
@@ -1185,12 +1253,160 @@ Alpine.data(
                     clickable: true,
                 },
             });
+            const syncTouchAllowance = () => {
+                try {
+                    const allowTouchMove = this.shouldAllowGalleryTouchMove();
+                    slider.allowTouchMove = allowTouchMove;
+                    if (slider.params) {
+                        slider.params.allowTouchMove = allowTouchMove;
+                    }
+                } catch (_) { }
+            };
+
             slider.on("slideChange", () => {
                 pauseAllGalleryVideos(null);
                 this.updateBadgeVisibilityForActiveSlide();
             });
+            slider.on("resize", syncTouchAllowance);
+            try {
+                const coarseMq = window.matchMedia
+                    ? window.matchMedia("(pointer: coarse)")
+                    : null;
+                if (coarseMq) {
+                    const handleMqChange = () => syncTouchAllowance();
+                    if (typeof coarseMq.addEventListener === "function") {
+                        coarseMq.addEventListener("change", handleMqChange);
+                    } else if (typeof coarseMq.addListener === "function") {
+                        coarseMq.addListener(handleMqChange);
+                    }
+                }
+            } catch (_) { }
+            syncTouchAllowance();
+
+            // Aggressive pagination control: ensure dots are removed when there is only 1 slide.
+            try {
+                this.updateGalleryPaginationVisibility();
+            } catch (_) { }
+            slider.on("update", () => {
+                try {
+                    this.updateGalleryPaginationVisibility();
+                } catch (_) { }
+            });
+            slider.on("slidesLengthChange", () => {
+                try {
+                    this.updateGalleryPaginationVisibility();
+                } catch (_) { }
+            });
+
+            try {
+                requestAnimationFrame(() => {
+                    try {
+                        this.updateGalleryPaginationVisibility();
+                    } catch (_) { }
+                });
+            } catch (_) { }
 
             return slider;
+        },
+
+        updateGalleryPaginationVisibility() {
+            try {
+                if (!galleryPreviewSlider) return;
+
+                const rootEl = document.querySelector(".product-gallery-preview");
+                const paginationEl = document.querySelector(
+                    ".product-gallery-preview .swiper-pagination"
+                );
+
+                const slidesCount = Array.isArray(galleryPreviewSlider.slides)
+                    ? galleryPreviewSlider.slides.length
+                    : 0;
+
+                const shouldHide = slidesCount <= 1;
+
+                if (rootEl) {
+                    rootEl.classList.toggle("is-pagination-hidden", shouldHide);
+                }
+
+                if (shouldHide) {
+                    // Kill pagination behaviors and markup to prevent any dots from appearing.
+                    try {
+                        if (galleryPreviewSlider.pagination && typeof galleryPreviewSlider.pagination.destroy === "function") {
+                            galleryPreviewSlider.pagination.destroy();
+                        }
+                    } catch (_) { }
+
+                    if (paginationEl) {
+                        paginationEl.innerHTML = "";
+                        paginationEl.style.setProperty("display", "none", "important");
+                        paginationEl.style.setProperty("visibility", "hidden", "important");
+                        paginationEl.style.setProperty("pointer-events", "none", "important");
+                        paginationEl.setAttribute("hidden", "hidden");
+
+                        // Keep it hidden even if Swiper (or other code) re-injects bullets.
+                        try {
+                            if (galleryPreviewPaginationObserver) {
+                                galleryPreviewPaginationObserver.disconnect();
+                            }
+
+                            galleryPreviewPaginationObserver = new MutationObserver(() => {
+                                try {
+                                    paginationEl.innerHTML = "";
+                                    paginationEl.style.setProperty("display", "none", "important");
+                                    paginationEl.style.setProperty("visibility", "hidden", "important");
+                                    paginationEl.style.setProperty("pointer-events", "none", "important");
+                                    paginationEl.setAttribute("hidden", "hidden");
+                                } catch (_) { }
+                            });
+
+                            galleryPreviewPaginationObserver.observe(paginationEl, {
+                                childList: true,
+                                subtree: true,
+                            });
+                        } catch (_) { }
+                    }
+
+                    try {
+                        if (galleryPreviewSlider.params && galleryPreviewSlider.params.pagination) {
+                            galleryPreviewSlider.params.pagination.clickable = false;
+                        }
+                    } catch (_) { }
+
+                    return;
+                }
+
+                // Re-enable pagination when there are multiple slides.
+                if (paginationEl) {
+                    try {
+                        if (galleryPreviewPaginationObserver) {
+                            galleryPreviewPaginationObserver.disconnect();
+                        }
+                    } catch (_) { }
+
+                    paginationEl.removeAttribute("hidden");
+                    paginationEl.style.setProperty("display", "", "important");
+                    paginationEl.style.setProperty("visibility", "", "important");
+                    paginationEl.style.setProperty("pointer-events", "", "important");
+                }
+
+                try {
+                    if (galleryPreviewSlider.params && galleryPreviewSlider.params.pagination) {
+                        galleryPreviewSlider.params.pagination.clickable = true;
+                    }
+                } catch (_) { }
+
+                try {
+                    if (galleryPreviewSlider.pagination && typeof galleryPreviewSlider.pagination.init === "function") {
+                        galleryPreviewSlider.pagination.init();
+                        if (typeof galleryPreviewSlider.pagination.render === "function") {
+                            galleryPreviewSlider.pagination.render();
+                        }
+                        if (typeof galleryPreviewSlider.pagination.update === "function") {
+                            galleryPreviewSlider.pagination.update();
+                        }
+                    }
+                } catch (_) { }
+            } catch (_) { }
         },
 
         updateGallerySlider() {
@@ -1212,6 +1428,7 @@ Alpine.data(
 
             this.addGalleryEventListeners();
             this.updateBadgeVisibilityForActiveSlide();
+            this.updateGalleryPaginationVisibility();
         },
 
         addGallerySlides() {
@@ -1221,7 +1438,7 @@ Alpine.data(
             }
 
             const galleryPreviewSlides = [];
-            
+
 
             const variantMedia = Array.isArray(this.item.media) ? this.item.media : [];
             const productMedia = Array.isArray(this.product.media) ? this.product.media : [];
@@ -1313,6 +1530,9 @@ Alpine.data(
                 this.initGalleryPreviewZoom();
                 bindGalleryVideoOverlayState();
                 galleryPreviewLightbox.reload();
+                try {
+                    this.updateGalleryPaginationVisibility();
+                } catch (_) { }
             });
         },
 
@@ -1337,7 +1557,7 @@ Alpine.data(
                 } else {
                     wrap.classList.remove("is-video-active");
                 }
-            } catch (_) {}
+            } catch (_) { }
         },
 
         initGalleryPreviewZoom() {
@@ -1353,16 +1573,22 @@ Alpine.data(
         },
 
         triggerGalleryPreviewLightbox(event) {
-            if (window.innerWidth > 990) {
-                event.currentTarget.nextElementSibling.click();
-            }
+            try {
+                if (this.isMobileDevice()) {
+                    return;
+                }
+
+                if (window.innerWidth > 990) {
+                    event.currentTarget.nextElementSibling.click();
+                }
+            } catch (_) { }
         },
 
         buildPreviewImageSources(file) {
             if (!file) return { avif: null, webp: null, jpeg: `${FleetCart.baseUrl}/build/assets/image-placeholder.png`, zoom: `${FleetCart.baseUrl}/build/assets/image-placeholder.png` };
 
-            const avif = file.detail_avif_url || file.grid_avif_url || null;
-            const webp = file.detail_webp_url || file.grid_webp_url || null;
+            const avif = file.grid_avif_url || file.detail_avif_url || null;
+            const webp = file.grid_webp_url || file.detail_webp_url || null;
             const jpeg =
                 file.detail_jpeg_url ||
                 file.grid_jpeg_url ||
@@ -1372,6 +1598,7 @@ Alpine.data(
             const zoom =
                 file.detail_jpeg_url ||
                 file.detail_webp_url ||
+                file.detail_avif_url ||
                 jpeg;
 
             return { avif, webp, jpeg, zoom };
@@ -1395,11 +1622,11 @@ Alpine.data(
                             <picture>
                                 ${avifSource}
                                 ${webpSource}
-                                <img src="${sources.jpeg}" alt="${this.productName}" loading="lazy" decoding="async" class="${imgClass}">
+                                <img src="${sources.jpeg}" data-zoom="${sources.zoom}" alt="${this.productName}" loading="lazy" decoding="async" class="${imgClass}">
                             </picture>
                         </div>
 
-                        <a href="${sources.jpeg}" data-gallery="product-gallery-preview" class="gallery-view-icon glightbox">
+                        <a href="${sources.zoom}" data-gallery="product-gallery-preview" class="gallery-view-icon glightbox">
                             <i class="las la-search-plus"></i>
                         </a>
                     </div>
@@ -1528,22 +1755,26 @@ Alpine.data(
         },
 
         setActiveVariationsValue() {
-            if (!this.hasAnyVariant) return;
+            if (!this.item || !this.item.uids) return;
+            const uids = String(this.item.uids).split(".").filter(Boolean);
+            if (!uids.length) return;
 
-            this.item.uids.split(".").forEach((uid) => {
+            const newVariations = {};
+            const newActiveValues = {};
+
+            uids.forEach((uid) => {
                 this.product.variations.some((variation) => {
-                    const value = variation.values.find(
-                        (value) => value.uid === uid
-                    );
-
-                    if (value !== undefined) {
-                        this.activeVariationValues[variation.uid] = value.label;
-                        this.cartItemForm.variations[variation.uid] = uid;
-
+                    const value = variation.values.find((v) => String(v.uid) === String(uid));
+                    if (value) {
+                        newActiveValues[variation.uid] = value.label;
+                        newVariations[variation.uid] = String(uid);
                         return true;
                     }
                 });
             });
+
+            this.cartItemForm.variations = newVariations;
+            this.activeVariationValues = newActiveValues;
         },
 
         setActiveVariationValueLabel(variationIndex) {
@@ -1551,10 +1782,17 @@ Alpine.data(
             this.previewVariantName = null;
 
             const variation = this.product.variations[variationIndex];
+            if (!variation || !variation.values || !Array.isArray(variation.values)) {
+                return;
+            }
             const value = variation.values.find(
-                (value) =>
-                    value.uid === this.cartItemForm.variations[variation.uid]
+                (v) =>
+                    String(v.uid) === String(this.cartItemForm.variations[variation.uid])
             );
+
+            if (!value || typeof value.label === "undefined") {
+                return;
+            }
 
             this.activeVariationValues[variation.uid] = value.label;
         },
@@ -1582,7 +1820,15 @@ Alpine.data(
             }
 
             if (!this.isMobileDevice() && variation.type === "image") {
-                this.variationImagePath = value.image.path;
+                const img = value?.image || {};
+                this.variationImagePath =
+                    img.grid_webp_url ||
+                    img.grid_jpeg_url ||
+                    img.detail_webp_url ||
+                    img.detail_jpeg_url ||
+                    img.url ||
+                    img.path ||
+                    null;
             }
 
             this.activeVariationValues[variation.uid] = value.label;
@@ -1602,11 +1848,35 @@ Alpine.data(
 
                 this.setVariationValueLabel(variationIndex, valueIndex);
                 this.updateVariantDetails();
+
+                // Mobile UX: after variant selection, scroll back to the main gallery.
+                if (this.isMobileDevice()) {
+                    this.$nextTick(() => {
+                        try {
+                            // Behave like the ScrollToTop button.
+                            // Only needed on mobile where layout stacks vertically.
+                            const variation = this.product?.variations?.[variationIndex];
+                            const shouldScrollTop = !variation || variation.type === 'image';
+
+                            if (shouldScrollTop) {
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }
+                        } catch (_) { }
+                    });
+                }
             }
         },
 
         doesVariantExist(uid) {
-            return this.product.variants.some(({ uids }) => uids.includes(uid));
+            if (!uid) return false;
+            const searchUids = String(uid).split(".");
+
+            return this.product.variants.some((v) => {
+                if (!v || !v.uids) return false;
+                const variantUids = String(v.uids).split(".");
+
+                return searchUids.every((su) => variantUids.includes(su));
+            });
         },
 
         setVariant() {
@@ -1657,7 +1927,7 @@ Alpine.data(
                     // Strip diacritics where supported
                     try {
                         str = str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-                    } catch (_) {}
+                    } catch (_) { }
 
                     str = str
                         .replace(/[^a-z0-9\s-]/g, " ")
@@ -1687,7 +1957,7 @@ Alpine.data(
                             }
                         }
                     }
-                } catch (_) {}
+                } catch (_) { }
 
                 // Preserve locale prefix by reusing the existing pathname prefix up to /products/.
                 const pathname = current.pathname || "";
@@ -1730,7 +2000,7 @@ Alpine.data(
                             current.searchParams.set(key, valueSlug);
                         }
                     }
-                } catch (_) {}
+                } catch (_) { }
 
                 window.history.replaceState({}, "", current.toString());
             } catch (_) {
@@ -1889,6 +2159,34 @@ Alpine.data(
                 .matches;
         },
 
+        shouldAllowGalleryTouchMove() {
+            try {
+                if (navigator?.maxTouchPoints > 0) {
+                    return true;
+                }
+            } catch (_) { }
+
+            try {
+                if (window.matchMedia("(pointer: coarse)").matches) {
+                    return true;
+                }
+            } catch (_) { }
+
+            try {
+                if (window.matchMedia("(hover: none)").matches) {
+                    return true;
+                }
+            } catch (_) { }
+
+            try {
+                if (this.isMobileDevice()) {
+                    return true;
+                }
+            } catch (_) { }
+
+            return false;
+        },
+
         // Unit tabanlı qty normalizasyonu
         normalizeQty(raw) {
             let v;
@@ -2022,7 +2320,7 @@ Alpine.data(
                 if (this.reviewLightbox && typeof this.reviewLightbox.destroy === "function") {
                     this.reviewLightbox.destroy();
                 }
-            } catch (_) {}
+            } catch (_) { }
 
             this.$nextTick(() => {
                 try {
@@ -2033,7 +2331,7 @@ Alpine.data(
                         openEffect: "fade",
                         closeEffect: "fade",
                     });
-                } catch (_) {}
+                } catch (_) { }
             });
         },
 
@@ -2056,6 +2354,56 @@ Alpine.data(
                 notify(error.response.data.message);
             } finally {
                 this.fetchingReviews = false;
+            }
+        },
+
+        initReviewsDefer() {
+            try {
+                if (this._reviewsObserverInitialized) {
+                    return;
+                }
+
+                const reviewsSection = document.querySelector("#reviews");
+
+                const triggerFetch = () => {
+                    if (!this.reviewsLoaded) {
+                        this.fetchReviews();
+                    }
+                };
+
+                if (!reviewsSection) {
+                    setTimeout(triggerFetch, 1200);
+                    return;
+                }
+
+                if ("IntersectionObserver" in window) {
+                    this._reviewsObserverInitialized = true;
+
+                    const observer = new IntersectionObserver(
+                        (entries, obs) => {
+                            entries.forEach((entry) => {
+                                if (entry.isIntersecting) {
+                                    triggerFetch();
+                                    obs.disconnect();
+                                }
+                            });
+                        },
+                        {
+                            rootMargin: "0px 0px -25% 0px",
+                            threshold: 0.25,
+                        }
+                    );
+
+                    observer.observe(reviewsSection);
+                } else {
+                    triggerFetch();
+                }
+            } catch (_) {
+                setTimeout(() => {
+                    if (!this.reviewsLoaded) {
+                        this.fetchReviews();
+                    }
+                }, 1000);
             }
         },
 
@@ -2110,7 +2458,7 @@ Alpine.data(
                     // URL.revokeObjectURL ile oluşturulan tüm preview'leri temizle
                     this.reviewImages.forEach((item) => {
                         if (item.preview) {
-                            try { URL.revokeObjectURL(item.preview); } catch (_) {}
+                            try { URL.revokeObjectURL(item.preview); } catch (_) { }
                         }
                     });
 
@@ -2133,7 +2481,7 @@ Alpine.data(
                     this.addingNewReview = false;
 
                     if (window.grecaptcha) {
-                        try { grecaptcha.reset(); } catch (_) {}
+                        try { grecaptcha.reset(); } catch (_) { }
                     }
                 });
         },
@@ -2185,7 +2533,7 @@ Alpine.data(
             const item = this.reviewImages[index];
 
             if (item && item.preview) {
-                try { URL.revokeObjectURL(item.preview); } catch (_) {}
+                try { URL.revokeObjectURL(item.preview); } catch (_) { }
             }
 
             this.reviewImages.splice(index, 1);
@@ -2259,9 +2607,9 @@ Alpine.data(
                 slidesPerView: 2,
                 pagination: paginationEl
                     ? {
-                          el: paginationEl,
-                          clickable: true,
-                      }
+                        el: paginationEl,
+                        clickable: true,
+                    }
                     : undefined,
                 breakpoints: {
                     640: {

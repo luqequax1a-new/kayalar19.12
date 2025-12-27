@@ -99,6 +99,9 @@ class UpdateSettingRequest extends Request
             'vonage_secret' => ['required_if:sms_service,vonage'],
             'twilio_sid' => ['required_if:sms_service,twilio'],
             'twilio_token' => ['required_if:sms_service,twilio'],
+            'netgsm_username' => ['required_if:sms_service,netgsm'],
+            'netgsm_password' => ['required_if:sms_service,netgsm'],
+            'netgsm_header' => ['required_if:sms_service,netgsm'],
             'sms_order_statuses.*' => ['nullable', Rule::in($this->orderStatuses())],
 
             'mail_from_address' => 'nullable|email',

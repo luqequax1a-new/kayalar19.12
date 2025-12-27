@@ -31,9 +31,15 @@ export default defineConfig(async ({ command }) => {
             host: process.env.HOST || "localhost",
             port: Number(process.env.PORT) || Number(process.env.VITE_PORT) || 5173,
             strictPort: true,
+            origin: process.env.VITE_DEV_SERVER_ORIGIN || undefined,
             hmr: {
-                host: process.env.HOST || "localhost",
-                port: Number(process.env.PORT) || Number(process.env.VITE_PORT) || 5173,
+                host: process.env.VITE_HMR_HOST || process.env.HOST || "localhost",
+                protocol: process.env.VITE_HMR_PROTOCOL || undefined,
+                port:
+                    Number(process.env.VITE_HMR_PORT)
+                    || Number(process.env.PORT)
+                    || Number(process.env.VITE_PORT)
+                    || 5173,
             },
         },
         plugins: [

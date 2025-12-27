@@ -8,6 +8,12 @@ Route::get('reviews', [
     'middleware' => 'can:admin.reviews.index',
 ]);
 
+Route::get('reviews/search', [
+    'as' => 'admin.reviews.search',
+    'uses' => 'ReviewController@search',
+    'middleware' => 'can:admin.reviews.index',
+]);
+
 Route::get('reviews/{id}/edit', [
     'as' => 'admin.reviews.edit',
     'uses' => 'ReviewController@edit',

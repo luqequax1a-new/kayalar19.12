@@ -39,6 +39,11 @@
 
         @include('storefront::public.partials.variables')
 
+        <style>
+            .header{min-height:60px}
+            .product-card{min-height:260px}
+        </style>
+
         @vite([
             'modules/Storefront/Resources/assets/public/sass/vendors/_bootstrap.scss',
             'modules/Storefront/Resources/assets/public/sass/vendors/_line-awesome.scss',
@@ -67,6 +72,12 @@
                 cartQuantity: {{ $cartQuantity }},
                 wishlistCount: {{ $wishlistCount }},
                 csrfToken: '{{ csrf_token() }}',
+                freeShippingEnabled: {{ setting('smart_shipping_enabled') === '1' && setting('smart_shipping_show_progress_bar') === '1' ? 'true' : 'false' }},
+                freeShippingMinAmount: {{ (float) setting('smart_shipping_free_threshold', 0) }},
+                smartShippingButton1Text: '{{ setting('smart_shipping_button_1_text', 'Yeni Gelenler') }}',
+                smartShippingButton1Link: '{{ setting('smart_shipping_button_1_link', url('products?sort=latest')) }}',
+                smartShippingButton2Text: '{{ setting('smart_shipping_button_2_text', 'Fırsat Ürünleri') }}',
+                smartShippingButton2Link: '{{ setting('smart_shipping_button_2_link', url('products?sort=sales')) }}',
                 data: {},
                 langs: {
                     'storefront::storefront.something_went_wrong': '{{ trans('storefront::storefront.something_went_wrong') }}',
@@ -124,5 +135,9 @@
         @stack('scripts')
 
         {!! setting('custom_footer_assets') !!}
+
+        @if (app()->environment('local') && app()->bound('debugbar'))
+            {!! app('debugbar')->render() !!}
+        @endif
     </body>
 </html>

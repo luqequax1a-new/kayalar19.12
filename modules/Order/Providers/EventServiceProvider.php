@@ -3,8 +3,9 @@
 namespace Modules\Order\Providers;
 
 use Modules\Order\Events\OrderStatusChanged;
-use Modules\Order\Listeners\SendOrderStatusChangedSms;
 use Modules\Order\Listeners\SendOrderStatusChangedEmail;
+use Modules\Order\Listeners\SendShippingProgressEmail;
+use Modules\Order\Listeners\SendOrderStatusChangedSms;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 
 class EventServiceProvider extends ServiceProvider
@@ -17,6 +18,7 @@ class EventServiceProvider extends ServiceProvider
     protected $listen = [
         OrderStatusChanged::class => [
             SendOrderStatusChangedEmail::class,
+            SendShippingProgressEmail::class,
             SendOrderStatusChangedSms::class,
             \Modules\Order\Listeners\ScheduleReviewRequestEmail::class,
             \Modules\Order\Listeners\LogOrderStatusChanged::class,

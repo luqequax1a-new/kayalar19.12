@@ -41,6 +41,26 @@
         </div>
     </div>
 
+    <div class="form-group">
+        <label for="{{ "{$fieldNamePrefix}_variants_mode" }}" class="col-md-3 control-label text-left">
+            Varyantları ayrı göster
+        </label>
+
+        <div class="col-md-9">
+            <select name="{{ "{$fieldNamePrefix}_variants_mode" }}" class="form-control custom-select-black" id="{{ "{$fieldNamePrefix}_variants_mode" }}">
+                <option value="inherit" {{ (setting("{$fieldNamePrefix}_variants_mode") ?: 'inherit') === 'inherit' ? 'selected' : '' }}>
+                    Ürün ayarını kullan
+                </option>
+                <option value="force_on" {{ setting("{$fieldNamePrefix}_variants_mode") === 'force_on' ? 'selected' : '' }}>
+                    Evet (zorla)
+                </option>
+                <option value="force_off" {{ setting("{$fieldNamePrefix}_variants_mode") === 'force_off' ? 'selected' : '' }}>
+                    Hayır (zorla)
+                </option>
+            </select>
+        </div>
+    </div>
+
     @if (auth()->user()->hasAccess('admin.categories.index') && ! ($featuredCategories ?? false))
         <div class="category-products {{ setting("{$fieldNamePrefix}_product_type") === 'category_products' ? '' : 'hide' }}">
             {{ Form::select("{$fieldNamePrefix}_category_id", trans('storefront::attributes.category'), $errors, $categories, $settings) }}

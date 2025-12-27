@@ -41,12 +41,19 @@ class NewOrder extends Mailable implements ShouldQueue
         $this->order->load([
             'products.product.files',
             'products.product_variant.files',
+            'shippingAddress',
+            'billingAddress',
+            'billingSnapshot',
+            'shippingSnapshot',
+            'coupon',
         ]);
 
-        return $this->subject('Yeni Sipariş 🔔')
+
+        return $this->subject($this->order->total->convert($this->order->currency, $this->order->currency_rate)->format($this->order->currency) . ' Tutarında Yeni Sipariş 🔔')
             ->view("storefront::emails.{$this->getViewName()}", [
                 'logo' => File::findOrNew(setting('storefront_mail_logo'))->path,
             ]);
+
     }
 
 

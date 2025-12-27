@@ -48,6 +48,8 @@ class Coupon extends Model
         'usage_limit_per_coupon',
         'usage_limit_per_customer',
         'is_review_coupon',
+        'is_abandoned_cart_coupon',
+        'cart_id',
         'review_id',
         'order_id',
         'customer_id',

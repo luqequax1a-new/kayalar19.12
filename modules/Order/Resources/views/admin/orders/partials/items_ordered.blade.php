@@ -29,13 +29,19 @@
                                     <td class="image-col" data-label="Görsel">
                                         <div class="product-media">
                                             @if ($imagePath)
-                                                <a href="{{ $imagePath }}" class="glightbox order-image-lightbox" data-gallery="order-product-{{ $product->product_variant?->id ?? $product->product->id ?? $product->id }}" data-type="image">
+                                                <div class="product-image-preview">
                                                     <img src="{{ $imagePath }}" alt="{{ $product->name }}" />
-                                                </a>
+                                                    <div class="image-hover-preview">
+                                                        <img src="{{ $imagePath }}" alt="{{ $product->name }}" />
+                                                    </div>
+                                                </div>
                                             @else
-                                                <a href="{{ asset('build/assets/image-placeholder.png') }}" class="glightbox order-image-lightbox" data-gallery="order-product-{{ $product->product_variant?->id ?? $product->product->id ?? $product->id }}" data-type="image">
+                                                <div class="product-image-preview">
                                                     <img src="{{ asset('build/assets/image-placeholder.png') }}" alt="{{ $product->name }}" />
-                                                </a>
+                                                    <div class="image-hover-preview">
+                                                        <img src="{{ asset('build/assets/image-placeholder.png') }}" alt="{{ $product->name }}" />
+                                                    </div>
+                                                </div>
                                             @endif
                                         </div>
                                     </td>
@@ -56,7 +62,7 @@
 
                                                 if ($product->hasAnyVariation()) {
                                                     foreach ($product->variations as $variation) {
-                                                        $valueLabel = $variation->values()->first()?->label;
+                                                        $valueLabel = $variation->values->first()?->label;
 
                                                         if ($valueLabel) {
                                                             $variantSegments[] = $variation->name . ': ' . $valueLabel;
@@ -127,13 +133,19 @@
                             <div class="d-flex align-items-start gap-3 w-100">
                                 <div class="mobile-image">
                                     @if ($imagePath)
-                                        <a href="{{ $imagePath }}" class="glightbox order-image-lightbox" data-gallery="order-product-{{ $product->product_variant?->id ?? $product->product->id ?? $product->id }}" data-type="image">
+                                        <div class="product-image-preview">
                                             <img src="{{ $imagePath }}" alt="{{ $product->name }}" class="mobile-img" />
-                                        </a>
+                                            <div class="image-hover-preview">
+                                                <img src="{{ $imagePath }}" alt="{{ $product->name }}" />
+                                            </div>
+                                        </div>
                                     @else
-                                        <a href="{{ asset('build/assets/image-placeholder.png') }}" class="glightbox order-image-lightbox" data-gallery="order-product-{{ $product->product_variant?->id ?? $product->product->id ?? $product->id }}" data-type="image">
+                                        <div class="product-image-preview">
                                             <img src="{{ asset('build/assets/image-placeholder.png') }}" alt="{{ $product->name }}" class="mobile-img" />
-                                        </a>
+                                            <div class="image-hover-preview">
+                                                <img src="{{ asset('build/assets/image-placeholder.png') }}" alt="{{ $product->name }}" />
+                                            </div>
+                                        </div>
                                     @endif
                                 </div>
 

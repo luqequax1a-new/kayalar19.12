@@ -52,6 +52,19 @@ class AppServiceProvider extends ServiceProvider
 
         $profilingAllowed = config('app.debug') || env('PROFILE_DB_QUERIES', false);
 
+        if (app()->environment('local')) {
+            DB::listen(function ($query) {
+                if ($query->time >= 30) {
+                    Log::warning('SLOW_SQL', [
+                        'ms' => $query->time,
+                        'sql' => $query->sql,
+                        'bindings' => $query->bindings,
+                        'url' => request()->fullUrl(),
+                    ]);
+                }
+            });
+        }
+
         if ($profileRequested && $profilingAllowed) {
             Log::channel('single')->info('PROFILE: enabled', [
                 'url' => app('request')->fullUrl(),

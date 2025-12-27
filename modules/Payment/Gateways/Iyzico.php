@@ -143,16 +143,21 @@ class Iyzico implements GatewayInterface
     {
         $buyer = new Buyer();
 
+        $billingSnap = $this->order->billingSnapshot;
+        $billingAddr = $this->order->billingAddress;
+        $billing = $billingSnap ?: $billingAddr;
+        $billingCountry = $billing?->country ?? 'TR';
+
         $buyer->setId($this->order->customer_id ?? uniqid('guest_'));
         $buyer->setName($this->order->customer_first_name);
         $buyer->setSurname($this->order->customer_last_name);
         $buyer->setGsmNumber($this->order->customer_phone);
         $buyer->setEmail($this->order->customer_email);
         $buyer->setIdentityNumber(uniqid('iyzico_'));
-        $buyer->setRegistrationAddress($this->order->billing_address_1 . ', ' . $this->order->billing_address_2);
-        $buyer->setCity($this->order->billing_city);
-        $buyer->setCountry($this->order->billing_country);
-        $buyer->setZipCode($this->order->billing_zip);
+        $buyer->setRegistrationAddress(trim((string) (($billing?->address_line ?? ($billing?->address_1 ?? '')) . ', ' . ($billing?->address_2 ?? ''))));
+        $buyer->setCity($billing?->city ?? $billing?->city_title);
+        $buyer->setCountry($billingCountry);
+        $buyer->setZipCode($billing?->zip);
 
         return $buyer;
     }
@@ -162,11 +167,16 @@ class Iyzico implements GatewayInterface
     {
         $billingAddress = new Address();
 
-        $billingAddress->setContactName($this->order->billing_first_name . ' ' . $this->order->billing_last_name);
-        $billingAddress->setCity($this->order->billing_city);
-        $billingAddress->setCountry($this->order->billing_country);
-        $billingAddress->setAddress($this->order->billing_address_1 . ', ' . $this->order->billing_address_2);
-        $billingAddress->setZipCode($this->order->billing_zip);
+        $billingSnap = $this->order->billingSnapshot;
+        $billingAddr = $this->order->billingAddress;
+        $billing = $billingSnap ?: $billingAddr;
+        $billingCountry = $billing?->country ?? 'TR';
+
+        $billingAddress->setContactName($this->order->billing_full_name);
+        $billingAddress->setCity($billing?->city ?? $billing?->city_title);
+        $billingAddress->setCountry($billingCountry);
+        $billingAddress->setAddress(trim((string) (($billing?->address_line ?? ($billing?->address_1 ?? '')) . ', ' . ($billing?->address_2 ?? ''))));
+        $billingAddress->setZipCode($billing?->zip);
 
         return $billingAddress;
     }
@@ -176,11 +186,26 @@ class Iyzico implements GatewayInterface
     {
         $shippingAddress = new Address();
 
-        $shippingAddress->setContactName($this->order->shipping_first_name . ' ' . $this->order->shipping_last_name);
-        $shippingAddress->setCity($this->order->billing_city);
-        $shippingAddress->setCountry($this->order->billing_country);
-        $shippingAddress->setAddress($this->order->billing_address_1 . ', ' . $this->order->billing_address_2);
-        $shippingAddress->setZipCode($this->order->billing_zip);
+        $shippingSnap = $this->order->shippingSnapshot;
+        $shippingAddr = $this->order->shippingAddress;
+        $billingSnap = $this->order->billingSnapshot;
+        $billingAddr = $this->order->billingAddress;
+
+        $shipping = $shippingSnap ?: $shippingAddr;
+        $billing = $billingSnap ?: $billingAddr;
+
+        $shippingCountry = $shipping?->country ?? ($billing?->country ?? 'TR');
+
+        $shippingAddress->setContactName($this->order->shipping_full_name);
+        $shippingAddress->setCity(($shipping?->city ?? $shipping?->city_title) ?? ($billing?->city ?? $billing?->city_title));
+        $shippingAddress->setCountry($shippingCountry);
+        $shippingAddress->setAddress(trim((string) ((
+            $shipping?->address_line
+            ?? ($shipping?->address_1 ?? null)
+            ?? ($billing?->address_line ?? null)
+            ?? ($billing?->address_1 ?? '')
+        ) . ', ' . ($shipping?->address_2 ?? ''))));
+        $shippingAddress->setZipCode($shipping?->zip ?? $billing?->zip);
 
         return $shippingAddress;
     }

@@ -8,6 +8,7 @@ use FleetCart\Http\Middleware\TrustProxies;
 use FleetCart\Http\Middleware\EncryptCookies;
 use FleetCart\Http\Middleware\VerifyCsrfToken;
 use FleetCart\Http\Middleware\CaptureOrderAttribution;
+use FleetCart\Http\Middleware\TrackPageView;
 use Illuminate\Auth\Middleware\RequirePassword;
 use Illuminate\Http\Middleware\SetCacheHeaders;
 use Illuminate\Session\Middleware\StartSession;
@@ -37,6 +38,7 @@ class Kernel extends HttpKernel
         EncryptCookies::class,
         StartSession::class,
         CaptureOrderAttribution::class,
+        TrackPageView::class,
         CheckForMaintenanceMode::class,
         ValidatePostSize::class,
         TrimStrings::class,

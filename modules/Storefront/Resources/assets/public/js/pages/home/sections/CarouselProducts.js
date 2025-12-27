@@ -2,8 +2,9 @@ import Swiper from "swiper";
 import { Navigation, Pagination, Autoplay } from "swiper/modules";
 import "../../../components/ProductCard";
 
-Alpine.data("CarouselProducts", () => ({
+Alpine.data("CarouselProducts", (products = []) => ({
     swiper: null,
+    products: products,
 
     init() {
         this.$nextTick(() => {
@@ -28,7 +29,7 @@ Alpine.data("CarouselProducts", () => ({
 
             const nextEl = container.querySelector(".swiper-button-next");
             const prevEl = container.querySelector(".swiper-button-prev");
-            const paginationEl = container.querySelector(".swiper-pagination");
+            const paginationEl = container.querySelector(".carousel-pagination");
 
             this.swiper = new Swiper(container, {
                 modules: [Navigation, Pagination, Autoplay],
@@ -38,6 +39,7 @@ Alpine.data("CarouselProducts", () => ({
                     ? {
                           delay: autoplaySpeed,
                           disableOnInteraction: false,
+                          pauseOnMouseEnter: true,
                       }
                     : false,
                 navigation: showArrows
@@ -57,8 +59,20 @@ Alpine.data("CarouselProducts", () => ({
                     576: {
                         slidesPerView: perRowTablet,
                     },
+                    830: {
+                        slidesPerView: perRowTablet + 1 <= perRowDesktop ? perRowTablet + 1 : perRowDesktop,
+                    },
                     991: {
                         slidesPerView: perRowDesktop,
+                    },
+                    1200: {
+                        slidesPerView: perRowDesktop + 1,
+                    },
+                    1400: {
+                        slidesPerView: perRowDesktop + 2,
+                    },
+                    1760: {
+                        slidesPerView: perRowDesktop + 3,
                     },
                 },
             });

@@ -196,7 +196,6 @@ Alpine.data("ProductCard", (product, idx = 0) => ({
     selectedVariantUid: null,
     showAllVariants: false,
     gallerySwiper: null,
-
     init() {
         startIkasImageLoad();
 
@@ -240,9 +239,7 @@ Alpine.data("ProductCard", (product, idx = 0) => ({
             });
         });
 
-        queueMicrotask(() => {
-            this.initGallery();
-        });
+        // Gallery init is intentionally lazy (on first user interaction)
     },
 
     initGallery() {
@@ -438,14 +435,23 @@ Alpine.data("ProductCard", (product, idx = 0) => ({
 
     get imageSrcsets() {
         const f = this.currentSourceFile;
-        const makeSrcset = (thumbUrl, cardUrl, card2xUrl, card3xUrl, gridUrl) => {
+        
+        // Prefer listing srcsets (optimized for category pages)
+        if (f?.listing_avif_srcset || f?.listing_webp_srcset || f?.listing_jpeg_srcset) {
+            return {
+                avif: f?.listing_avif_srcset || '',
+                webp: f?.listing_webp_srcset || '',
+                jpeg: f?.listing_jpeg_srcset || '',
+            };
+        }
+        
+        // Fallback to building srcset from individual variants
+        const makeSrcset = (thumbUrl, cardUrl, card2xUrl, gridUrl) => {
             const entries = [];
             if (thumbUrl) entries.push(`${thumbUrl} 80w`);
             if (cardUrl && cardUrl !== thumbUrl) entries.push(`${cardUrl} 260w`);
             if (card2xUrl && card2xUrl !== cardUrl && card2xUrl !== thumbUrl)
                 entries.push(`${card2xUrl} 520w`);
-            if (card3xUrl && card3xUrl !== card2xUrl && card3xUrl !== cardUrl && card3xUrl !== thumbUrl)
-                entries.push(`${card3xUrl} 780w`);
             if (gridUrl && gridUrl !== thumbUrl) entries.push(`${gridUrl} 400w`);
             return entries.join(", ");
         };
@@ -454,21 +460,18 @@ Alpine.data("ProductCard", (product, idx = 0) => ({
             f?.thumb_avif_url,
             f?.card_avif_url,
             f?.card_2x_avif_url,
-            f?.card_3x_avif_url,
             f?.fast_avif_url || f?.grid_avif_url
         );
         const webp = makeSrcset(
             f?.thumb_webp_url,
             f?.card_webp_url,
             f?.card_2x_webp_url,
-            f?.card_3x_webp_url,
             f?.fast_webp_url || f?.grid_webp_url
         );
         const jpeg = makeSrcset(
             f?.thumb_jpeg_url,
             f?.card_jpeg_url,
             f?.card_2x_jpeg_url,
-            f?.card_3x_jpeg_url,
             f?.grid_jpeg_url || f?.path || this.baseImage
         );
 
@@ -489,6 +492,14 @@ Alpine.data("ProductCard", (product, idx = 0) => ({
     },
 
     get imageSizes() {
+        return this.imageSizesDetail;
+    },
+
+    get imageSizesDetail() {
         return "(max-width: 320px) 136px, (max-width: 450px) 200px, (max-width: 768px) 400px, 400px";
+    },
+
+    get imageSizesGrid() {
+        return "(max-width: 576px) calc((100vw - 24px) / 2), (max-width: 992px) 33vw, 25vw";
     },
 }));

@@ -57,6 +57,7 @@ Alpine.data(
                 tax_number: "",
                 tax_office: "",
                 phone: "",
+                billing_email: "",
                 city_id: null,
                 district_id: null,
                 address_line: "",
@@ -134,6 +135,22 @@ Alpine.data(
             return Object.keys(this.addresses).length !== 0;
         },
 
+        get shippingAddresses() {
+            return Object.values(this.addresses || {}).filter((a) => a && a.type === "shipping");
+        },
+
+        get billingAddresses() {
+            return Object.values(this.addresses || {}).filter((a) => a && a.type === "billing");
+        },
+
+        get hasShippingAddress() {
+            return this.shippingAddresses.length !== 0;
+        },
+
+        get hasBillingAddress() {
+            return this.billingAddresses.length !== 0;
+        },
+
         get firstCountry() {
             return Object.keys(this.countries)[0];
         },
@@ -194,7 +211,7 @@ Alpine.data(
                                 item_count: Object.keys(this.cart.items || {}).length,
                             });
                         }
-                    } catch (e) {}
+                    } catch (e) { }
 
                     this.hideSkeleton();
                     const keys = Object.keys(this.gateways || {});
@@ -318,17 +335,27 @@ Alpine.data(
                 if (this._debouncedUpdateCheckout) this._debouncedUpdateCheckout();
             });
 
-            if (this.defaultAddress.address_id) {
-                this.form.billingAddressId = this.defaultAddress.address_id;
-                this.form.shippingAddressId = this.defaultAddress.address_id;
+            const defaultShippingId = this.defaultAddress.default_shipping_address_id || this.defaultAddress.address_id;
+            const defaultBillingId = this.defaultAddress.default_billing_address_id || this.defaultAddress.address_id;
+
+            if (defaultShippingId || defaultBillingId) {
+                if (defaultShippingId) {
+                    this.form.shippingAddressId = defaultShippingId;
+                }
+                if (defaultBillingId) {
+                    this.form.billingAddressId = defaultBillingId;
+                }
 
                 this.mergeSavedBillingAddress();
                 this.mergeSavedShippingAddress();
             }
 
-            if (!this.hasAddress) {
-                this.form.newBillingAddress = true;
+            if (!this.hasShippingAddress) {
                 this.form.newShippingAddress = true;
+            }
+
+            if (!this.hasBillingAddress) {
+                this.form.newBillingAddress = true;
             }
 
             if (this.singleCountry) {
@@ -383,13 +410,13 @@ Alpine.data(
                 if (!element) {
                     try {
                         console.log("[CHECKOUT] hideSkeleton: element not found", selector);
-                    } catch (e) {}
+                    } catch (e) { }
                     return;
                 }
 
                 try {
                     console.log("[CHECKOUT] hideSkeleton: removing", selector);
-                } catch (e) {}
+                } catch (e) { }
 
                 if (typeof element.remove === "function") {
                     element.remove();
@@ -411,7 +438,7 @@ Alpine.data(
 
             this.mergeSavedBillingAddress();
 
-            
+
         },
 
         addNewBillingAddress() {
@@ -484,6 +511,9 @@ Alpine.data(
                     tax_office: addr.invoice_tax_office || addr.tax_office || "",
                     tax_number: addr.invoice_tax_number || addr.tax_number || "",
                 };
+                if (!this.form.billing.billing_email) {
+                    this.form.billing.billing_email = addr.billing_email || "";
+                }
             }
         },
 
@@ -593,7 +623,7 @@ Alpine.data(
             const d = (this.shippingDistricts || []).find((x) => String(x.id) === String(districtId));
             this.form.shipping.state = d ? d.name : '';
         },
-        
+
 
         changeBillingZip(zip) {
             this.form.billing.zip = zip;
@@ -745,6 +775,9 @@ Alpine.data(
                 const { data } = await axios.post('/checkout/update', {
                     payment_method: pm,
                     shipping_method: sm,
+                    billing: this.form.billing || {},
+                    customer_email: this.form.customer_email,
+                    customer_phone: this.form.customer_phone,
                 }, { signal: this.updateController.signal });
                 if (data && data.cart) {
                     this.$store.cart.updateCart(data.cart);
@@ -761,7 +794,7 @@ Alpine.data(
                     this.gateways = mapped;
                 }
                 const ended = performance.now();
-                try { console.log('[CHECKOUT] update', Math.round(ended - started), 'ms'); } catch (e) {}
+                try { console.log('[CHECKOUT] update', Math.round(ended - started), 'ms'); } catch (e) { }
             } catch (error) {
                 if (error?.response?.data?.message) {
                     notify(error.response.data.message);

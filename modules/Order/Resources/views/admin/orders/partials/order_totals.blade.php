@@ -48,9 +48,9 @@
                             </tr>
                         @endforeach
 
-                        @if ($order->hasCoupon())
+                        @if ($order->coupon_code)
                             <tr>
-                                <td>{{ trans('order::orders.coupon') }} (<span class="coupon-code">{{ $order->coupon->code }}</span>)</td>
+                                <td>{{ trans('order::orders.coupon') }} (<span class="coupon-code">{{ $order->coupon_code }}</span>)</td>
                                 <td class="text-right">&#8211;{{ $order->discount->format() }}</td>
                             </tr>
                         @endif

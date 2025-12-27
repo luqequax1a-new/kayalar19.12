@@ -31,7 +31,7 @@
                             </tr>
                             <tr>
                                 <td>{{ trans('order::orders.order_date') }}</td>
-                                <td>{{ $order->created_at->toFormattedDateString() }}</td>
+                                <td>{{ $order->created_at->translatedFormat('d F Y, H:i') }}</td>
                             </tr>
 
                             <tr>
@@ -117,7 +117,7 @@
 
                             <tr>
                                 <td>{{ trans('order::orders.customer_phone') }}</td>
-                                <td>{{ $order->shipping_phone }}</td>
+                                <td>{{ $order->shipping_phone ?: '-' }}</td>
                             </tr>
 
                             <tr>

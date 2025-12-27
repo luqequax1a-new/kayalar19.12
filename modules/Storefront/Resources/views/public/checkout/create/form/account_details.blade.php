@@ -6,7 +6,7 @@
             <div class="col-md-9">
                 <div class="form-group">
                     <label for="email">
-                        {{ trans('checkout::attributes.customer_email') }}<span>*</span>
+                        {{ trans('storefront::checkout.email') }}<span>*</span>
                     </label>
 
                     <input
@@ -26,7 +26,7 @@
             <div class="col-md-9">
                 <div class="form-group">
                     <label for="phone">
-                        {{ trans('checkout::attributes.customer_phone') }}<span>*</span>
+                        {{ trans('storefront::checkout.phone') }}<span>*</span>
                     </label>
 
                     <input
@@ -91,4 +91,5 @@
     </div>
 @else
     <input type="hidden" name="customer_email" x-model="form.customer_email">
+    <input type="hidden" name="customer_phone" x-model="form.customer_phone">
 @endguest

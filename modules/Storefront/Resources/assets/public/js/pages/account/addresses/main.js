@@ -31,12 +31,15 @@ Alpine.data(
         addresses: initialAddresses,
         defaultAddress: initialDefaultAddress,
         countries,
+        activeType: "shipping",
         formOpen: false,
         editing: false,
         loading: false,
         form: {},
         states: {},
         districts: [],
+        provincesTR: SEHIRLER,
+        districtOptionsTR: [],
         errors: new Errors(),
 
         get firstCountry() {
@@ -52,37 +55,108 @@ Alpine.data(
             return Object.keys(this.addresses).length !== 0;
         },
 
-        init() {
-            this.changeCountry(this.firstCountry);
+        get defaultShippingAddressId() {
+            return this.defaultAddress?.default_shipping_address_id || this.defaultAddress?.address_id || null;
+        },
 
-            if (this.singleCountry) {
-                this.form.country = this.firstCountry;
+        get defaultBillingAddressId() {
+            return this.defaultAddress?.default_billing_address_id || this.defaultAddress?.address_id || null;
+        },
+
+        get shippingAddresses() {
+            return Object.values(this.addresses || {}).filter((a) => a && a.type === "shipping");
+        },
+
+        get billingAddresses() {
+            return Object.values(this.addresses || {}).filter((a) => a && a.type === "billing");
+        },
+
+        get activeAddresses() {
+            return this.activeType === "billing" ? this.billingAddresses : this.shippingAddresses;
+        },
+
+        init() {
+            this.form.country = "TR";
+            this.changeCountry("TR");
+
+            this.$watch("form.city_id", (newCityId) => {
+                this.form.city_id = newCityId || null;
+                this.form.district_id = null;
+
+                const match = SEHIRLER.find((p) => String(p.sehir_id) === String(newCityId));
+                this.form.city = match ? match.sehir_adi : "";
+
+                this.districtOptionsTR = ILCELER
+                    .filter((d) => String(d.sehir_id) === String(newCityId))
+                    .map((d) => ({ id: d.ilce_id ?? d.ilce_adi, name: d.ilce_adi }));
+
+                this.form.state = "";
+            });
+
+            this.$watch("form.district_id", (newDistrictId) => {
+                const opt = (this.districtOptionsTR || []).find((d) => String(d.id) === String(newDistrictId));
+                this.form.state = opt ? opt.name : "";
+            });
+
+            if (!this.form.type) {
+                this.form.type = this.activeType;
+            }
+        },
+
+        setActiveType(type) {
+            this.activeType = type === "billing" ? "billing" : "shipping";
+
+            if (!this.editing) {
+                this.form.type = this.activeType;
             }
 
-            this.$watch("form.state", (newState) => {
-                if (this.form.country === "TR") {
-                    const provinceName = this.states[newState];
-                    const key = this.normalizeTR(provinceName);
-                    this.districts = ILCELER
-                        .filter((d) => this.normalizeTR(d.sehir_adi) === key)
-                        .map((d) => d.ilce_adi);
-                    if (!this.districts.includes(this.form.city)) {
-                        this.form.city = "";
-                    }
-                } else {
-                    this.districts = [];
+            if (this.form.type === "billing") {
+                this.form.first_name = "";
+                this.form.last_name = "";
+            } else {
+                this.form.invoice_title = "";
+                this.form.invoice_tax_number = "";
+                this.form.invoice_tax_office = "";
+                this.form.billing_email = "";
+            }
+        },
+
+        openNewAddress(type) {
+            this.formOpen = true;
+            this.editing = false;
+            this.resetForm();
+            this.setActiveType(type);
+
+            this.$nextTick(() => {
+                const panel = this.activeType === "billing" ? this.$refs?.billingFormPanel : this.$refs?.shippingFormPanel;
+                if (panel?.scrollIntoView) {
+                    panel.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+
+                const inputId = this.activeType === "billing" ? "address-title-billing" : "address-title-shipping";
+                const input = document.getElementById(inputId);
+                if (input?.focus) {
+                    input.focus({ preventScroll: true });
                 }
             });
         },
 
-        changeDefaultAddress(address) {
-            if (this.defaultAddress.address_id === address.id) return;
+        changeDefaultAddress(address, type) {
+            const t = type === "billing" ? "billing" : "shipping";
+            const current = t === "billing" ? this.defaultBillingAddressId : this.defaultShippingAddressId;
+            if (current === address.id) return;
 
-            this.defaultAddress.address_id = address.id;
+            if (!this.defaultAddress) this.defaultAddress = {};
+            if (t === "billing") {
+                this.defaultAddress.default_billing_address_id = address.id;
+            } else {
+                this.defaultAddress.default_shipping_address_id = address.id;
+            }
 
             axios
                 .post("/account/addresses/change-default", {
                     address_id: address.id,
+                    type: t,
                 })
                 .then((response) => {
                     notify(response.data);
@@ -95,13 +169,18 @@ Alpine.data(
         changeCountry(country) {
             this.form.country = country;
             this.form.state = "";
+            this.form.city = "";
+            this.form.city_id = null;
+            this.form.district_id = null;
 
             this.fetchStates(country, (states) => {
                 this.states = states;
                 if (country !== "TR") {
                     this.districts = [];
+                    this.districtOptionsTR = [];
                 } else {
                     this.districts = [];
+                    this.districtOptionsTR = [];
                 }
             });
         },
@@ -124,41 +203,76 @@ Alpine.data(
             }
         },
 
-        changeCity(city) {
-            this.form.city = city;
-            if (this.form.country === "TR" && Array.isArray(this.districts) && this.districts.length) {
-                const district = ILCELER.find((d) => String(d.ilce_adi) === String(city));
-                if (district) {
-                    const key = this.normalizeTR(district.sehir_adi);
-                    const code = Object.keys(this.states || {}).find((c) => this.normalizeTR(this.states[c]) === key);
-                    if (code) {
-                        this.form.state = code;
-                    }
-                }
-            }
+        changeCityId(cityId) {
+            this.form.city_id = cityId || null;
+        },
+
+        changeDistrictId(districtId) {
+            this.form.district_id = districtId || null;
+        },
+
+        resolveProvinceIdFromName(name) {
+            if (!name) return null;
+            const key = this.normalizeTR(name);
+            const match = SEHIRLER.find((p) => this.normalizeTR(p.sehir_adi) === key);
+            return match ? (match.sehir_id ?? null) : null;
+        },
+
+        resolveDistrictIdFromName(name, cityId = null) {
+            if (!name) return null;
+            const key = this.normalizeTR(name);
+            const list = cityId
+                ? ILCELER.filter((d) => String(d.sehir_id) === String(cityId))
+                : ILCELER;
+            const match = list.find((d) => this.normalizeTR(d.ilce_adi) === key);
+            return match ? (match.ilce_id ?? match.ilce_adi) : null;
         },
 
         edit(address) {
             this.formOpen = true;
             this.editing = true;
 
+            this.activeType = address?.type === "billing" ? "billing" : "shipping";
+
             this.$nextTick(() => {
                 this.form = { ...address };
+
+                this.$nextTick(() => {
+                    const panel = this.activeType === "billing" ? this.$refs?.billingFormPanel : this.$refs?.shippingFormPanel;
+                    if (panel?.scrollIntoView) {
+                        panel.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }
+
+                    const inputId = this.activeType === "billing" ? "address-title-billing" : "address-title-shipping";
+                    const input = document.getElementById(inputId);
+                    if (input?.focus) {
+                        input.focus({ preventScroll: true });
+                    }
+                });
 
                 this.fetchStates(address.country, (states) => {
                     this.states = states;
                     this.form.state = "";
 
                     this.$nextTick(() => {
-                        this.form.state = address.state;
                         if (address.country === "TR") {
-                            const provinceName = this.states[this.form.state];
-                            const key = this.normalizeTR(provinceName);
-                            this.districts = ILCELER
-                                .filter((d) => this.normalizeTR(d.sehir_adi) === key)
-                                .map((d) => d.ilce_adi);
+                            const cityId = address.city_id || this.resolveProvinceIdFromName(address.city);
+                            this.form.city_id = cityId;
+                            this.form.city = address.city || (SEHIRLER.find((p) => String(p.sehir_id) === String(cityId))?.sehir_adi ?? "");
+
+                            this.districtOptionsTR = ILCELER
+                                .filter((d) => String(d.sehir_id) === String(cityId))
+                                .map((d) => ({ id: d.ilce_id ?? d.ilce_adi, name: d.ilce_adi }));
+
+                            const districtId = address.district_id || this.resolveDistrictIdFromName(address.state, cityId);
+                            this.form.district_id = districtId;
+
+                            const opt = (this.districtOptionsTR || []).find((d) => String(d.id) === String(districtId));
+                            this.form.state = opt ? opt.name : (address.state || "");
                         } else {
                             this.districts = [];
+                            this.form.state = address.state;
+                            this.form.city = address.city;
                         }
                     });
                 });
@@ -209,14 +323,19 @@ Alpine.data(
 
                     this.resetForm();
 
-                    notify(data.message);
+                    notify.success(
+                        payload.type === "billing"
+                            ? trans("storefront::account.addresses.billing_address_updated")
+                            : trans("storefront::account.addresses.shipping_address_updated")
+                    );
                 })
                 .catch(({ response }) => {
                     if (response.status === 422) {
                         this.errors.record(response.data.errors);
+                        return;
                     }
 
-                    notify(response.data.message);
+                    notify.error(response?.data?.message || trans('storefront::storefront.something_went_wrong'));
                 })
                 .finally(() => {
                     this.loading = false;
@@ -226,19 +345,28 @@ Alpine.data(
         create() {
             const payload = { ...this.form };
 
+            if (!payload.type) {
+                payload.type = this.activeType;
+            }
+
             axios
                 .post('/account/addresses', payload)
                 .then(({ data }) => {
                     this.formOpen = false;
                     this.addresses = { ...this.addresses, [data.address.id]: data.address };
                     this.resetForm();
-                    notify(trans('account::messages.address_created'));
+                    notify.success(
+                        payload.type === "billing"
+                            ? trans("storefront::account.addresses.billing_address_created")
+                            : trans("storefront::account.addresses.shipping_address_created")
+                    );
                 })
                 .catch(({ response }) => {
                     if (response?.status === 422) {
                         this.errors.record(response.data.errors);
+                        return;
                     }
-                    notify(response?.data?.message || trans('storefront::storefront.something_went_wrong'));
+                    notify.error(response?.data?.message || trans('storefront::storefront.something_went_wrong'));
                 })
                 .finally(() => {
                     this.loading = false;
@@ -246,7 +374,7 @@ Alpine.data(
         },
 
         resetForm() {
-            this.form = {};
+            this.form = { type: this.activeType, country: "TR", city_id: null, district_id: null };
         },
     })
 );

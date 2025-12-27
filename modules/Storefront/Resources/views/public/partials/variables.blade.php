@@ -1,13 +1,14 @@
 <style>
+    @php($themeColorString = trim((string) (optional($themeColor)->toString() ?: '')) ?: '#0068e1')
     :root {
         --base-font-family: "{{ setting('storefront_display_font', 'Poppins') }}", sans-serif;
-        --color-primary: {{ tinycolor($themeColor->toString())->toHexString() }};
-        --color-primary-hover: {{ tinycolor($themeColor->toString())->darken(8)->toString() }};
-        --color-primary-alpha-10: {{ tinycolor($themeColor->toString())->setAlpha(0.10)->toString() }};
-        --color-primary-alpha-12: {{ tinycolor($themeColor->toString())->setAlpha(0.12)->toString() }};
-        --color-primary-alpha-15: {{ tinycolor($themeColor->toString())->setAlpha(0.15)->toString() }};
-        --color-primary-alpha-30: {{ tinycolor($themeColor->toString())->setAlpha(0.3)->toString() }};
-        --color-primary-alpha-80: {{ tinycolor($themeColor->toString())->setAlpha(0.8)->toString() }};
+        --color-primary: {{ tinycolor($themeColorString)->toHexString() }};
+        --color-primary-hover: {{ tinycolor($themeColorString)->darken(8)->toString() }};
+        --color-primary-alpha-10: {{ tinycolor($themeColorString)->setAlpha(0.10)->toString() }};
+        --color-primary-alpha-12: {{ tinycolor($themeColorString)->setAlpha(0.12)->toString() }};
+        --color-primary-alpha-15: {{ tinycolor($themeColorString)->setAlpha(0.15)->toString() }};
+        --color-primary-alpha-30: {{ tinycolor($themeColorString)->setAlpha(0.3)->toString() }};
+        --color-primary-alpha-80: {{ tinycolor($themeColorString)->setAlpha(0.8)->toString() }};
 
         --font-light: 300;
         --font-normal: 400;

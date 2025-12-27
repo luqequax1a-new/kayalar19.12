@@ -19,7 +19,6 @@ use Modules\Coupon\Checkers\MaximumSpend;
 use Modules\User\Services\CustomerService;
 use Modules\Checkout\Services\OrderService;
 use Modules\Coupon\Checkers\AlreadyApplied;
-use Modules\Account\Entities\DefaultAddress;
 use Modules\Coupon\Checkers\ExcludedProducts;
 use Modules\Coupon\Checkers\ApplicableProducts;
 use Modules\Coupon\Checkers\ExcludedCategories;
@@ -39,6 +38,7 @@ use Modules\Shipping\Services\SmartShippingCalculator;
 use Modules\Shipping\Method as ShippingMethod;
 use Illuminate\Support\Facades\DB;
 use Modules\Cart\Services\CartUpsellService;
+use Modules\Address\Entities\DefaultAddress;
 
 class CheckoutController extends Controller
 {
@@ -83,6 +83,7 @@ class CheckoutController extends Controller
         ]);
 
         $order = $orderService->create($request);
+        
         $gateway = Gateway::get($request->payment_method);
 
         try {
@@ -120,6 +121,7 @@ class CheckoutController extends Controller
         Cart::clearCartConditions();
 
         $cart = Cart::instance();
+        $cart->loadStockAndRelations();
         $upsellOffer = $upsellService->resolveBestRule($cart);
 
         return view('storefront::public.checkout.create', [
@@ -141,6 +143,9 @@ class CheckoutController extends Controller
         try {
             $shippingName = $request->input('shipping_method');
             $paymentName = $request->input('payment_method') ?? session('checkout.payment_method');
+
+            Cart::instance()->loadStockAndRelations();
+            $this->syncCustomerInfoToCart($request);
 
             if ($shippingName) {
                 if ($shippingName === 'smart_shipping') {
@@ -263,5 +268,43 @@ class CheckoutController extends Controller
         }
 
         return auth()->user()->addresses->keyBy('id');
+    }
+
+
+    private function syncCustomerInfoToCart(Request $request)
+    {
+        $sessionId = session()->getId();
+        $cartIds = [$sessionId . '_cart_items', $sessionId . '_cart_conditions'];
+
+        $data = [
+            'customer_email' => $request->input('billing.email') ?? $request->input('customer_email'),
+            'customer_first_name' => $request->input('billing.first_name'),
+            'customer_last_name' => $request->input('billing.last_name'),
+            'customer_phone' => $request->input('billing.phone') ?? $request->input('customer_phone'),
+            'user_id' => auth()->id(),
+        ];
+
+        // Filter out null values to avoid overwriting with empty data
+        $data = array_filter($data);
+
+        if (!empty($data)) {
+            \Log::info('Syncing customer info to cart:', $data);
+            
+            // Validate email before saving to avoid breaking mailer later
+            if (!empty($data['customer_email'])) {
+                $validator = \Illuminate\Support\Facades\Validator::make($data, [
+                    'customer_email' => 'email',
+                ]);
+                
+                if ($validator->fails()) {
+                    \Log::info('Invalid email format, not saving email to cart: ' . $data['customer_email']);
+                    unset($data['customer_email']);
+                }
+            }
+
+            \Modules\Cart\Entities\Cart::whereIn('id', $cartIds)->update($data);
+        } else {
+            \Log::info('No customer info to sync. Request input:', $request->all());
+        }
     }
 }

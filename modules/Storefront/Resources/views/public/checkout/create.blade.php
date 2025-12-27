@@ -33,7 +33,7 @@
                                 <div class="form-group ship-to-different-address-label">
                                     <div class="ship-toggle-card d-flex align-items-center justify-content-between">
                                         <label for="ship-to-different-address" class="form-check-label">
-                                            {{ trans('checkout::attributes.ship_to_a_different_address') }}
+                                            {{ trans('storefront::checkout.ship_to_different_address') }}
                                         </label>
 
                                         <label class="toggle-switch">

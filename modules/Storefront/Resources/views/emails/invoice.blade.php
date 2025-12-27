@@ -1,513 +1,344 @@
 <!DOCTYPE html>
-<html lang="en"
-      style="-ms-text-size-adjust: 100%;
-             -webkit-text-size-adjust: 100%;
-             -webkit-print-color-adjust: exact;">
-
+<html lang="tr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Poppins', Arial, sans-serif;
-            font-size: 15px;
-            color: #4b5563;
-            background: #f3f4f6;
-        }
+        body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.6; color: #1e293b; background: #f8fafc; }
+        .main-wrapper { width: 100%; padding: 40px 0; background-color: #f8fafc; }
+        .container { max-width: 650px; margin: 0 auto; background: #fff; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.04); border: 1px solid #e2e8f0; }
+        
+        .header { background: linear-gradient(135deg, {{ mail_theme_color() }} 0%, #334155 100%); padding: 60px 30px; text-align: center; color: #fff; }
+        .header h1 { margin: 10px 0 0; font-size: 30px; font-weight: 800; letter-spacing: -0.8px; }
+        .header p { margin: 8px 0 0; font-size: 16px; opacity: 0.85; font-weight: 500; }
 
-        td {
-            vertical-align: top;
-        }
+        .section { padding: 40px 35px; border-bottom: 1px solid #f1f5f9; }
+        .section:last-child { border-bottom: none; }
+        
+        .section-title { font-size: 20px; font-weight: 800; margin-bottom: 24px; color: #0f172a; text-align: center; }
+        
+        .info-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 25px; }
+        .info-row { display: table; width: 100%; margin-bottom: 12px; }
+        .info-label { display: table-cell; font-weight: 600; color: #64748b; width: 150px; font-size: 13px; }
+        .info-value { display: table-cell; color: #1e293b; font-weight: 700; font-size: 14px; }
 
-        .main-wrapper {
-            border-collapse: collapse;
-            min-width: 320px;
-            width: 100%;
-            margin: 0;
-        }
+        .address-container { border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; background: #fff; }
+        .address-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .address-cell { padding: 25px; vertical-align: top; }
+        .address-cell.border-r { border-right: 1px solid #e2e8f0; }
+        .address-heading { font-weight: 800; color: #0f172a; margin-bottom: 15px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid {{ mail_theme_color() }}; display: inline-block; padding-bottom: 4px; }
+        .address-text { font-size: 13px; color: #475569; line-height: 1.8; }
+        .address-text b { color: #0f172a; }
 
-        .main-container {
-            border-collapse: collapse;
-            max-width: 600px;
-            width: 100%;
-            margin: 0 auto;
-            background: #ffffff;
-            border-radius: 12px 12px 0 0;
-            overflow: hidden;
-            border-bottom: 2px solid {{ mail_theme_color() }};
-        }
+        .product-list-block { background: #f8fafc; border-radius: 20px; padding: 30px; border: 1px solid #e2e8f0; }
+        .product-item { padding: 15px 0; border-bottom: 1px solid #e2e8f0; }
+        .product-item:last-child { border-bottom: none; }
+        .product-image { width: 85px; height: 85px; border-radius: 12px; object-fit: cover; border: 1px solid #e2e8f0; display: block; background: #fff; }
+        .product-name { font-weight: 700; color: #1e293b; font-size: 15px; margin-bottom: 2px; display: block; text-decoration: none; }
+        .product-meta { font-size: 12px; color: #64748b; line-height: 1.4; }
 
-        .section {
-            padding: 20px 18px;
-        }
+        .totals-wrapper { background: #0f172a; color: #fff; border-radius: 20px; padding: 30px; margin-top: 15px; }
+        .totals-table { width: 100%; }
+        .total-row td { padding: 7px 0; font-size: 14px; color: #94a3b8; }
+        .total-row.grand-total td { padding-top: 20px; font-size: 24px; font-weight: 800; color: #fff; border-top: 1px solid rgba(255,255,255,0.1); }
+        
+        .note-box { background: #fffbeb; border: 1px solid #fef3c7; border-radius: 16px; padding: 20px; margin-top: 25px; text-align: center; }
+        .note-title { font-weight: 700; color: #92400e; font-size: 14px; margin-bottom: 8px; }
+        .note-content { font-size: 13px; color: #b45309; font-style: italic; word-wrap: break-word; word-break: break-word; overflow-wrap: break-word; }
 
-        .section + .section {
-            border-top: 1px solid #f1f5f9;
-        }
+        .footer { padding: 50px 30px; text-align: center; background: #f1f5f9; }
+        .footer-logo { max-height: 40px; margin-bottom: 25px; opacity: 0.8; }
+        .store-contact { font-size: 13px; color: #64748b; margin-bottom: 25px; line-height: 2; }
+        .footer-links { margin-bottom: 25px; }
+        .footer-links a { color: {{ mail_theme_color() }}; text-decoration: none; margin: 0 15px; font-weight: 600; font-size: 14px; }
+        .copyright { font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 25px; margin-top: 25px; }
 
-        .section-title {
-            font-family: 'Poppins', Arial, sans-serif;
-            font-weight: 700;
-            font-size: 18px;
-            line-height: 22px;
-            margin: 0 0 8px;
-            color: #111827;
-        }
+        /* WhatsApp Button Style */
+        .whatsapp-btn { background-color: #25d366; color: #fff !important; padding: 16px 30px; border-radius: 50px; text-decoration: none; font-weight: 800; display: inline-block; margin: 30px 0; font-size: 15px; box-shadow: 0 10px 20px rgba(37, 211, 102, 0.2); }
+        .delivery-info { background: #f0fdf4; border: 1px solid #dcfce7; border-radius: 16px; padding: 20px; margin: 25px 0; text-align: center; }
+        .delivery-text { font-size: 14px; color: #166534; line-height: 1.6; }
 
-        .address-column {
-            width: 50%;
-        }
-
-        .address-block {
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            padding: 10px 12px;
-            background: #ffffff;
-        }
-
-        .address-block span {
-            display: block;
-            padding: 2px 0;
-        }
-
-        .summary-table {
-            border-collapse: collapse;
-            width: 100%;
-        }
-
-        .summary-table td {
-            font-size: 15px;
-            padding: 5px 0;
-        }
-
-        .summary-total-row td {
-            border-top: 1px solid #e5e7eb;
-            font-weight: 700;
-            padding-top: 8px;
-        }
-
-        @media screen and (max-width: 767px) {
-            .address-column {
-                width: 100% !important;
-                display: block;
-            }
-
-            .address-column + .address-column {
-                margin-top: 12px;
-            }
-
-            .section {
-                padding: 16px 14px;
-            }
-
-            .summary-table td {
-                font-size: 14px;
-            }
+        @media screen and (max-width: 600px) {
+            .address-cell { display: block !important; width: 100% !important; border-right: none !important; border-bottom: 1px solid #e2e8f0; }
+            .address-cell:last-child { border-bottom: none; }
+            .section { padding: 30px 20px; }
+            .info-label { width: 110px; }
         }
     </style>
 </head>
 
 <body>
-<table class="main-wrapper">
-    <tbody>
+<table class="main-wrapper" width="100%" cellpadding="0" cellspacing="0">
     <tr>
-        <td style="padding: 16px 8px;">
-            <span style="display:none;color:transparent;visibility:hidden;opacity:0;height:0;width:0;">
-                Siparişiniz başarıyla oluşturuldu – Toplam: {{ $order->total->convert($order->currency, $order->currency_rate)->format($order->currency) }}
-            </span>
+        <td align="center">
+            <div class="container">
+                
+                {{-- HEADER --}}
+                <div class="header">
+                    @if($logo)
+                        <img src="{{ $logo }}" style="max-height:70px; margin-bottom:15px">
+                    @endif
+                    <h1>Siparişiniz Bize Ulaştı, Mutlulukla Hazırlıyoruz ❤️</h1>
+                    <p>Sipariş No: #{{ $order->order_number }}</p>
+                </div>
 
-            <!-- ANA KART -->
-            <table class="main-container">
-                <tbody>
+                {{-- GREETING --}}
+                <div class="section">
+                    <div style="text-align:center;">
+                        <div style="font-size: 22px; font-weight: 800; margin-bottom: 12px; color: #0f172a;">Merhaba {{ $order->customer_first_name }},</div>
+                        <p style="margin: 0; color: #475569; font-size: 16px;">Siparişinizi büyük bir heyecanla aldık. Ekibimiz şu an ürünlerinizi en özenli şekilde paketliyor!</p>
+                    </div>
+                </div>
 
-                <!-- HEADER -->
-                <tr>
-                    <td style="padding: 0;">
-                        <table style="border-collapse: collapse;width: 100%;background: {{ mail_theme_color() }};">
-                            <tbody>
-                            <tr>
-                                <td style="padding: 20px 15px 12px; text-align: center;">
-                                    @if (is_null($logo))
-                                        <h1
-                                            style="font-family: 'Poppins', Arial, sans-serif;
-                                                   font-weight: 700;
-                                                   font-size: 26px;
-                                                   line-height: 32px;
-                                                   display: inline-block;
-                                                   color: #fafafa;
-                                                   margin: 0;">
-                                            {{ setting('store_name') }}
-                                        </h1>
-                                    @else
-                                        <div
-                                            style="display: flex;
-                                                   align-items: center;
-                                                   justify-content: center;
-                                                   height: 64px;
-                                                   width: 200px;
-                                                   margin: auto;">
-                                            <img src="{{ $logo }}" style="max-height: 100%; max-width: 100%;" alt="Logo">
-                                        </div>
-                                    @endif
-                                </td>
-                            </tr>
-
-                            <tr>
-                                <td style="padding: 0 15px 18px; text-align: center;">
-                                    <span
-                                        style="font-family: 'Poppins', Arial, sans-serif;
-                                               font-size: 22px;
-                                               line-height: 30px;
-                                               font-weight: 700;
-                                               display: inline-block;
-                                               color: #fafafa;
-                                               margin: 0;">
-                                        Siparişiniz Başarıyla Oluşturuldu 🎉
-                                    </span>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </td>
-                </tr>
-
-                <!-- KARŞILAMA -->
-                <tr>
-                    <td class="section" style="text-align:center;">
-                        @php
-                            $greetName = trim(($order->customer_first_name ?? '') . ' ' . ($order->customer_last_name ?? ''));
-                        @endphp
-                        @if ($greetName !== '')
-                            <div style="font-size:17px;color:#ef4444;">
-                                Merhaba {{ $greetName }},
-                            </div>
-                        @endif
-                        <div style="font-size:15px;color:#ef4444;margin-top:4px;">
-                            🎁 Siparişiniz başarıyla oluşturuldu! Hazırlıklara hemen başlıyoruz.
+                {{-- ORDER SUMMARY --}}
+                <div class="section">
+                    <div class="section-title">📋 Sipariş Özeti</div>
+                    <div class="info-card">
+                        <div class="info-row">
+                            <div class="info-label">Sipariş Tarihi:</div>
+                            <div class="info-value">{{ $order->created_at->translatedFormat('d F Y H:i') }}</div>
                         </div>
-                        <div style="font-size:14px;color:#6b7280;margin-top:8px;">
-                            Aşağıda siparişinize ait detayları bulabilirsiniz. Herhangi bir sorunuz olursa bizimle iletişime geçmekten çekinmeyin.
+                        <div class="info-row">
+                            <div class="info-label">Sipariş Tutarı:</div>
+                            <div class="info-value">{{ $order->total->convert($order->currency, $order->currency_rate)->format($order->currency) }}</div>
                         </div>
-                    </td>
-                </tr>
+                        <div class="info-row">
+                            <div class="info-label">Ödeme Yöntemi:</div>
+    <div class="info-value">{{ $order->payment_method }}</div>
+</div>
+                        <div class="info-row">
+                            <div class="info-label">Sipariş Durumu:</div>
+                            <div class="info-value">{{ $order->status() }}</div>
+                        </div>
+                    </div>
+                </div>
 
-                <!-- SİPARİŞ ÖZETİ (MINIMAL) -->
-                <tr>
-                    <td class="section">
-                        <h5 class="section-title">Sipariş Özeti</h5>
-
-                        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
-                               style="border:1px solid #e5e7eb;border-radius:12px;background:#ffffff;">
+                {{-- ADDRESS INFORMATION --}}
+                <div class="section">
+                    <div class="section-title">📍 Adres Bilgileri</div>
+                    <div class="address-container">
+                        <table class="address-table" width="100%" cellpadding="0" cellspacing="0">
                             <tr>
-                                <td style="padding:12px 14px;">
-                                    <p style="margin:2px 0;font-size:14px;color:#111827;">
-                                        <strong>{{ trans('storefront::invoice.order_id') }}:</strong>
-                                        &nbsp;#{{ $order->id }}
-                                    </p>
-                                    <p style="margin:2px 0;font-size:14px;color:#111827;">
-                                        <strong>{{ trans('storefront::invoice.date') }}:</strong>
-                                        &nbsp;{{ $order->created_at->toFormattedDateString() }}
-                                    </p>
-                                    <p style="margin:2px 0;font-size:14px;color:#111827;">
-                                        <strong>{{ trans('storefront::invoice.total') }}:</strong>
-                                        &nbsp;{{ $order->total->convert($order->currency, $order->currency_rate)->format($order->currency) }}
-                                    </p>
-                                    <p style="margin:2px 0;font-size:14px;color:#111827;word-break:break-all;">
-                                        <strong>{{ trans('storefront::invoice.email') }}:</strong>
-                                        &nbsp;{{ $order->customer_email }}
-                                    </p>
-                                    <p style="margin:2px 0;font-size:14px;color:#111827;word-break:break-all;">
-                                        <strong>{{ trans('storefront::invoice.phone') }}:</strong>
-                                        &nbsp;{{ $order->customer_phone }}
-                                    </p>
-                                    <p style="margin:4px 0 0;font-size:14px;color:#111827;">
-                                        <strong>{{ trans('storefront::invoice.payment_method') }}:</strong>
-                                        &nbsp;{{ $order->payment_method }}
-                                    </p>
-
-                                    @if ($order->payment_method === 'Bank Transfer')
-                                        <span style="color:#9ca3af;font-size:12px;margin-top:4px;display:block;">
-                                            {!! setting('bank_transfer_instructions') !!}
-                                        </span>
-                                    @endif
-                                </td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-
-                <!-- ADRESLER -->
-                <tr>
-                    <td class="section">
-                        <table style="border-collapse: collapse; width: 100%;">
-                            <tbody>
-                            <tr>
-                                <!-- KARGO -->
-                                <td class="address-column" style="padding-right:10px;">
-                                    <h5 class="section-title" style="margin-bottom:8px; text-align:center;">🚚 {{ trans('storefront::invoice.shipping_address') }}</h5>
-                                    <div class="address-block" style="font-size:13px; text-align:center;">
-                                        @if ($order->shippingAddress)
-                                            <span>{{ $order->shippingAddress->first_name }} {{ $order->shippingAddress->last_name }}</span>
-                                            <span>{{ $order->shippingAddress->phone }}</span>
-                                            <span>{{ $order->shippingAddress->address_line ?? $order->shippingAddress->address_1 }}</span>
-
-                                            @if ($order->shippingAddress && ($order->shippingAddress->district_title || $order->shippingAddress->city_title))
-                                                <span>
-                                                    {{ $order->shippingAddress->district_title }}
-                                                    @if ($order->shippingAddress->district_title && $order->shippingAddress->city_title)
-                                                        ,
-                                                    @endif
-                                                    {{ $order->shippingAddress->city_title }}
-                                                </span>
-                                            @endif
+                                <td class="address-cell border-r" valign="top">
+                                    <div class="address-heading">Teslimat Adresi</div>
+                                    <div class="address-text">
+                                        @php $shipping = $order->shippingAddress; @endphp
+                                        @php $shippingSnapshot = $order->shippingSnapshot; @endphp
+                                        @if ($shippingSnapshot || $shipping)
+                                            <b>Ad Soyad:</b> {{ ($shippingSnapshot->first_name ?? null) ?: ($shipping->first_name ?? '-') }} {{ ($shippingSnapshot->last_name ?? null) ?: ($shipping->last_name ?? '') }}<br>
+                                            <b>Telefon:</b> {{ ($shippingSnapshot->phone ?? null) ?: (($shipping->phone ?? null) ?: ($order->customer_phone ?: '-')) }}<br>
+                                            <b>Adres:</b> {{ ($shippingSnapshot->address_line ?? null) ?: ((($shipping->address_line ?? $shipping->address_1) ?? null) ?: '-') }}<br>
+                                            <b>İl / İlçe:</b> {{ ($shippingSnapshot->district ?? null) ?: (($shipping->district_title ?? $shipping->state ?? $shipping->district_id) ?? '-') }} / {{ ($shippingSnapshot->city ?? null) ?: (($shipping->city_title ?? $shipping->city ?? $shipping->city_id) ?? '-') }}
                                         @endif
                                     </div>
                                 </td>
-
-                                <!-- FATURA -->
-                                <td class="address-column" style="padding-left:10px;">
-                                    <h5 class="section-title" style="margin-bottom:8px; text-align:center;">📄 {{ trans('storefront::invoice.billing_address') }}</h5>
-                                    <div class="address-block" style="font-size:13px; text-align:center;">
-                                        @if ($order->billingAddress && $order->billing_address_id !== $order->shipping_address_id)
-                                            @if ($order->billingAddress->company_name)
-                                                <span>{{ $order->billingAddress->company_name }}</span>
+                                <td class="address-cell" valign="top">
+                                    <div class="address-heading">Fatura Bilgileri</div>
+                                    <div class="address-text">
+                                        @php 
+                                            $shipping = $order->shippingAddress; 
+                                            $shippingSnapshot = $order->shippingSnapshot;
+                                            $billing = $order->billingAddress;
+                                            $billingSnapshot = $order->billingSnapshot;
+                                            $isBillingDifferent = ($order->shipping_address_id !== $order->billing_address_id);
+                                        @endphp
+                                        
+                                        @if (($billingSnapshot || $billing) && $isBillingDifferent)
+                                            <b>Firma Adı:</b> {{ $billingSnapshot->company_name ?? (($billing->invoice_title ?? null) ?: (($billing->company_name ?? null) ?: '-')) }}<br>
+                                            <b>Vergi No:</b> {{ $billingSnapshot->tax_number ?? (($billing->invoice_tax_number ?? null) ?: (($billing->tax_number ?? null) ?: '-')) }}<br>
+                                            <b>Vergi Dairesi:</b> {{ $billingSnapshot->tax_office ?? (($billing->invoice_tax_office ?? null) ?: (($billing->tax_office ?? null) ?: '-')) }}<br>
+                                            <b>Email:</b> {{ $billingSnapshot->billing_email ?? (($billing->billing_email ?? null) ?: ($order->customer_email ?: '-')) }}<br>
+                                            <b>Telefon:</b> {{ $billingSnapshot->phone ?? (($billing->phone ?? null) ?: ($order->customer_phone ?: '-')) }}<br>
+                                            <b>Adres:</b> {{ $billingSnapshot->address_line ?? ((($billing->address_line ?? $billing->address_1) ?? null) ?: '-') }}<br>
+                                            <b>İl / İlçe:</b> {{ $billingSnapshot->district ?? (($billing->district_title ?? $billing->state ?? $billing->district_id) ?? '-') }} / {{ $billingSnapshot->city ?? (($billing->city_title ?? $billing->city ?? $billing->city_id) ?? '-') }}
+                                        @else
+                                            @if (($billingSnapshot->company_name ?? null) || ($billingSnapshot->tax_number ?? null) || ($billingSnapshot->tax_office ?? null))
+                                                <b>Firma Adı:</b> {{ $billingSnapshot->company_name ?? '-' }}<br>
+                                                <b>Vergi No:</b> {{ $billingSnapshot->tax_number ?? '-' }}<br>
+                                                <b>Vergi Dairesi:</b> {{ $billingSnapshot->tax_office ?? '-' }}<br>
+                                                <b>Email:</b> {{ ($billingSnapshot->billing_email ?? null) ?: ($order->customer_email ?: '-') }}<br>
                                             @endif
-
-                                            @if ($order->billingAddress->tax_office || $order->billingAddress->tax_number)
-                                                <span>Vergi Dairesi: {{ $order->billingAddress->tax_office }}</span>
-                                                <span>Vergi No: {{ $order->billingAddress->tax_number }}</span>
-                                            @endif
-
-                                            <span>{{ $order->billingAddress->phone }}</span>
-                                            <span>{{ $order->billingAddress->address_line ?? $order->billingAddress->address_1 }}</span>
-
-                                            @if ($order->billingAddress && ($order->billingAddress->district_title || $order->billingAddress->city_title))
-                                                <span>
-                                                    {{ $order->billingAddress->district_title }}
-                                                    @if ($order->billingAddress->district_title && $order->billingAddress->city_title)
-                                                        ,
-                                                    @endif
-                                                    {{ $order->billingAddress->city_title }}
-                                                </span>
-                                            @endif
-                                        @elseif ($order->shippingAddress)
-                                            <span>{{ $order->shippingAddress->first_name }} {{ $order->shippingAddress->last_name }}</span>
-                                            <span>{{ $order->shippingAddress->phone }}</span>
-                                            <span>{{ $order->shippingAddress->address_line ?? $order->shippingAddress->address_1 }}</span>
-
-                                            @if ($order->shippingAddress && ($order->shippingAddress->district_title || $order->shippingAddress->city_title))
-                                                <span>
-                                                    {{ $order->shippingAddress->district_title }}
-                                                    @if ($order->shippingAddress->district_title && $order->shippingAddress->city_title)
-                                                        ,
-                                                    @endif
-                                                    {{ $order->shippingAddress->city_title }}
-                                                </span>
-                                            @endif
+                                            <b>Ad Soyad:</b> {{ ($shippingSnapshot->first_name ?? null) ?: ($shipping->first_name ?? '-') }} {{ ($shippingSnapshot->last_name ?? null) ?: ($shipping->last_name ?? '') }}<br>
+                                            <b>Telefon:</b> {{ ($shippingSnapshot->phone ?? null) ?: (($shipping->phone ?? null) ?: ($order->customer_phone ?: '-')) }}<br>
+                                            <b>Adres:</b> {{ ($shippingSnapshot->address_line ?? null) ?: (($shipping->address_line ?? null) ?: ((($shipping->address_line ?? $shipping->address_1) ?? null) ?: '-')) }}<br>
+                                            <b>İl / İlçe:</b> {{ ($shippingSnapshot->district ?? null) ?: (($shippingSnapshot->city ?? null) ?: (($shipping->district_title ?? $shipping->state ?? $shipping->district_id) ?? '-')) }} / {{ ($shippingSnapshot->city ?? null) ?: (($shippingSnapshot->city ?? null) ?: (($shipping->city_title ?? $shipping->city ?? $shipping->city_id) ?? '-')) }}
                                         @endif
                                     </div>
                                 </td>
                             </tr>
-                            </tbody>
                         </table>
-                    </td>
-                </tr>
+                    </div>
+                </div>
 
-                <!-- ÜRÜNLER -->
-                <tr>
-                    <td class="section">
-                        <h5 class="section-title" style="text-align:center;">🛒 Sipariş Verilen Ürünler</h5>
+                {{-- DELIVERY INFO --}}
+                <div class="section">
+                    <div class="delivery-info">
+                        <div class="delivery-text">
+                            <strong>📦 Siparişinizi heyecanla beklediğinizi biliyoruz!</strong><br>
+                            Ürünleriniz en geç <strong>24 saat içinde</strong> kargoya teslim edilecek ve tahmini <strong>1-3 iş günü</strong> içerisinde kapınızda olacaktır. Şimdiden güzel günlerde kullanmanızı dileriz!
+                        </div>
+                    </div>
+                </div>
 
-                        @foreach ($order->products as $product)
+                {{-- PRODUCTS --}}
+                <div class="section">
+                    <div class="section-title">🛒 Sipariş Verilen Ürünler</div>
+                    <div class="product-list-block">
+                        @foreach($order->products as $product)
                             @php
-                                $imagePath = $product->product_variant?->base_image?->path
-                                    ?? $product->product?->base_image?->path
+                                $image = optional($product->product_variant?->base_image)->path
+                                    ?? optional($product->product?->base_image)->path
                                     ?? $product->product_image_path;
+                                $prodUrl = $product->product_variant?->url() ?? $product->url();
+                            @endphp
+                            <div class="product-item">
+                                <table width="100%" cellpadding="0" cellspacing="0">
+                                    <tr>
+                                        <td width="95" valign="top">
+                                            <a href="{{ $prodUrl }}" target="_blank">
+                                                @if($image)
+                                                    <img src="{{ $image }}" class="product-image">
+                                                @else
+                                                    <div style="width:85px; height:85px; background:#fff; border-radius:12px; border:1px solid #e2e8f0;"></div>
+                                                @endif
+                                            </a>
+                                        </td>
+                                        <td valign="top" style="padding-left: 15px;">
+                                            <a href="{{ $prodUrl }}" target="_blank" class="product-name">{{ $product->name }}</a>
+                                            <div class="product-meta">
+                                                <div style="margin-bottom: 2px;">Stok Kodu: {{ $product->sku ?: '-' }}</div>
+                                                
+                                                @if($product->hasAnyVariation())
+                                                    @foreach($product->variations as $variation)
+                                                        <div style="margin-bottom: 2px;">{{ $variation->name }}: {{ $variation->values->pluck('label')->implode(', ') }}</div>
+                                                    @endforeach
+                                                @endif
+                                                
+                                                @if($product->hasAnyOption())
+                                                    @foreach($product->options as $option)
+                                                        <div style="margin-bottom: 2px;">{{ $option->name }}: {{ $option->isFieldType() ? $option->value : $option->values->pluck('label')->implode(', ') }}</div>
+                                                    @endforeach
+                                                @endif
 
-                                $attributes = [];
+                                                <div style="margin-top: 5px; font-weight: 800; color: #0f172a; font-size: 14px;">
+                                                    {{ $product->getFormattedQuantityWithUnit() }}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td align="right" valign="top" style="font-weight: 800; color: #0f172a; font-size: 15px; white-space: nowrap;">
+                                            {{ $product->line_total->convert($order->currency,$order->currency_rate)->format($order->currency) }}
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        @endforeach
+                    </div>
 
-                                if ($product->hasAnyVariation()) {
-                                    foreach ($product->variations as $variation) {
-                                        $label = $variation->values()->first()?->label;
-                                        if ($label) {
-                                            $attributes[] = $variation->name . ':' . $label;
-                                        }
+                    @if($order->note)
+                        <div class="note-box">
+                            <div class="note-title">📝 Sipariş Notunuz:</div>
+                            <div class="note-content">"{{ $order->note }}"</div>
+                        </div>
+                    @endif
+                </div>
+
+                {{-- TOTALS BLOCK --}}
+                <div class="section">
+                    <div class="totals-wrapper">
+                        <table class="totals-table" width="100%">
+                            <tr class="total-row">
+                                <td>Sepet Toplamı</td>
+                                <td align="right">{{ $order->sub_total->convert($order->currency,$order->currency_rate)->format($order->currency) }}</td>
+                            </tr>
+                            @if($order->shipping_cost->amount() > 0)
+                                <tr class="total-row">
+                                    <td>{{ $order->shipping_method }}</td>
+                                    <td align="right">{{ $order->shipping_cost->convert($order->currency,$order->currency_rate)->format($order->currency) }}</td>
+                                </tr>
+                            @endif
+
+                            @php
+                                $codFeeForOrder = null;
+                                if ($order->isCodPayment()) {
+                                    $codFee = \Modules\Shipping\SmartShippingCod::codFeeForSubtotal($order->sub_total);
+                                    if (!$codFee->isZero()) {
+                                        $codFeeForOrder = $codFee->convert($order->currency, $order->currency_rate);
                                     }
                                 }
-
-                                if ($product->hasAnyOption()) {
-                                    foreach ($product->options as $option) {
-                                        if ($option->option->isFieldType()) {
-                                            $val = $option->value;
-                                        } else {
-                                            $val = $option->values->implode('label', ', ');
-                                        }
-                                        if ($val) {
-                                            $attributes[] = $option->name . ':' . $val;
-                                        }
-                                    }
-                                }
-
-                                $attributesText = implode(' • ', $attributes);
                             @endphp
 
-                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
-                                   style="border:1px solid #e5e7eb;border-radius:12px;margin:8px 0;background:#ffffff;">
-                                <tr>
-                                    <td width="110" valign="top" style="padding:10px;">
-                                        @if ($imagePath)
-                                            <img src="{{ $imagePath }}" width="90" height="90" alt="{{ $product->name }}"
-                                                 style="display:block;border-radius:10px;border:1px solid #e5e7eb;object-fit:cover;">
-                                        @endif
-                                    </td>
-
-                                    <td valign="top" style="padding:10px 10px 10px 0; width:100%;">
-                                        <div style="font-size:14px;font-weight:700;color:#0f172a;line-height:1.35;">
-                                            {{ $product->name }}
-                                        </div>
-
-                                        @if ($attributesText)
-                                            <div style="font-size:13px;color:#4b5563;margin-top:4px;">
-                                                {{ $attributesText }}
-                                            </div>
-                                        @endif
-
-                                        @if ($product->sku)
-                                            <div style="font-size:13px;color:#4b5563;margin-top:2px;">
-                                                <strong>Stok Kodu:</strong> {{ $product->sku }}
-                                            </div>
-                                        @endif
-
-                                        @if ($product->unit_price)
-                                            <div style="font-size:13px;color:#0f172a;margin-top:6px;">
-                                                {{ $product->unit_price->convert($order->currency, $order->currency_rate)->format($order->currency) }}
-                                                × {{ $product->getFormattedQuantityWithUnit() }}
-                                                = <span style="font-weight:700;color:#16a34a;">
-                                                    {{ $product->line_total->convert($order->currency, $order->currency_rate)->format($order->currency) }}
-                                                  </span>
-                                            </div>
-                                        @endif
-                                    </td>
-                                </tr>
-                            </table>
-                        @endforeach
-                    </td>
-                </tr>
-
-                <!-- ÖDEME ÖZETİ -->
-                @php
-                    $isCodOrder = $order->isCodPayment();
-                    $codFeeForOrder = null;
-
-                    if ($isCodOrder) {
-                        $codFee = \Modules\Shipping\SmartShippingCod::codFeeForSubtotal($order->sub_total);
-
-                        if (!$codFee->isZero()) {
-                            $codFeeForOrder = $codFee->convert($order->currency, $order->currency_rate);
-                        }
-                    }
-                @endphp
-
-                <tr>
-                    <td class="section">
-                        <h3 style="font-size:18px;font-weight:700;color:#0f172a;margin:0 0 10px;text-align:center;">
-                            💳 Ödeme Özeti
-                        </h3>
-                        <table class="summary-table" style="border:1px solid #e5e7eb;border-radius:12px;width:100%;background:#ffffff;table-layout:fixed;">
-                            <tbody>
-                            <tr>
-                                <td style="padding:8px 12px;font-size:15px;color:#334155;">Ürün Toplamı</td>
-                                <td style="padding:8px 12px;font-size:15px;color:#334155;text-align:right;word-break:break-word;">
-                                    {{ $order->sub_total->convert($order->currency, $order->currency_rate)->format($order->currency) }}
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="padding:8px 12px;font-size:15px;color:#334155;">Kargo</td>
-                                <td style="padding:8px 12px;font-size:15px;color:#334155;text-align:right;word-break:break-word;">
-                                    @if ($order->shipping_cost->amount() == 0)
-                                        {{ trans('storefront::checkout.free') }}
-                                    @else
-                                        {{ $order->shipping_cost->convert($order->currency, $order->currency_rate)->format($order->currency) }}
-                                    @endif
-                                </td>
-                            </tr>
                             @if ($codFeeForOrder)
-                            <tr>
-                                <td style="padding:8px 12px;font-size:15px;color:#334155;">{{ trans('storefront::checkout.cod_fee') }}</td>
-                                <td style="padding:8px 12px;font-size:15px;color:#334155;text-align:right;word-break:break-word;">
-                                    {{ $codFeeForOrder->format($order->currency) }}
-                                </td>
-                            </tr>
+                                <tr class="total-row">
+                                    <td>{{ trans('storefront::checkout.cod_fee') }}</td>
+                                    <td align="right">{{ $codFeeForOrder->format($order->currency) }}</td>
+                                </tr>
                             @endif
-                            <tr>
-                                <td style="padding:8px 12px;font-size:15px;color:#ef4444;">İndirim</td>
-                                <td style="padding:8px 12px;font-size:15px;color:#ef4444;text-align:right;word-break:break-word;">
-                                    -{{ $order->discount->convert($order->currency, $order->currency_rate)->format($order->currency) }}
-                                </td>
+
+                            @if($order->discount->amount() > 0)
+                                <tr class="total-row">
+                                    <td>
+                                        @if($order->coupon_code)
+                                            Kupon Kodu ({{ $order->coupon_code }})
+                                            @if($order->coupon && $order->coupon->name)
+                                                <br><span style="font-size: 11px; color: #64748b;">{{ $order->coupon->name }}</span>
+                                            @endif
+                                        @else
+                                            İndirim
+                                        @endif
+                                    </td>
+                                    <td align="right">-{{ $order->discount->convert($order->currency,$order->currency_rate)->format($order->currency) }}</td>
+                                </tr>
+                            @endif
+                            @foreach($order->taxes as $tax)
+                                <tr class="total-row">
+                                    <td>{{ $tax->name }}</td>
+                                    <td align="right">{{ $tax->order_tax->amount->convert($order->currency,$order->currency_rate)->format($order->currency) }}</td>
+                                </tr>
+                            @endforeach
+                            <tr class="total-row grand-total">
+                                <td>Genel Toplam</td>
+                                <td align="right">{{ $order->total->convert($order->currency,$order->currency_rate)->format($order->currency) }}</td>
                             </tr>
-                            <tr>
-                                <td style="padding:10px 12px;font-size:16px;font-weight:700;color:#0f172a;border-top:1px solid #e5e7eb;">
-                                    Genel Toplam
-                                </td>
-                                <td style="padding:10px 12px;font-size:16px;font-weight:800;color:#16a34a;text-align:right;word-break:break-word;border-top:1px solid #e5e7eb;">
-                                    {{ $order->total->convert($order->currency, $order->currency_rate)->format($order->currency) }}
-                                </td>
-                            </tr>
-                            </tbody>
                         </table>
-                    </td>
-                </tr>
+                    </div>
+                </div>
 
-                </tbody>
-            </table>
+                {{-- WHATSAPP BUTTON --}}
+                <div class="section" style="text-align: center; border-bottom: none;">
+                    <div style="color: #64748b; margin-bottom: 5px; font-weight: 600;">Yardıma mı ihtiyacınız var?</div>
+                    <a href="https://wa.me/905456535466" class="whatsapp-btn">
+                        💬 WhatsApp Destek Hattı
+                    </a>
+                </div>
 
-            <!-- FOOTER -->
-            <table style="border-collapse: collapse; max-width: 600px; width: 100%; margin: 0 auto;">
-                <tbody>
-                <tr>
-                    <td style="padding: 20px 0; background: {{ mail_theme_color() }}; text-align: center; border-radius: 0 0 12px 12px; color:#ffffff;">
-                        <div style="font-family: 'Poppins', Arial, sans-serif; font-weight: 700; font-size: 18px; line-height: 22px; color: #ffffff; padding: 0 15px;">
-                            {{ setting('store_name') }}
-                        </div>
-                        <div style="font-family: 'Poppins', Arial, sans-serif; font-weight: 400; font-size: 14px; line-height: 20px; color: #e5e7eb; padding: 6px 15px;">
-                            @if (setting('store_phone') && ! setting('store_phone_hide'))
-                                <a href="tel:{{ setting('store_phone') }}" style="text-decoration: none; color: #ffffff;">{{ setting('store_phone') }}</a>
-                            @endif
-                            @if (setting('store_email') && ! setting('store_email_hide'))
-                                <span style="margin: 0 6px; color:#cbd5e1;">•</span>
-                                <a href="mailto:{{ setting('store_email') }}" style="text-decoration: none; color: #ffffff;">{{ setting('store_email') }}</a>
-                            @endif
-                            @if (setting('storefront_address'))
-                                <span style="margin: 0 6px; color:#cbd5e1;">•</span>
-                                <span style="color:#ffffff;">{{ setting('storefront_address') }}</span>
-                            @endif
-                        </div>
-                        <div style="font-family: 'Poppins', Arial, sans-serif; font-weight: 500; font-size: 14px; line-height: 20px; color: #ffffff; padding: 6px 15px;">
-                            <a href="{{ route('categories.index') }}" style="text-decoration: none; color: #ffffff;">{{ trans('storefront::layouts.categories') }}</a>
-                            <span style="margin: 0 10px; color:#cbd5e1;">•</span>
-                            <a href="{{ route('home') }}#flash-sale" style="text-decoration: none; color: #ffffff;">İndirimli Ürünler</a>
-                            <span style="margin: 0 10px; color:#cbd5e1;">•</span>
-                            <a href="{{ route('account.dashboard.index') }}" style="text-decoration: none; color: #ffffff;">{{ trans('storefront::layouts.my_account') }}</a>
-                            <span style="margin: 0 10px; color:#cbd5e1;">•</span>
-                            <a href="{{ route('register') }}" style="text-decoration: none; color: #ffffff;">{{ trans('storefront::layouts.login_register') }}</a>
-                        </div>
-                        <div style="font-family: 'Poppins', Arial, sans-serif; font-weight: 400; font-size: 13px; line-height: 18px; color: #e5e7eb; padding: 0 15px;">
-                            &copy; {{ date('Y') }}
-                            <a target="_blank" href="{{ route('home') }}" style="text-decoration: none; color: #ffffff;">{{ setting('store_name') }}</a>
-                            {{ trans('storefront::mail.all_rights_reserved') }}
-                        </div>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+                {{-- FOOTER --}}
+                <div class="footer">
+                    @if($logo)
+                        <img src="{{ $logo }}" class="footer-logo">
+                    @else
+                        <div style="font-weight: 900; font-size: 24px; color: #1e293b; margin-bottom: 25px; letter-spacing: -1px;">{{ setting('store_name') }}</div>
+                    @endif
 
+                    <div class="store-contact">
+                        <strong>{{ setting('store_name') }}</strong><br>
+                        {{ setting('store_address') }}<br>
+                        <span style="color: {{ mail_theme_color() }}; font-weight: 600;">{{ setting('store_email') }}</span> | {{ setting('store_phone') }}
+                    </div>
+
+                    <div class="footer-links">
+                        <a href="{{ url('/') }}">Mağazayı Keşfet</a>
+                        <a href="{{ route('account.orders.show', $order->id) }}">Siparişimi Takip Et</a>
+                    </div>
+                    
+                    <div class="copyright">
+                        &copy; {{ date('Y') }} Tüm hakları saklıdır. Bu e-posta siparişinizle ilgili bilgilendirme amaçlı gönderilmiştir.
+                    </div>
+                </div>
+
+            </div>
         </td>
     </tr>
-    </tbody>
 </table>
 </body>
 </html>

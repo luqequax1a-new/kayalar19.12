@@ -18,7 +18,7 @@
                         <div class="swiper-slide">
                             <template
                                 x-for="product in productChunks"
-                                :key="product.id"
+                                :key="product.listing_key || product.id"
                             >
                                 @include('storefront::public.partials.vertical_products')
                             </template>

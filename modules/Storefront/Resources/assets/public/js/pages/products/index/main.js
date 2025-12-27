@@ -60,13 +60,21 @@ const {
     initialProducts,
     initialAttributes,
     initialCategoryData,
+    initialProductsHtml,
+    initialPaginationHtml,
+    initialShowingText,
+    initialTotal,
 } = FleetCart.data;
 
 Alpine.data("ProductIndex", () => ({
+    phase: "boot",
+    hasEverRenderedProducts: false,
     fetchingProducts: false,
     products: initialProducts || { data: [] },
-    renderLimit: 12,
-    observer: null,
+    productsHtml: "",
+    paginationHtml: "",
+    showingText: "",
+    total: 0,
     attributeFilters: Array.isArray(initialAttributes) ? initialAttributes : [],
     initialBrandName,
     initialTagName,
@@ -93,34 +101,43 @@ Alpine.data("ProductIndex", () => ({
         page: initialPage,
     },
 
-    get emptyProducts() {
-        return this.products.data.length === 0;
-    },
-
-    get visibleProducts() {
-        const data = Array.isArray(this.products?.data) ? this.products.data : [];
-        return data.slice(0, this.renderLimit);
-    },
-
     get totalPage() {
-        return Math.ceil(this.products.total / this.queryParams.perPage);
-    },
-
-    get showingResults() {
-        if (this.emptyProducts) {
-            return;
-        }
-
-        return trans("storefront::products.showing_results", {
-            from: this.products.from,
-            to: this.products.to,
-            total: this.products.total,
-        });
+        const t = Number(this.total || 0);
+        const per = Number(this.queryParams?.perPage || 1);
+        return per > 0 ? Math.ceil(t / per) : 0;
     },
 
     init() {
         const hasSsrProducts =
             this.products && Array.isArray(this.products?.data) && this.products.data.length > 0;
+
+        this.total = Number((initialTotal ?? this.products?.total) || 0);
+        this.showingText =
+            typeof initialShowingText === "string" && initialShowingText.length
+                ? initialShowingText
+                : this.total > 0
+                  ? trans("storefront::products.showing_results", {
+                        from: this.products?.from,
+                        to: this.products?.to,
+                        total: this.products?.total,
+                    })
+                  : "";
+
+        try {
+            // Initial SSR HTML: prefer server-provided fragments to avoid blanking mounts.
+            if (typeof initialProductsHtml === "string" && initialProductsHtml.length) {
+                this.productsHtml = initialProductsHtml;
+            } else if (this.$refs?.productsMount) {
+                this.productsHtml = this.$refs.productsMount.innerHTML || "";
+            }
+
+            if (typeof initialPaginationHtml === "string" && initialPaginationHtml.length) {
+                this.paginationHtml = initialPaginationHtml;
+            } else if (this.$refs?.paginationMount) {
+                this.paginationHtml = this.$refs.paginationMount.innerHTML || "";
+            }
+            this.hasEverRenderedProducts = true;
+        } catch (e) {}
 
         if (this.queryParams.query && this.queryParams.category) {
             const url = new URL(window.location.href);
@@ -170,43 +187,19 @@ Alpine.data("ProductIndex", () => ({
                 }
             }
         }
-        this.initInfiniteRender();
         this.initLatestProductsSlider();
+        this.phase = "ready";
     },
 
-    initInfiniteRender() {
+    reinitMounts() {
         try {
-            if (this.observer) {
-                this.observer.disconnect();
-            }
-
-            if (typeof window.IntersectionObserver !== "function") {
-                return;
-            }
-
-            this.observer = new IntersectionObserver(
-                (entries) => {
-                    const entry = entries && entries[0] ? entries[0] : null;
-                    if (!entry || !entry.isIntersecting) {
-                        return;
-                    }
-
-                    if (this.fetchingProducts) {
-                        return;
-                    }
-
-                    const total = Array.isArray(this.products?.data) ? this.products.data.length : 0;
-                    if (this.renderLimit >= total) {
-                        return;
-                    }
-
-                    this.renderLimit = Math.min(total, this.renderLimit + 12);
-                },
-                { root: null, rootMargin: "400px 0px", threshold: 0 }
-            );
-
-            if (this.$refs?.renderMoreTrigger) {
-                this.observer.observe(this.$refs.renderMoreTrigger);
+            if (window.Alpine && typeof window.Alpine.initTree === "function") {
+                if (this.$refs?.productsMount) {
+                    window.Alpine.initTree(this.$refs.productsMount);
+                }
+                if (this.$refs?.paginationMount) {
+                    window.Alpine.initTree(this.$refs.paginationMount);
+                }
             }
         } catch (e) {}
     },
@@ -332,20 +325,31 @@ Alpine.data("ProductIndex", () => ({
 
     async fetchProducts(options = { updateAttributeFilters: true }) {
         this.fetchingProducts = true;
-        this.renderLimit = 12;
+        this.phase = "fetching";
 
         try {
             const response = await axios.get(`/products`, {
                 params: {
                     ...this.queryParams,
+                    fragment: 1,
                 },
             });
 
             const products = response.data.products;
-
             const data = Array.isArray(products?.data) ? products.data : [];
             const rawData = data.map((p) => (typeof Alpine.raw === "function" ? Alpine.raw(p) : p));
+
+            // Atomic swap: first update data, then HTML fragments.
             this.products = { ...products, data: rawData };
+            this.total = Number(response.data.total ?? products?.total ?? 0);
+            this.productsHtml = response.data.products_html || "";
+            this.paginationHtml = response.data.pagination_html || "";
+            this.showingText = response.data.showing_text || "";
+            this.hasEverRenderedProducts = true;
+
+            this.$nextTick(() => {
+                this.reinitMounts();
+            });
 
             if (options.updateAttributeFilters) {
                 this.attributeFilters = response.data.attributes;
@@ -369,8 +373,11 @@ Alpine.data("ProductIndex", () => ({
                 this.categoryDescriptionHtml = "";
                 this.categoryFaqItems = [];
             }
+
+            this.phase = "ready";
         } catch (error) {
             notify(error.response.data.message);
+            this.phase = "error";
         } finally {
             this.fetchingProducts = false;
         }

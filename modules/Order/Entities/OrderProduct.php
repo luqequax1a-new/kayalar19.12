@@ -76,7 +76,16 @@ class OrderProduct extends Model
      */
     public function storeVariations($variations)
     {
-        $variations->each(function ($variation) {
+        collect($variations)->unique('id')->each(function ($variation) {
+            $exists = \Illuminate\Support\Facades\DB::table('order_product_variations')
+                ->where('order_product_id', $this->id)
+                ->where('variation_id', $variation->id)
+                ->exists();
+
+            if ($exists) {
+                return;
+            }
+
             $orderProductVariation = $this->variations()->create([
                 'order_product_id' => $this->id,
                 'variation_id' => $variation->id,
@@ -104,7 +113,16 @@ class OrderProduct extends Model
      */
     public function storeOptions($options)
     {
-        $options->each(function ($option) {
+        collect($options)->unique('id')->each(function ($option) {
+            $exists = \Illuminate\Support\Facades\DB::table('order_product_options')
+                ->where('order_product_id', $this->id)
+                ->where('option_id', $option->id)
+                ->exists();
+
+            if ($exists) {
+                return;
+            }
+
             $orderProductOption = $this->options()->create([
                 'order_product_id' => $this->id,
                 'option_id' => $option->id,

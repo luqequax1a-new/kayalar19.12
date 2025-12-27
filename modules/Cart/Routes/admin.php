@@ -32,4 +32,6 @@ Route::group(['middleware' => 'can:admin.coupons.index'], function () {
         'as' => 'admin.cart_upsell_rules.destroy',
         'uses' => 'CartUpsellRuleController@destroy',
     ]);
+
+
 });

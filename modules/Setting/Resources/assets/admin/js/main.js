@@ -92,6 +92,10 @@ $("#sslcommerz_enabled").on("change", () => {
     $("#sslcommerz-fields").toggleClass("hide");
 });
 
+$("#paytr_enabled").on("change", () => {
+    $("#paytr-fields").toggleClass("hide");
+});
+
 $("#payfast_enabled").on("change", () => {
     $("#payfast-fields").toggleClass("hide");
 });
@@ -111,7 +115,7 @@ $("#store_country").on("change", (e) => {
         method: "GET",
         url: `/countries/${e.currentTarget.value}/states`,
         baseURL: FleetCart.baseUrl,
-    }).then(({data}) => {
+    }).then(({ data }) => {
         $(".store-state").addClass("hide");
 
         if (_.isEmpty(data)) {

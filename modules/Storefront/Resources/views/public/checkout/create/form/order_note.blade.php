@@ -2,7 +2,7 @@
     <div class="col-md-18">
         <div class="form-group order-notes">
             <label for="order-note">
-                {{ trans('checkout::attributes.order_note') }}
+                {{ trans('storefront::checkout.order_note') }}
             </label>
 
             <textarea

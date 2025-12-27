@@ -21,7 +21,7 @@
                     <tr>
                         <td>
                             <a href="{{ route('admin.orders.show', $latestOrder) }}">
-                                {{ $latestOrder->id }}
+                                {{ $latestOrder->displayOrderNumber() }}
                             </a>
                         </td>
                         <td>

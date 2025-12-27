@@ -6,15 +6,15 @@
 }
 
 .info-icons-wrapper {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    gap: 80px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 32px;
     text-align: center;
 }
 
 .info-icon-item {
-    max-width: 260px;
+    max-width: 220px;
+    margin: 0 auto;
 }
 
 .info-icon-image img {
@@ -39,7 +39,8 @@
 
 @media screen and (max-width: 991px) {
     .info-icons-wrapper {
-        gap: 40px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 28px;
     }
 }
 
@@ -51,9 +52,7 @@
     }
 
     .info-icons-wrapper {
-        flex-direction: column;
-        align-items: center;
-        gap: 24px;
+        gap: 20px;
     }
 
     .info-icon-image img {

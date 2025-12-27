@@ -66,10 +66,23 @@ Alpine.data("CartItem", (cartItem) => ({
     },
 
     get baseImage() {
-        return this.hasBaseImage
-            ? this.item.base_image.path || this.product.base_image.path
-            : `${window.location.origin}/build/assets/image-placeholder.png`;
+        if (!this.hasBaseImage) {
+            return `${window.location.origin}/build/assets/image-placeholder.png`;
+        }
+
+        const img = this.item.base_image.path
+            ? this.item.base_image
+            : this.product.base_image;
+
+        return (
+            img.thumb_webp_url ||
+            img.thumb_jpeg_url ||
+            img.card_webp_url ||
+            img.card_jpeg_url ||
+            img.path
+        );
     },
+
 
     isQtyIncreaseDisabled(cartItem) {
         return (

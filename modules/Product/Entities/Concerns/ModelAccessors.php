@@ -13,7 +13,29 @@ trait ModelAccessors
 {
     public function getVariantAttribute()
     {
-        return $this->variants->where('is_default', 1)->first();
+        if ($this->relationLoaded('variant')) {
+            return $this->getRelation('variant');
+        }
+
+        static $defaultVariantCache = [];
+
+        $productId = (int) ($this->id ?? 0);
+
+        if ($productId > 0 && array_key_exists($productId, $defaultVariantCache)) {
+            return $defaultVariantCache[$productId];
+        }
+
+        $variants = $this->relationLoaded('variants')
+            ? $this->getRelation('variants')
+            : $this->variants()->get();
+
+        $variant = $variants?->where('is_default', 1)->first();
+
+        if ($productId > 0) {
+            $defaultVariantCache[$productId] = $variant;
+        }
+
+        return $variant;
     }
 
 

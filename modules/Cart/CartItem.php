@@ -10,6 +10,21 @@ use Modules\Product\Entities\ProductVariant;
 
 class CartItem implements JsonSerializable
 {
+    private static array $productStockCache = [];
+    private static array $variantStockCache = [];
+
+
+    public static function setProductStockCache(int $id, $product): void
+    {
+        self::$productStockCache[$id] = $product;
+    }
+
+
+    public static function setVariantStockCache(int $id, $variant): void
+    {
+        self::$variantStockCache[$id] = $variant;
+    }
+
     /**
      * The ID of the cart item.
      *
@@ -112,10 +127,20 @@ class CartItem implements JsonSerializable
      */
     private function getProduct()
     {
-        return Product::withName()
-            ->addSelect('id', 'in_stock', 'manage_stock', 'qty', 'is_active')
-            ->where('id', $this->product->id)
-            ->first();
+        $id = (int) ($this->product->id ?? 0);
+
+        if ($id <= 0) {
+            return null;
+        }
+
+        if (!array_key_exists($id, self::$productStockCache)) {
+            self::$productStockCache[$id] = Product::withName()
+                ->addSelect('id', 'in_stock', 'manage_stock', 'qty', 'is_active')
+                ->where('id', $id)
+                ->first();
+        }
+
+        return self::$productStockCache[$id];
     }
 
 
@@ -124,9 +149,21 @@ class CartItem implements JsonSerializable
      */
     private function getVariant()
     {
-        return ProductVariant::addSelect('id', 'in_stock', 'manage_stock', 'qty', 'is_active')
-            ->where('id', $this->variant->id)
-            ->first();
+        $id = (int) ($this->variant->id ?? 0);
+
+        if ($id <= 0) {
+            return null;
+        }
+
+        if (!array_key_exists($id, self::$variantStockCache)) {
+            self::$variantStockCache[$id] = ProductVariant::query()
+                ->without(['files'])
+                ->addSelect('id', 'in_stock', 'manage_stock', 'qty', 'is_active')
+                ->where('id', $id)
+                ->first();
+        }
+
+        return self::$variantStockCache[$id];
     }
 
 

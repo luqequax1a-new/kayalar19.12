@@ -17,7 +17,7 @@
                             @endif
                             <div style="font-family:'Open Sans',sans-serif;font-size:24px;line-height:32px;font-weight:800;color:#fafafa;margin-top:10px;">Siparişiniz İptal Edildi ❌</div>
                             <div style="font-family:'Open Sans',sans-serif;font-size:15px;line-height:22px;font-weight:600;color:#e5e7eb;margin-top:6px;">
-                                #{{ $order->id }}
+                                #{{ $order->displayOrderNumber() }}
                             </div>
                         </td>
                     </tr>
@@ -25,7 +25,7 @@
                     <tr>
                         <td style="padding:20px;">
                             <div style="font-family:'Open Sans',sans-serif;font-size:14px;line-height:22px;color:#374151;">
-                                Siparişiniz (#{{ $order->id }}) iptal edilmiştir. Eğer bir hata olduğunu düşünüyorsanız bizimle iletişime geçebilirsiniz.
+                                Siparişiniz (#{{ $order->displayOrderNumber() }}) iptal edilmiştir. Eğer bir hata olduğunu düşünüyorsanız bizimle iletişime geçebilirsiniz.
                             </div>
                         </td>
                     </tr>
@@ -36,7 +36,7 @@
                                 <tbody>
                                     <tr>
                                         <td style="font-size:14px;padding:4px 0;color:#111827;white-space:nowrap;font-weight:600;">Sipariş No:</td>
-                                        <td style="font-size:14px;padding:4px 0;color:#111827;">#{{ $order->id }}</td>
+                                        <td style="font-size:14px;padding:4px 0;color:#111827;">#{{ $order->displayOrderNumber() }}</td>
                                     </tr>
                                     <tr>
                                         <td style="font-size:14px;padding:4px 0;color:#111827;white-space:nowrap;font-weight:600;">Tarih:</td>

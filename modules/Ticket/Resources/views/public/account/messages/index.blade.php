@@ -53,7 +53,9 @@
                             <td>{{ $t->id }}</td>
                             <td>{{ $t->subject }}</td>
                             <td>
-                                <span class="status-badge {{ $t->status === 'closed' ? 'status-closed' : 'status-open' }}">{{ $t->status === 'closed' ? 'Kapalı' : 'Açık' }}</span>
+                                <span class="status-badge {{ $t->status === 'closed' ? 'status-closed' : 'status-open' }}">
+                                    {{ $t->status === 'closed' ? 'Kapalı' : ($t->status === 'waiting_admin' ? 'Admin Bekleniyor' : ($t->status === 'waiting_customer' ? 'Cevabınız Bekleniyor' : 'Açık')) }}
+                                </span>
                             </td>
                             <td>{{ optional($t->last_message_at)->toDateTimeString() }}</td>
                             <td><a href="{{ route('account.tickets.show', $t->id) }}" class="btn btn-default btn-sm">{{ __('Görüntüle') }}</a></td>
@@ -64,7 +66,7 @@
                 <div class="tickets-mobile">
                     @foreach($tickets as $t)
                         <div class="ticket-card">
-                            <div class="row"><span class="title">#{{ $t->id }} — {{ $t->subject }}</span><span class="status-badge {{ $t->status === 'closed' ? 'status-closed' : 'status-open' }}">{{ $t->status === 'closed' ? 'Kapalı' : 'Açık' }}</span></div>
+                            <div class="row"><span class="title">#{{ $t->id }} — {{ $t->subject }}</span><span class="status-badge {{ $t->status === 'closed' ? 'status-closed' : 'status-open' }}">{{ $t->status === 'closed' ? 'Kapalı' : ($t->status === 'waiting_admin' ? 'Admin Bekleniyor' : ($t->status === 'waiting_customer' ? 'Cevabınız Bekleniyor' : 'Açık')) }}</span></div>
                             <div class="meta">{{ optional($t->last_message_at)->toDateTimeString() }}</div>
                             <div class="row"><a href="{{ route('account.tickets.show', $t->id) }}" class="btn btn-default btn-sm">{{ __('Görüntüle') }}</a></div>
                         </div>

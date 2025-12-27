@@ -2,8 +2,31 @@
 
 @section('title', $product->meta->meta_title ?: $product->name)
 
-@php($canonical = $product->variant?->url() ?? $product->url())
-@php($canonical = \Illuminate\Support\Str::before($canonical, '?'))
+@php
+    $canonical = $product->variant?->url() ?? $product->url();
+    $canonical = \Illuminate\Support\Str::before($canonical, '?');
+    
+    $lcpImage = optional($product->variant)->base_image ?: $product->base_image;
+    $lcpSizes = '(max-width: 576px) 92vw, (max-width: 992px) 50vw, 720px';
+@endphp
+
+@push('lcp_preload')
+    @if ($lcpImage)
+        @php
+            $lcpAvifSrcset = $lcpImage->ikas_avif_srcset ?: ($lcpImage->grid_avif_url ?? $lcpImage->detail_avif_url);
+            $lcpWebpSrcset = $lcpImage->ikas_webp_srcset ?: ($lcpImage->grid_webp_url ?? $lcpImage->detail_webp_url);
+            $lcpFallback = $lcpImage->grid_jpeg_url ?? $lcpImage->detail_jpeg_url ?? $lcpImage->path;
+        @endphp
+        
+        @if ($lcpAvifSrcset)
+            <link rel="preload" as="image" href="{{ $lcpFallback }}" imagesrcset="{{ $lcpAvifSrcset }}" imagesizes="{{ $lcpSizes }}" type="image/avif" fetchpriority="high">
+        @elseif ($lcpWebpSrcset)
+            <link rel="preload" as="image" href="{{ $lcpFallback }}" imagesrcset="{{ $lcpWebpSrcset }}" imagesizes="{{ $lcpSizes }}" type="image/webp" fetchpriority="high">
+        @else
+            <link rel="preload" as="image" href="{{ $lcpFallback }}" fetchpriority="high">
+        @endif
+    @endif
+@endpush
 
 @push('meta')
     <meta name="title" content="{{ $product->meta->meta_title ?: $product->name }}">
@@ -15,52 +38,11 @@
     <meta property="og:url" content="{{ $canonical }}">
     <meta property="og:title" content="{{ $product->meta->meta_title ?: $product->name }}">
     <meta property="og:description" content="{{ $product->seo_meta_description }}">
-    @php(
+    @php
         $productOgImage = ($product->variant && optional($product->variant->base_image)->id)
             ? optional($product->variant->base_image)->path
-            : ($product->base_image?->path ?? asset('build/assets/image-placeholder.png'))
-    )
-
-    @php($lcpImage = $product->variant?->base_image ?? $product->base_image)
-    @php($lcpJpeg = $lcpImage?->detail_jpeg_url ?? $lcpImage?->grid_jpeg_url ?? $lcpImage?->path)
-    @php($lcpWebp = $lcpImage?->detail_webp_url ?? $lcpImage?->grid_webp_url)
-    @php($lcpAvif = $lcpImage?->detail_avif_url ?? $lcpImage?->grid_avif_url)
-    @php($lcpGridJpeg = $lcpImage?->grid_jpeg_url)
-    @php($lcpGridWebp = $lcpImage?->grid_webp_url)
-    @php($lcpGridAvif = $lcpImage?->grid_avif_url)
-    @php($lcpCard2xWebp = $lcpImage?->card_2x_webp_url)
-    @php($lcpCard2xAvif = $lcpImage?->card_2x_avif_url)
-    @php($lcpCard2xJpeg = $lcpImage?->card_2x_jpeg_url)
-    @php($lcpCard3xWebp = $lcpImage?->card_3x_webp_url)
-    @php($lcpCard3xAvif = $lcpImage?->card_3x_avif_url)
-    @php($lcpCard3xJpeg = $lcpImage?->card_3x_jpeg_url)
-    @php($lcpPreloadHref = $lcpGridAvif ?? $lcpCard3xAvif ?? $lcpCard2xAvif ?? $lcpAvif ?? null)
-    @php($lcpSrcset = trim(collect([
-        ($lcpGridAvif ? $lcpGridAvif.' 400w' : null),
-        ($lcpCard2xAvif ? $lcpCard2xAvif.' 520w' : null),
-        ($lcpCard3xAvif ? $lcpCard3xAvif.' 780w' : null),
-        ($lcpAvif ? $lcpAvif.' 1000w' : null),
-    ])->filter()->unique()->values()->implode(', ')))
-    @php($lcpSizes = '(max-width: 576px) 92vw, (max-width: 992px) 50vw, 650px')
-
-    @if (!empty($lcpPreloadHref))
-        @php($lcpHost = parse_url($lcpPreloadHref, PHP_URL_HOST))
-        @php($appHost = parse_url(url('/'), PHP_URL_HOST))
-        @if ($lcpHost && $appHost && $lcpHost !== $appHost)
-            <link rel="preconnect" href="{{ (parse_url($lcpPreloadHref, PHP_URL_SCHEME) ?: 'https') . '://' . $lcpHost }}" crossorigin>
-        @endif
-
-        <link
-            rel="preload"
-            as="image"
-            href="{{ $lcpPreloadHref }}"
-            @if (!empty($lcpSrcset))
-                imagesrcset="{{ $lcpSrcset }}"
-                imagesizes="{{ $lcpSizes }}"
-            @endif
-            fetchpriority="high"
-        >
-    @endif
+            : ($product->base_image?->path ?? asset('build/assets/image-placeholder.png'));
+    @endphp
 
     <meta property="og:image" content="{{ $productOgImage }}">
     <meta property="og:locale" content="{{ locale() }}">
@@ -112,56 +94,47 @@
 @endsection
 
 @section('content')
-    @php(
+    @php
         $defaultProductSectionsOrder = [
-            // product_page_sections tab names (admin-side ordering)
             'product_page_custom_text',
             'product_page_custom_html',
             'product_page_image_banner',
             'product_page_info_icons',
-        ]
-    )
+        ];
 
-    @php(
-        $rawProductSectionsOrder = setting('storefront_product_page_sections_order')
-    )
+        $rawProductSectionsOrder = setting('storefront_product_page_sections_order');
 
-    @php(
         $savedProductSectionsOrder = is_array($rawProductSectionsOrder)
             ? $rawProductSectionsOrder
-            : json_decode($rawProductSectionsOrder ?: '[]', true)
-    )
+            : json_decode($rawProductSectionsOrder ?: '[]', true);
 
-    @php(
         $savedProductSectionsOrder = is_array($savedProductSectionsOrder)
             ? $savedProductSectionsOrder
-            : []
-    )
+            : [];
 
-    @php(
         $productSectionsOrder = collect($savedProductSectionsOrder)
             ->filter(fn ($name) => in_array($name, $defaultProductSectionsOrder, true))
             ->merge(collect($defaultProductSectionsOrder)->diff($savedProductSectionsOrder))
-            ->values()
-    )
+            ->values();
+
+        // Optimized data for Alpine.js to reduce HTML weight
+        $alpineProduct = $product->clean();
+        $alpineVariant = $product->variant ? $product->variant->clean() : null;
+    @endphp
 
     <section
         x-data="ProductShow({
-            product: {{ $product }},
-
-            @if ($product->variant)
-                variant: {{ $product->variant }},
-            @endif
-
-            reviewCount: {{ $review->count ?? 0 }},
-            avgRating: {{ $review->avg_rating ?? 0 }},
-            ratingBreakdown: {
-                5: {{ $review->count_5 ?? 0 }},
-                4: {{ $review->count_4 ?? 0 }},
-                3: {{ $review->count_3 ?? 0 }},
-                2: {{ $review->count_2 ?? 0 }},
-                1: {{ $review->count_1 ?? 0 }},
-            },
+            product: {{ json_encode($alpineProduct) }},
+            variant: {{ json_encode($alpineVariant) }},
+            reviewCount: {{ (int) ($review->count ?? 0) }},
+            avgRating: {{ (float) ($review->avg_rating ?? 0) }},
+            ratingBreakdown: {{ json_encode([
+                5 => (int) ($review->count_5 ?? 0),
+                4 => (int) ($review->count_4 ?? 0),
+                3 => (int) ($review->count_3 ?? 0),
+                2 => (int) ($review->count_2 ?? 0),
+                1 => (int) ($review->count_1 ?? 0),
+            ]) }},
             flashSalePrice: '{{ $flashSalePrice }}'
         })"
         class="product-details-wrap"

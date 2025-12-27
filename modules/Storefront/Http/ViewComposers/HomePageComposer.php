@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Cache;
 use Modules\Category\Entities\Category;
 use Modules\Media\Entities\File;
 use Modules\Storefront\Http\Controllers\CarouselProductController;
+use Modules\Review\Entities\Review;
 
 class HomePageComposer
 {
@@ -40,6 +41,7 @@ class HomePageComposer
             'threeColumnBanners2' => $this->threeColumnBanners2(),
             'categoryGridBanners' => $this->categoryGridBanners(),
             'koleysiyonGrid' => $this->koleysiyonGrid(),
+            'koleysiyonGrid2' => $this->koleysiyonGrid2(),
             'productTabsOne' => $this->productTabsOne(),
             'topBrands' => $this->topBrands(),
             'flashSale' => $this->flashSale(),
@@ -242,6 +244,43 @@ class HomePageComposer
     }
 
 
+    private function koleysiyonGrid2()
+    {
+        if (! setting('storefront_koleysiyon_grid_2_enabled')) {
+            return;
+        }
+
+        $items = collect(range(1, 4))->map(function ($number) {
+            $title = setting("storefront_koleysiyon_grid_2_card_{$number}_title");
+            $text = setting("storefront_koleysiyon_grid_2_card_{$number}_text");
+            $buttonText = setting("storefront_koleysiyon_grid_2_card_{$number}_button_text");
+            $buttonUrl = setting("storefront_koleysiyon_grid_2_card_{$number}_button_url");
+
+            if (empty($title) && empty($text) && empty($buttonText) && empty($buttonUrl)) {
+                return null;
+            }
+
+            return [
+                'image' => $this->getMedia(setting("storefront_koleysiyon_grid_2_card_{$number}_image")),
+                'title' => $title,
+                'text' => $text,
+                'button_text' => $buttonText,
+                'button_url' => $buttonUrl,
+            ];
+        })->filter()->values();
+
+        if ($items->isEmpty()) {
+            return;
+        }
+
+        return [
+            'title' => setting('storefront_koleysiyon_grid_2_title'),
+            'subtitle' => setting('storefront_koleysiyon_grid_2_subtitle'),
+            'items' => $items,
+        ];
+    }
+
+
     private function koleysiyonGrid()
     {
         if (! setting('storefront_koleysiyon_grid_enabled')) {
@@ -313,7 +352,7 @@ class HomePageComposer
         }
 
         return [
-            'items' => collect([1, 2, 3])->map(function ($number) {
+            'items' => collect([1, 2, 3, 4])->map(function ($number) {
                 return [
                     'image' => $this->getMedia(setting("storefront_info_icons_icon_{$number}_image")),
                     'title' => setting("storefront_info_icons_icon_{$number}_title"),

@@ -10,6 +10,24 @@ class TagBadge extends Model
 {
     protected $table = 'tag_badges';
 
+    protected static function booted()
+    {
+        static::updating(function (self $badge) {
+            if ($badge->isDirty('image_path')) {
+                static::deleteImageFile($badge->getOriginal('image_path'));
+            }
+        });
+
+        static::saved(function () {
+            static::bumpCacheVersion();
+        });
+
+        static::deleted(function (self $badge) {
+            static::deleteImageFile($badge->image_path);
+            static::bumpCacheVersion();
+        });
+    }
+
     protected $fillable = [
         'name',
         'slug',
@@ -65,7 +83,8 @@ class TagBadge extends Model
         $tagIds = array_values(array_filter($tagIds));
         sort($tagIds);
 
-        $key = 'storefront:globals:' . $locale . ':tag_badges:' . $context . ':' . md5(json_encode($tagIds)) . ':v1';
+        $version = Cache::store('file')->get(static::cacheVersionKey(), 1);
+        $key = 'storefront:globals:' . $locale . ':tag_badges:' . $context . ':' . md5(json_encode($tagIds)) . ':v' . $version;
 
         return Cache::store('file')->remember($key, now()->addMinutes(10), function () use ($tagIds, $context) {
             $query = static::active()->whereIn('tag_id', $tagIds);
@@ -78,5 +97,26 @@ class TagBadge extends Model
 
             return $query->orderByDesc('priority')->get();
         });
+    }
+
+    protected static function cacheVersionKey(): string
+    {
+        return 'storefront:globals:tag_badges:version';
+    }
+
+    protected static function bumpCacheVersion(): void
+    {
+        Cache::store('file')->increment(static::cacheVersionKey());
+    }
+
+    protected static function deleteImageFile(?string $path): void
+    {
+        if (!$path) {
+            return;
+        }
+
+        if (Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+        }
     }
 }

@@ -16,22 +16,14 @@ class SendOrderToGeliverOnProcessing
         if ($order->geliver_shipment_id) {
             return;
         }
-        if ($order->status !== Order::PROCESSING) {
+        if ($order->status !== Order::PENDING) {
             return;
         }
 
-        $paymentMethod = (string) $order->payment_method;
-        $bankLabel = (string) setting('bank_transfer_label');
-
-        if ($paymentMethod !== '' && (
-            $paymentMethod === 'Bank Transfer' ||
-            ($bankLabel !== '' && $paymentMethod === $bankLabel)
-        )) {
-            try {
-                app(\Modules\Geliver\Services\GeliverService::class)->sendOrderToGeliver($order);
-            } catch (\Throwable $e) {
-                // sessizce yut, admin ekranında zaten hatalar gösterilir
-            }
+        try {
+            app(\Modules\Geliver\Services\GeliverService::class)->sendOrderToGeliver($order);
+        } catch (\Throwable $e) {
+            // sessizce yut, admin ekranında zaten hatalar gösterilir
         }
     }
 }

@@ -1,6 +1,6 @@
 .product-gallery {
-    width: 650px;
-    min-width: 650px;
+    width: 720px;
+    min-width: 720px;
     padding-right: 15px;
     top: 90px;
     position: sticky !important;
@@ -98,6 +98,13 @@ video.product-main-media--video::-webkit-media-controls-fullscreen-button {
 
 .product-gallery-preview {
     transition: var(--transition-150);
+
+    &.is-pagination-hidden {
+        .swiper-pagination,
+        .swiper-pagination.swiper-pagination-bullets {
+            display: none !important;
+        }
+    }
 
     .swiper-pagination {
         position: absolute;
@@ -220,18 +227,26 @@ video.product-main-media--video::-webkit-media-controls-fullscreen-button {
         position: absolute;
         top: 15px;
         right: 15px;
-        height: 30px;
-        width: 30px;
+        height: 34px;
+        width: 34px;
         display: none;
         justify-content: center;
         align-items: center;
-        color: var(--color-white);
-        background: var(--color-primary);
+        color: var(--color-primary);
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+        backdrop-filter: blur(10px);
         border-radius: var(--radius-full);
         z-index: 1;
-        transform: rotateY(180deg);
-        transition: none;
+        transform: none;
+        transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
         cursor: pointer;
+
+        &:active {
+            transform: scale(0.96);
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.16);
+        }
 
         > i {
             font-size: 16px;
@@ -241,14 +256,14 @@ video.product-main-media--video::-webkit-media-controls-fullscreen-button {
 }
 
 .product-gallery {
-    width: 650px;
-    min-width: 650px;
+    width: 720px;
+    min-width: 720px;
 }
 
 @media screen and (max-width: 1600px) {
     .product-gallery {
-        width: 600px;
-        min-width: 600px;
+        width: 680px;
+        min-width: 680px;
     }
 }
 
@@ -276,7 +291,7 @@ video.product-main-media--video::-webkit-media-controls-fullscreen-button {
 
     .product-gallery-preview {
         .gallery-view-icon {
-            display: flex;
+            display: none;
         }
     }
 }
@@ -307,8 +322,14 @@ video.product-main-media--video::-webkit-media-controls-fullscreen-button {
 
     .product-gallery-preview {
         .gallery-view-icon {
-            top: 0;
-            right: 0;
+            top: 10px;
+            right: 10px;
+            height: 42px;
+            width: 42px;
+
+            > i {
+                font-size: 18px;
+            }
         }
     }
 }

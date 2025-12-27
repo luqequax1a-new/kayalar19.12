@@ -330,8 +330,6 @@ class ProductVariant extends Model
     {
         $cleanExceptAttributes = [
             'files',
-            'is_active',
-            'in_stock',
             'created_at',
             'updated_at',
             'deleted_at',

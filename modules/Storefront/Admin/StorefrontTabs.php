@@ -47,6 +47,7 @@ class StorefrontTabs extends Tabs
             ->add($this->prepareHomeTab($this->threeColumnFullWidthBanners(), $homeWeights, 'storefront_three_column_full_width_banners_enabled'))
             ->add($this->prepareHomeTab($this->threeColumnBanners2(), $homeWeights, 'storefront_three_column_banners_2_enabled'))
             ->add($this->prepareHomeTab($this->koleysiyonGridSection(), $homeWeights, 'storefront_koleysiyon_grid_enabled'))
+            ->add($this->prepareHomeTab($this->koleysiyonGrid2Section(), $homeWeights, 'storefront_koleysiyon_grid_2_enabled'))
             ->add($this->prepareHomeTab($this->categoryGridBanners(), $homeWeights, 'storefront_category_grid_banners_enabled'))
             ->add($this->prepareHomeTab($this->infoIconsSection(), $homeWeights, 'storefront_info_icons_enabled'))
             ->add($this->prepareHomeTab($this->contentBannerSection(), $homeWeights, 'storefront_buldan_promo_enabled'))
@@ -136,6 +137,7 @@ class StorefrontTabs extends Tabs
             'three_column_full_width_banners',
             'three_column_banners_2',
             'koleysiyon_grid',
+            'koleysiyon_grid_2',
             'category_grid_banners',
             'info_icons',
             'content_banner',
@@ -626,6 +628,47 @@ class StorefrontTabs extends Tabs
     }
 
 
+    private function koleysiyonGrid2Section()
+    {
+        return tap(new Tab('koleysiyon_grid_2', 'Koleysiyon Grid 2'), function (Tab $tab) {
+            $tab->weight(45);
+
+            $tab->fields([
+                'storefront_koleysiyon_grid_2_enabled',
+                'storefront_koleysiyon_grid_2_title',
+                'storefront_koleysiyon_grid_2_subtitle',
+                'storefront_koleysiyon_grid_2_card_1_image',
+                'storefront_koleysiyon_grid_2_card_1_title',
+                'storefront_koleysiyon_grid_2_card_1_text',
+                'storefront_koleysiyon_grid_2_card_1_button_text',
+                'storefront_koleysiyon_grid_2_card_1_button_url',
+                'storefront_koleysiyon_grid_2_card_2_image',
+                'storefront_koleysiyon_grid_2_card_2_title',
+                'storefront_koleysiyon_grid_2_card_2_text',
+                'storefront_koleysiyon_grid_2_card_2_button_text',
+                'storefront_koleysiyon_grid_2_card_2_button_url',
+                'storefront_koleysiyon_grid_2_card_3_image',
+                'storefront_koleysiyon_grid_2_card_3_title',
+                'storefront_koleysiyon_grid_2_card_3_text',
+                'storefront_koleysiyon_grid_2_card_3_button_text',
+                'storefront_koleysiyon_grid_2_card_3_button_url',
+                'storefront_koleysiyon_grid_2_card_4_image',
+                'storefront_koleysiyon_grid_2_card_4_title',
+                'storefront_koleysiyon_grid_2_card_4_text',
+                'storefront_koleysiyon_grid_2_card_4_button_text',
+                'storefront_koleysiyon_grid_2_card_4_button_url',
+            ]);
+
+            $tab->view('storefront::admin.storefront.tabs.koleysiyon_grid_2', [
+                'card1Image' => $this->getMedia(setting('storefront_koleysiyon_grid_2_card_1_image')),
+                'card2Image' => $this->getMedia(setting('storefront_koleysiyon_grid_2_card_2_image')),
+                'card3Image' => $this->getMedia(setting('storefront_koleysiyon_grid_2_card_3_image')),
+                'card4Image' => $this->getMedia(setting('storefront_koleysiyon_grid_2_card_4_image')),
+            ]);
+        });
+    }
+
+
     private function koleysiyonGridSection()
     {
         return tap(new Tab('koleysiyon_grid', 'Koleysiyon Grid'), function (Tab $tab) {
@@ -865,12 +908,16 @@ class StorefrontTabs extends Tabs
                 'storefront_info_icons_icon_3_image',
                 'storefront_info_icons_icon_3_title',
                 'storefront_info_icons_icon_3_text',
+                'storefront_info_icons_icon_4_image',
+                'storefront_info_icons_icon_4_title',
+                'storefront_info_icons_icon_4_text',
             ]);
 
             $tab->view('storefront::admin.storefront.tabs.info_icons', [
                 'icon1' => $this->getMedia(setting('storefront_info_icons_icon_1_image')),
                 'icon2' => $this->getMedia(setting('storefront_info_icons_icon_2_image')),
                 'icon3' => $this->getMedia(setting('storefront_info_icons_icon_3_image')),
+                'icon4' => $this->getMedia(setting('storefront_info_icons_icon_4_image')),
             ]);
         });
     }

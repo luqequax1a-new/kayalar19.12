@@ -55,7 +55,7 @@ export default class {
                             .find(`.item[data-value="${value}"]`)
                             .html(
                                 label.replace(/¦––\s/g, "") +
-                                    '<a href="javascript:void(0)" class="remove" tabindex="-1">×</a>'
+                                '<a href="javascript:void(0)" class="remove" tabindex="-1">×</a>'
                             );
                     }
                 },
@@ -258,8 +258,30 @@ export default class {
 
         const movePreview = (el, x, y) => {
             const offset = 16;
-            el.style.left = `${x + offset}px`;
-            el.style.top = `${y + offset}px`;
+            const width = 500; // Match CSS width
+            const height = 500; // Match CSS height
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+
+            let left = x + offset;
+            let top = y + offset;
+
+            // If preview goes off the right edge, flip it to the left side of the cursor
+            if (left + width > viewportWidth) {
+                left = x - width - offset;
+            }
+
+            // If preview goes off the bottom edge, flip it to the top side of the cursor
+            if (top + height > viewportHeight) {
+                top = y - height - offset;
+            }
+
+            // Safety boundary checks
+            if (left < 0) left = 10;
+            if (top < 0) top = 10;
+
+            el.style.left = `${left}px`;
+            el.style.top = `${top}px`;
         };
 
         const removePreview = () => {

@@ -8,7 +8,7 @@ use Yajra\DataTables\Exceptions\Exception;
 
 class OrderTable extends AdminTable
 {
-    protected array $rawColumns = ['actions', 'status', 'created'];
+    protected array $rawColumns = ['checkbox', 'order_no', 'order_count', 'status', 'actions', 'created'];
     /**
      * Raw columns that will not be escaped.
      *
@@ -26,12 +26,32 @@ class OrderTable extends AdminTable
      */
     public function make()
     {
+        $statuses = trans('order::statuses');
+
         return $this->newTable()
-            ->editColumn('id', function ($order) {
-                return $order->displayOrderNumber();
+            ->addColumn('checkbox', function ($order) {
+                return view('admin::partials.table.checkbox', ['entity' => $order]);
+            })
+            ->addColumn('customer_email', function ($order) {
+                return $order->customer_email;
+            })
+            ->editColumn('order_no', function ($order) {
+                return '<div class="order-no-wrapper" style="display: flex; align-items: center; gap: 8px;">
+                            <span class="details-control" style="cursor: pointer; color: #3b82f6; display: flex;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            </span>
+                            <span>' . $order->displayOrderNumber() . '</span>
+                        </div>';
             })
             ->addColumn('customer_name', function ($order) {
                 return $order->customer_full_name;
+            })
+            ->addColumn('order_count', function ($order) {
+                $count = \Modules\Order\Entities\Order::where('customer_email', $order->customer_email)
+                    ->where('created_at', '<=', $order->created_at)
+                    ->count();
+
+                return "<span style='font-weight: 500; color: #475569;'>{$count}. Sipariş</span>";
             })
             ->editColumn('payment_method', function ($order) {
                 return $order->payment_method;
@@ -39,8 +59,64 @@ class OrderTable extends AdminTable
             ->editColumn('total', function ($order) {
                 return $order->total->format();
             })
-            ->editColumn('status', function ($order) {
-                return '<span class="badge ' . order_status_badge_class($order->status) . '">' . $order->status() . '</span>';
+            ->editColumn('status', function ($order) use ($statuses) {
+                $options = '';
+                foreach ($statuses as $key => $label) {
+                    $selected = $order->status === $key ? 'selected' : '';
+                    $options .= "<option value='{$key}' {$selected}>{$label}</option>";
+                }
+
+                $badgeClass = order_status_badge_class($order->status);
+                
+                return "<div class='order-status-dropdown'>
+                            <select class='form-control status-select-styled {$badgeClass}' data-id='{$order->id}'>
+                                {$options}
+                            </select>
+                        </div>";
+            })
+            ->addColumn('child_data', function ($order) {
+                $shipping = $order->shippingSnapshot ?: $order->shippingAddress;
+                $billing = $order->billingSnapshot ?: $order->billingAddress;
+
+                return [
+                    'shipping' => [
+                        'first_name' => $shipping->first_name ?? null,
+                        'last_name' => $shipping->last_name ?? null,
+                        'address_1' => $shipping->address_line ?? ($shipping->address_1 ?? null),
+                        'address_2' => $shipping->address_2 ?? null,
+                        'city' => $shipping->city_title ?? ($shipping->city ?? null),
+                        'state_name' => $shipping->district_title ?? ($shipping->district ?? ($shipping->state_name ?? ($shipping->state ?? null))),
+                        'phone' => $shipping->phone ?? ($order->customer_phone ?? null),
+                    ],
+                    'billing' => [
+                        'first_name' => $billing->first_name ?? null,
+                        'last_name' => $billing->last_name ?? null,
+                        'company_name' => $billing->company_name ?? ($billing->invoice_title ?? null),
+                        'tax_number' => $billing->tax_number ?? ($billing->invoice_tax_number ?? null),
+                        'tax_office' => $billing->tax_office ?? ($billing->invoice_tax_office ?? null),
+                        'billing_email' => $billing->billing_email ?? ($order->customer_email ?? null),
+                        'address_1' => $billing->address_line ?? ($billing->address_1 ?? null),
+                        'address_2' => $billing->address_2 ?? null,
+                        'city' => $billing->city_title ?? ($billing->city ?? null),
+                        'state_name' => $billing->district_title ?? ($billing->district ?? ($billing->state_name ?? ($billing->state ?? null))),
+                        'phone' => $billing->phone ?? ($order->customer_phone ?? null),
+                    ],
+                    'email' => $order->customer_email,
+                    'phone' => $order->customer_phone,
+                    'products' => $order->products->map(function($p) {
+                        return [
+                            'name' => $p->product_name,
+                            'variant' => $p->product_variant?->name,
+                            'sku' => $p->product_sku,
+                            'qty' => $p->qty,
+                            'unit' => $p->unit_label,
+                            'line_total' => $p->line_total->format(),
+                            'image' => $p->product_variant?->base_image?->path 
+                                ?? ($p->product?->base_image?->path 
+                                ?? ($p->product_image_path ?? null)),
+                        ];
+                    })
+                ];
             })
             ->editColumn('created', function ($order) {
                 $date = optional($order->created_at)->format('d.m.Y');

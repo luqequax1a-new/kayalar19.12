@@ -10,6 +10,7 @@ use Modules\Category\Entities\Category;
 class ProductIndexController
 {
     private $recentlyViewed;
+    protected string $variantsMode = 'inherit';
 
 
     public function __construct(RecentlyViewed $recentlyViewed)
@@ -20,6 +21,7 @@ class ProductIndexController
 
     protected function getProducts($settingPrefix)
     {
+        $this->variantsMode = setting("{$settingPrefix}_variants_mode") ?: 'inherit';
         $type = setting("{$settingPrefix}_product_type", 'custom_products');
         $limit = setting("{$settingPrefix}_products_limit");
 
@@ -27,6 +29,7 @@ class ProductIndexController
             return Product::forCard()
                 ->with([
                     'variants',
+                    'saleUnit',
                     'variations',
                     'tags',
                     'tags.tagBadges' => function ($query) {
@@ -48,7 +51,61 @@ class ProductIndexController
                         ];
                     })->values();
 
+                    $variantLabel = optional($product->variations->first())->name;
+
+                    $shouldListSeparately = (bool) $product->list_variants_separately;
+                    if ($this->variantsMode === 'force_on') {
+                        $shouldListSeparately = true;
+                    } elseif ($this->variantsMode === 'force_off') {
+                        $shouldListSeparately = false;
+                    }
+
+                    if ($shouldListSeparately) {
+                        $variants = $product->relationLoaded('variants')
+                            ? $product->variants->sortBy('position')->values()
+                            : $product->variants()->orderBy('position')->get();
+                        $actives = $variants->filter(function ($v) {
+                            return (bool) ($v->is_active ?? false);
+                        });
+
+                        if ($actives->isNotEmpty()) {
+                            return $actives->map(function ($variant) use ($product, $tagBadges, $variantLabel) {
+                                $p = $product->clean();
+                                $p['variant_attribute_label'] = $variantLabel;
+                                $p['name'] = $product->name;
+                                $p['list_variants_separately'] = true;
+                                $p['listing_key'] = 'p' . (int) $product->id . '-v' . (int) ($variant->id ?? 0);
+                                $p['variant'] = $variant->toArray();
+                                $p['url'] = $variant->url() ?? $product->url();
+                                $p['base_image'] = ($variant->base_image ?? $product->base_image);
+                                $p['formatted_price'] = $variant->formatted_price ?? $product->formatted_price;
+                                $p['formatted_price_range'] = null;
+                                $p['tag_badges'] = $tagBadges;
+                                return $p;
+                            });
+                        }
+                    }
+
                     $base = $product->clean();
+                    $base['variant_attribute_label'] = $variantLabel;
+                    $base['listing_key'] = 'p' . (int) $product->id;
+                    if ($this->variantsMode === 'force_off') {
+                        $base['list_variants_separately'] = false;
+                    } elseif ($this->variantsMode === 'force_on') {
+                        $base['list_variants_separately'] = true;
+                    }
+                    $base['variants'] = ($product->relationLoaded('variants')
+                        ? $product->variants
+                        : $product->variants()->get())
+                        ->filter(function ($v) {
+                            return (bool) ($v->is_active ?? false);
+                        })
+                        ->sortBy(function ($v) {
+                            return (int) ($v->position ?? 0);
+                        })
+                        ->take(10)
+                        ->values()
+                        ->toArray();
                     $base['tag_badges'] = $tagBadges;
 
                     return collect([$base]);
@@ -70,6 +127,7 @@ class ProductIndexController
         return Product::forCard()
             ->with([
                 'variants',
+                'saleUnit',
                 'variations',
                 'tags',
                 'tags.tagBadges' => function ($query) {
@@ -91,26 +149,51 @@ class ProductIndexController
                 })->values();
                 // Grid badge label: use first variation name (e.g. Renk, Beden)
                 $variantLabel = optional($product->variations->first())->name;
-                if ($product->list_variants_separately) {
-                    $variants = $product->variants()->orderBy('position')->get();
+                $shouldListSeparately = (bool) $product->list_variants_separately;
+                if ($this->variantsMode === 'force_on') {
+                    $shouldListSeparately = true;
+                } elseif ($this->variantsMode === 'force_off') {
+                    $shouldListSeparately = false;
+                }
+
+                if ($shouldListSeparately) {
+                    $variants = $product->relationLoaded('variants')
+                        ? $product->variants->sortBy('position')->values()
+                        : $product->variants()->orderBy('position')->get();
                     $actives = $variants->filter(function ($v) {
                         return (bool) ($v->is_active ?? false);
                     });
 
                     if ($actives->isNotEmpty()) {
                         return $actives->map(function ($variant) use ($product, $tagBadges, $variantLabel) {
+                            $variantImage = ($variant->base_image && ($variant->base_image->id ?? null)) ? $variant->base_image : null;
+                            $productImage = ($product->base_image && ($product->base_image->id ?? null)) ? $product->base_image : null;
+                            $image = $variantImage ?: ($productImage ?: $product->base_image);
+
                             $p = $product->clean();
                             $p['variant_attribute_label'] = $variantLabel;
                             // Keep base product name; frontend combines with variant name once
                             $p['name'] = $product->name;
+                            $p['list_variants_separately'] = true;
+                            $p['listing_key'] = 'p' . (int) $product->id . '-v' . (int) $variant->id;
                             $p['variant'] = $variant->toArray();
-                            $p['url'] = $variant->url() ?? $product->url();
-                            $p['base_image'] = ($variant->base_image ?? $product->base_image);
+                            $slug = (string) ($product->slug ?? '');
+                            $uid = (string) ($variant->uid ?? '');
+                            $p['url'] = $slug !== ''
+                                ? url('/products/' . $slug) . ($uid !== '' ? ('?variant=' . $uid) : '')
+                                : $product->url();
+                            $p['base_image'] = $image;
                             $p['base_image_thumb'] = [
-                                'path' => media_variant_url(($variant->base_image ?? $product->base_image), 400)
+                                'path' => media_variant_url(
+                                    $image,
+                                    (int) config('image_optimization.variants.widths.grid', 400)
+                                )
                             ];
                             $p['variant']['base_image_thumb'] = [
-                                'path' => media_variant_url(($variant->base_image ?? $product->base_image), 80)
+                                'path' => media_variant_url(
+                                    $image,
+                                    (int) config('image_optimization.variants.widths.thumb', 80)
+                                )
                             ];
                             $p['formatted_price'] = $variant->formatted_price ?? $product->formatted_price;
                             $p['formatted_price_range'] = null;
@@ -121,9 +204,30 @@ class ProductIndexController
                 }
                 $base = $product->clean();
                 $base['variant_attribute_label'] = $variantLabel;
+                $base['listing_key'] = 'p' . (int) $product->id;
                 $base['base_image_thumb'] = [
-                    'path' => media_variant_url($product->base_image, 400)
+                    'path' => media_variant_url(
+                        $product->base_image,
+                        (int) config('image_optimization.variants.widths.grid', 400)
+                    )
                 ];
+                if ($this->variantsMode === 'force_off') {
+                    $base['list_variants_separately'] = false;
+                } elseif ($this->variantsMode === 'force_on') {
+                    $base['list_variants_separately'] = true;
+                }
+                $base['variants'] = ($product->relationLoaded('variants')
+                    ? $product->variants
+                    : $product->variants()->get())
+                    ->filter(function ($v) {
+                        return (bool) ($v->is_active ?? false);
+                    })
+                    ->sortBy(function ($v) {
+                        return (int) ($v->position ?? 0);
+                    })
+                    ->take(10)
+                    ->values()
+                    ->toArray();
                 $base['tag_badges'] = $tagBadges;
                 return collect([$base]);
             });
@@ -137,6 +241,7 @@ class ProductIndexController
         return Product::forCard()
             ->with([
                 'variants',
+                'saleUnit',
                 'variations',
                 'tags',
                 'tags.tagBadges' => function ($query) {
@@ -161,8 +266,18 @@ class ProductIndexController
                     ];
                 })->values();
                 $variantLabel = optional($product->variations->first())->name;
-                if ($product->list_variants_separately) {
-                    $variants = $product->variants()->orderBy('position')->get();
+
+                $shouldListSeparately = (bool) $product->list_variants_separately;
+                if ($this->variantsMode === 'force_on') {
+                    $shouldListSeparately = true;
+                } elseif ($this->variantsMode === 'force_off') {
+                    $shouldListSeparately = false;
+                }
+
+                if ($shouldListSeparately) {
+                    $variants = $product->relationLoaded('variants')
+                        ? $product->variants->sortBy('position')->values()
+                        : $product->variants()->orderBy('position')->get();
                     $actives = $variants->filter(function ($v) {
                         return (bool) ($v->is_active ?? false);
                     });
@@ -172,6 +287,7 @@ class ProductIndexController
                             $p = $product->clean();
                             $p['variant_attribute_label'] = $variantLabel;
                             $p['name'] = $product->name;
+                            $p['list_variants_separately'] = true;
                             $p['variant'] = $variant->toArray();
                             $p['url'] = $variant->url() ?? $product->url();
                             $p['base_image'] = ($variant->base_image ?? $product->base_image);
@@ -184,6 +300,23 @@ class ProductIndexController
                 }
                 $base = $product->clean();
                 $base['variant_attribute_label'] = $variantLabel;
+                if ($this->variantsMode === 'force_off') {
+                    $base['list_variants_separately'] = false;
+                } elseif ($this->variantsMode === 'force_on') {
+                    $base['list_variants_separately'] = true;
+                }
+                $base['variants'] = ($product->relationLoaded('variants')
+                    ? $product->variants
+                    : $product->variants()->get())
+                    ->filter(function ($v) {
+                        return (bool) ($v->is_active ?? false);
+                    })
+                    ->sortBy(function ($v) {
+                        return (int) ($v->position ?? 0);
+                    })
+                    ->take(10)
+                    ->values()
+                    ->toArray();
                 $base['tag_badges'] = $tagBadges;
 
                 return collect([$base]);
@@ -199,6 +332,7 @@ class ProductIndexController
             ->forCard()
             ->with([
                 'variants',
+                'saleUnit',
                 'variations',
                 'tags',
                 'tags.tagBadges' => function ($query) {
@@ -218,8 +352,18 @@ class ProductIndexController
                     ];
                 })->values();
                 $variantLabel = optional($product->variations->first())->name;
-                if ($product->list_variants_separately) {
-                    $variants = $product->variants()->orderBy('position')->get();
+
+                $shouldListSeparately = (bool) $product->list_variants_separately;
+                if ($this->variantsMode === 'force_on') {
+                    $shouldListSeparately = true;
+                } elseif ($this->variantsMode === 'force_off') {
+                    $shouldListSeparately = false;
+                }
+
+                if ($shouldListSeparately) {
+                    $variants = $product->relationLoaded('variants')
+                        ? $product->variants->sortBy('position')->values()
+                        : $product->variants()->orderBy('position')->get();
                     $actives = $variants->filter(function ($v) {
                         return (bool) ($v->is_active ?? false);
                     });
@@ -229,6 +373,7 @@ class ProductIndexController
                             $p = $product->clean();
                             $p['variant_attribute_label'] = $variantLabel;
                             $p['name'] = $product->name;
+                            $p['list_variants_separately'] = true;
                             $p['variant'] = $variant->toArray();
                             $p['url'] = $variant->url() ?? $product->url();
                             $p['base_image'] = ($variant->base_image ?? $product->base_image);
@@ -241,6 +386,18 @@ class ProductIndexController
                 }
                 $base = $product->clean();
                 $base['variant_attribute_label'] = $variantLabel;
+                $base['variants'] = ($product->relationLoaded('variants')
+                    ? $product->variants
+                    : $product->variants()->get())
+                    ->filter(function ($v) {
+                        return (bool) ($v->is_active ?? false);
+                    })
+                    ->sortBy(function ($v) {
+                        return (int) ($v->position ?? 0);
+                    })
+                    ->take(10)
+                    ->values()
+                    ->toArray();
                 $base['tag_badges'] = $tagBadges;
 
                 return collect([$base]);

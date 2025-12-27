@@ -134,47 +134,25 @@
     <div
         class="search-result-middle"
         :class="{
-            empty: emptyProducts,
-            loading: fetchingProducts 
+            empty: phase === 'ready' && total === 0
         }"
     >  
-        <template x-if="fetchingProducts">
-            <div class="search-result-skeleton">
-                <div class="search-result-skeleton-item"></div>
-                <div class="search-result-skeleton-item"></div>
-                <div class="search-result-skeleton-item"></div>
-                <div class="search-result-skeleton-item"></div>
-                <div class="search-result-skeleton-item"></div>
-                <div class="search-result-skeleton-item"></div>
-            </div>
-        </template>
-
-        <template x-if="!emptyProducts && viewMode === 'grid'">
-            @include('storefront::public.partials.products.grid')
-        </template>
-
-        <template x-if="!emptyProducts && viewMode === 'list'">
-            @include('storefront::public.products.index.list_view_products')
-        </template>
+        <div id="productsMount" x-ref="productsMount" x-html="productsHtml"></div>
         
-        <template x-if="!fetchingProducts && emptyProducts">
+        <template x-if="phase === 'ready' && total === 0">
             <div class="empty-message">
                 @include('storefront::public.products.index.empty_results_logo')
 
                 <h2>{{ trans('storefront::products.no_products_found') }}</h2>
             </div>
         </template>
-
-        <div x-ref="renderMoreTrigger"></div>
     </div>
 
-    <template x-if="!emptyProducts">
+    <template x-if="phase === 'ready' && total > 0">
         <div class="search-result-bottom">
-            <span class="showing-results" x-text="showingResults"></span>
+            <span class="showing-results" x-text="showingText"></span>
 
-            <template x-if="products.total > queryParams.perPage">
-                @include('storefront::public.partials.pagination')
-            </template>
+            <div id="paginationMount" x-ref="paginationMount" x-html="paginationHtml"></div>
         </div>
     </template>
 

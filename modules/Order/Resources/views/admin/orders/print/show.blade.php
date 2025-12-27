@@ -101,38 +101,40 @@
                             <div class="invoice-address">
                                 <h5>{{ trans('order::print.billing_address') }}</h5>
 
-                                @php($billing = $order->billingAddress)
-                                @php($shipping = $order->shippingAddress)
-                                @if ($billing && $order->billing_address_id !== $order->shipping_address_id)
-                                    @if($billing->company_name)
-                                        <span>Firma Adı: {{ $billing->company_name }}</span>
+                                @php($billingSnapshot = $order->billingSnapshot)
+                                @php($shippingSnapshot = $order->shippingSnapshot)
+                                @if ($billingSnapshot && $order->billing_address_id !== $order->shipping_address_id)
+                                    @if($billingSnapshot->company_name)
+                                        <span>Firma Adı: {{ $billingSnapshot->company_name }}</span>
                                     @endif
-                                    @if($billing->tax_number || $billing->tax_office)
-                                        <span>Vergi Dairesi: {{ $billing->tax_office }}</span>
-                                        <span>Vergi No: {{ $billing->tax_number }}</span>
+                                    @if($billingSnapshot->tax_number || $billingSnapshot->tax_office)
+                                        <span>Vergi Dairesi: {{ $billingSnapshot->tax_office }}</span>
+                                        <span>Vergi No: {{ $billingSnapshot->tax_number }}</span>
                                     @endif
-                                    <span>{{ $billing->phone }}</span>
-                                    <span>{{ $billing->address_line ?? $billing->address_1 }}</span>
-                                    @if ($billing->district_title || $billing->city_title)
+                                    @if ($billingSnapshot->phone)
+                                        <span>{{ $billingSnapshot->phone }}</span>
+                                    @endif
+                                    <span>{{ $billingSnapshot->address_line }}</span>
+                                    @if ($billingSnapshot->district || $billingSnapshot->city)
                                         <span>
-                                            {{ $billing->district_title }}
-                                            @if ($billing->district_title && $billing->city_title)
+                                            {{ $billingSnapshot->district }}
+                                            @if ($billingSnapshot->district && $billingSnapshot->city)
                                                 ,
                                             @endif
-                                            {{ $billing->city_title }}
+                                            {{ $billingSnapshot->city }}
                                         </span>
                                     @endif
-                                @elseif ($shipping)
-                                    <span>{{ $shipping->first_name }} {{ $shipping->last_name }}</span>
-                                    <span>{{ $shipping->phone }}</span>
-                                    <span>{{ $shipping->address_line ?? $shipping->address_1 }}</span>
-                                    @if ($shipping->district_title || $shipping->city_title)
+                                @elseif ($shippingSnapshot)
+                                    <span>{{ $shippingSnapshot->first_name }} {{ $shippingSnapshot->last_name }}</span>
+                                    <span>{{ $shippingSnapshot->phone }}</span>
+                                    <span>{{ $shippingSnapshot->address_line }}</span>
+                                    @if ($shippingSnapshot->district || $shippingSnapshot->city)
                                         <span>
-                                            {{ $shipping->district_title }}
-                                            @if ($shipping->district_title && $shipping->city_title)
+                                            {{ $shippingSnapshot->district }}
+                                            @if ($shippingSnapshot->district && $shippingSnapshot->city)
                                                 ,
                                             @endif
-                                            {{ $shipping->city_title }}
+                                            {{ $shippingSnapshot->city }}
                                         </span>
                                     @endif
                                 @endif
@@ -143,18 +145,18 @@
                             <div class="invoice-address">
                                 <h5>{{ trans('order::print.shipping_address') }}</h5>
 
-                                @php($shipping = $shipping)
-                                @if ($shipping)
-                                    <span>{{ $shipping->first_name }} {{ $shipping->last_name }}</span>
-                                    <span>{{ $shipping->phone }}</span>
-                                    <span>{{ $shipping->address_line ?? $shipping->address_1 }}</span>
-                                    @if ($shipping->district_title || $shipping->city_title)
+                                @php($shippingSnapshot = $shippingSnapshot)
+                                @if ($shippingSnapshot)
+                                    <span>{{ $shippingSnapshot->first_name }} {{ $shippingSnapshot->last_name }}</span>
+                                    <span>{{ $shippingSnapshot->phone }}</span>
+                                    <span>{{ $shippingSnapshot->address_line }}</span>
+                                    @if ($shippingSnapshot->district || $shippingSnapshot->city)
                                         <span>
-                                            {{ $shipping->district_title }}
-                                            @if ($shipping->district_title && $shipping->city_title)
+                                            {{ $shippingSnapshot->district }}
+                                            @if ($shippingSnapshot->district && $shippingSnapshot->city)
                                                 ,
                                             @endif
-                                            {{ $shipping->city_title }}
+                                            {{ $shippingSnapshot->city }}
                                         </span>
                                     @endif
                                 @endif

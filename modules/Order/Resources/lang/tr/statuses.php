@@ -1,14 +1,12 @@
 <?php
 
 return [
-    'canceled' => 'Canceled',
+    'canceled' => 'İptal Edildi',
     'completed' => 'Teslim Edildi',
-    'on_hold' => 'On Hold',
     'on_the_way' => 'Yolda',
     'out_for_delivery' => 'Dağıtımda',
     'pending' => 'Sipariş Onaylandı',
-    'pending_payment' => 'Pending Payment',
-    'processing' => 'Processing',
-    'refunded' => 'Refunded',
+    'pending_payment' => 'Ödeme Bekleniyor',
+    'refunded' => 'İade Edildi',
     'shipped' => 'Kargoya Verildi',
 ];

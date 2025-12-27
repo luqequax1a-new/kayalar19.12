@@ -21,10 +21,14 @@ export default class {
         this.registerTableProcessingPlugin();
     }
 
+    get api() {
+        return this.tableInstance;
+    }
+
     initiateDataTable(options, callback) {
         let sortColumn = this.element.find("th[data-sort]");
 
-        table = new DataTable(
+        this.tableInstance = new DataTable(
             this.element,
             _.merge(
                 {
@@ -117,6 +121,8 @@ export default class {
                 options
             )
         );
+
+        table = this.tableInstance;
     }
 
     addTableActions() {
@@ -267,9 +273,8 @@ export default class {
     route(name, params) {
         let router = FleetCart.dataTable.routes[this.selector][name];
 
-        const url = `${window.FleetCart.baseUrl}/admin/${
-            FleetCart.dataTable.routePrefix[this.selector]
-        }`;
+        const url = `${window.FleetCart.baseUrl}/admin/${FleetCart.dataTable.routePrefix[this.selector]
+            }`;
 
         if (name === "table" && this.filtersFormSelector) {
             const form = document.querySelector(this.filtersFormSelector);

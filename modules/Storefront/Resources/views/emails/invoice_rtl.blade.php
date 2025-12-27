@@ -130,7 +130,7 @@
                                                     </span>
 
                                                     <span style="float: left;">
-                                                        #{{ $order->id }}
+                                                        #{{ $order->displayOrderNumber() }}
                                                     </span>
                                                 </td>
                                             </tr>
@@ -194,7 +194,7 @@
                                                         <tbody>
                                                             <tr>
                                                                 <td style="font-family: 'Poppins', Arial, sans-serif; font-size: 17px; font-weight: 700; color:#000; padding: 4px 0; white-space:nowrap;">{{ trans('storefront::invoice.order_id') }}:</td>
-                                                                <td style="font-family: 'Poppins', Arial, sans-serif; font-size: 17px; padding: 4px 0; word-break: break-all;">#{{ $order->id }}</td>
+                                                                <td style="font-family: 'Poppins', Arial, sans-serif; font-size: 17px; padding: 4px 0; word-break: break-all;">#{{ $order->displayOrderNumber() }}</td>
                                                             </tr>
                                                             <tr>
                                                                 <td style="font-family: 'Poppins', Arial, sans-serif; font-size: 17px; font-weight: 700; color:#000; padding: 4px 0; white-space:nowrap;">{{ trans('storefront::invoice.date') }}:</td>
@@ -291,19 +291,19 @@
                                             <tr>
                                                 <td style="font-family: 'Open Sans', sans-serif; font-weight: 400; font-size: 15px; padding: 0;">
                                                     <div class="address-block" style="text-align:center; font-size:15px;">
-                                                        @if ($order->shippingAddress)
-                                                            <span style="display: block; padding: 4px 0;">{{ $order->shippingAddress->first_name }} {{ $order->shippingAddress->last_name }}</span>
-                                                            <span style="display: block; padding: 4px 0;">{{ $order->shippingAddress->phone }}</span>
-                                                            <span style="display: block; padding: 4px 0;">{{ $order->shippingAddress->address_line ?? $order->shippingAddress->address_1 }}</span>
-                                                            @if ($order->shippingAddress && ($order->shippingAddress->district_title || $order->shippingAddress->city_title))
-                                                                <span style="display: block; padding: 4px 0;">
-                                                                    {{ $order->shippingAddress->district_title }}
-                                                                    @if ($order->shippingAddress->district_title && $order->shippingAddress->city_title)
-                                                                        ,
-                                                                    @endif
-                                                                    {{ $order->shippingAddress->city_title }}
-                                                                </span>
-                                                            @endif
+                                                        @php($ss = $order->shippingSnapshot)
+                                                        @php($sa = $order->shippingAddress)
+                                                        @if ($ss || $sa)
+                                                            <span style="display: block; padding: 4px 0;">{{ trim((string) (($ss->first_name ?? $sa->first_name ?? '') . ' ' . ($ss->last_name ?? $sa->last_name ?? ''))) }}</span>
+                                                            <span style="display: block; padding: 4px 0;">{{ $ss->phone ?? ($sa->phone ?? '') }}</span>
+                                                            <span style="display: block; padding: 4px 0;">{{ $ss->address_line ?? ($sa->address_line ?? $sa->address_1 ?? '') }}</span>
+                                                            <span style="display: block; padding: 4px 0;">
+                                                                {{ $ss->district ?? ($sa->district_title ?? '') }}
+                                                                @if ((($ss->district ?? null) && ($ss->city ?? null)) || (($sa->district_title ?? null) && ($sa->city_title ?? null)))
+                                                                    ,
+                                                                @endif
+                                                                {{ $ss->city ?? ($sa->city_title ?? '') }}
+                                                            </span>
                                                         @endif
                                                     </div>
                                                 </td>
@@ -323,38 +323,35 @@
                                             <tr>
                                                 <td style="font-family: 'Open Sans', sans-serif; font-weight: 400; font-size: 15px; padding: 0;">
                                                     <div class="address-block" style="text-align:center; font-size:15px;">
-                                                        @if ($order->billingAddress && $order->billing_address_id !== $order->shipping_address_id)
-                                                            @if ($order->billingAddress->company_name)
-                                                                <span style="display: block; padding: 4px 0;">{{ $order->billingAddress->company_name }}</span>
+                                                        @php($bs = $order->billingSnapshot)
+                                                        @php($ba = $order->billingAddress)
+                                                        @php($same = $order->billing_address_id === $order->shipping_address_id)
+                                                        @if (!$same && ($bs || $ba))
+                                                            @if (($bs->company_name ?? null) || ($ba->company_name ?? null))
+                                                                <span style="display: block; padding: 4px 0;">{{ $bs->company_name ?? $ba->company_name }}</span>
                                                             @endif
-                                                            @if ($order->billingAddress->tax_office || $order->billingAddress->tax_number)
-                                                                <span style="display: block; padding: 4px 0;">Vergi Dairesi: {{ $order->billingAddress->tax_office }}</span>
-                                                                <span style="display: block; padding: 4px 0;">Vergi No: {{ $order->billingAddress->tax_number }}</span>
+                                                            @if (($bs->tax_office ?? null) || ($ba->tax_office ?? null) || ($bs->tax_number ?? null) || ($ba->tax_number ?? null))
+                                                                <span style="display: block; padding: 4px 0;">{{ trans('storefront::invoice.tax_office') }}: {{ $bs->tax_office ?? $ba->tax_office }}</span>
+                                                                <span style="display: block; padding: 4px 0;">{{ trans('storefront::invoice.tax_number') }}: {{ $bs->tax_number ?? $ba->tax_number }}</span>
                                                             @endif
-                                                            <span style="display: block; padding: 4px 0;">{{ $order->billingAddress->phone }}</span>
-                                                            <span style="display: block; padding: 4px 0;">{{ $order->billingAddress->address_line ?? $order->billingAddress->address_1 }}</span>
-                                                            @if ($order->billingAddress && ($order->billingAddress->district_title || $order->billingAddress->city_title))
-                                                                <span style="display: block; padding: 4px 0;">
-                                                                    {{ $order->billingAddress->district_title }}
-                                                                    @if ($order->billingAddress->district_title && $order->billingAddress->city_title)
-                                                                        ,
-                                                                    @endif
-                                                                    {{ $order->billingAddress->city_title }}
-                                                                </span>
+                                                            @if ($ba && $ba->billing_email)
+                                                                <span style="display: block; padding: 4px 0; word-break:break-all;">{{ trans('storefront::invoice.billing_email') }}: {{ $ba->billing_email }}</span>
                                                             @endif
-                                                        @elseif ($order->shippingAddress)
-                                                            <span style="display: block; padding: 4px 0;">{{ $order->shippingAddress->first_name }} {{ $order->shippingAddress->last_name }}</span>
-                                                            <span style="display: block; padding: 4px 0;">{{ $order->shippingAddress->phone }}</span>
-                                                            <span style="display: block; padding: 4px 0;">{{ $order->shippingAddress->address_line ?? $order->shippingAddress->address_1 }}</span>
-                                                            @if ($order->shippingAddress && ($order->shippingAddress->district_title || $order->shippingAddress->city_title))
-                                                                <span style="display: block; padding: 4px 0;">
-                                                                    {{ $order->shippingAddress->district_title }}
-                                                                    @if ($order->shippingAddress->district_title && $order->shippingAddress->city_title)
-                                                                        ,
-                                                                    @endif
-                                                                    {{ $order->shippingAddress->city_title }}
-                                                                </span>
-                                                            @endif
+                                                        @endif
+                                                        @if ($same)
+                                                            @php($bs = $order->shippingSnapshot)
+                                                            @php($ba = $order->shippingAddress)
+                                                        @endif
+                                                        @if ($bs || $ba)
+                                                            <span style="display: block; padding: 4px 0;">{{ $bs->phone ?? ($ba->phone ?? '') }}</span>
+                                                            <span style="display: block; padding: 4px 0;">{{ $bs->address_line ?? ($ba->address_line ?? $ba->address_1 ?? '') }}</span>
+                                                            <span style="display: block; padding: 4px 0;">
+                                                                {{ $bs->district ?? ($ba->district_title ?? '') }}
+                                                                @if ((($bs->district ?? null) && ($bs->city ?? null)) || (($ba->district_title ?? null) && ($ba->city_title ?? null)))
+                                                                    ,
+                                                                @endif
+                                                                {{ $bs->city ?? ($ba->city_title ?? '') }}
+                                                            </span>
                                                         @endif
                                                     </div>
                                                 </td>

@@ -5,7 +5,12 @@
                 <span class="d-flex">
                     {{ $variation->name }}:
                     
-                    <span class="d-flex variation-label" x-text="activeVariationValues['{{ $variation->uid }}']"></span>
+                    <span class="d-flex variation-label" x-text="activeVariationValues['{{ $variation->uid }}']">
+                        @if($product->variant)
+                            @php($currentVal = $variation->values->first(fn($v) => in_array($v->uid, explode('.', (string) $product->variant->uids))))
+                            {{ $currentVal?->label }}
+                        @endif
+                    </span>
                 </span>
             </div>
 
@@ -22,6 +27,7 @@
                             class="
                                 {{ $variation->type === 'color' ? 'variation-color' : '' }}
                                 {{ $variation->type === 'image' ? 'variation-image' : '' }}
+                                @if($product->variant && in_array($value->uid, explode('.', (string) $product->variant->uids ?? ''))) active @endif
                             "
                             :class="{
                                 active: isActiveVariationValue('{{ $variation->uid }}', '{{ $value->uid }}'),
@@ -49,22 +55,40 @@
                                 ></div>
                             @elseif ($variation->type === 'image' && $value->image)
                                 @php(
-                                    $imageThumb = $value->image->thumb_webp_url
-                                        ?? $value->image->thumb_avif_url
-                                        ?? $value->image->thumb_jpeg_url
-                                        ?? $value->image->grid_webp_url
+                                    $imageJpeg = $value->image->thumb_jpeg_url
                                         ?? $value->image->grid_jpeg_url
+                                        ?? $value->image->detail_jpeg_url
                                         ?? $value->image->path
                                 )
-                                <img
-                                    src="{{ $imageThumb }}"
-                                    alt="{{ $product->name }} {{ $value->label }}"
-                                    width="60"
-                                    height="60"
-                                    loading="{{ $loop->index < 6 ? 'eager' : 'lazy' }}"
-                                    fetchpriority="{{ $loop->index < 6 ? 'high' : 'auto' }}"
-                                    decoding="async"
-                                >
+                                <picture>
+                                    @if ($value->image->listing_avif_srcset)
+                                        <source
+                                            type="image/avif"
+                                            srcset="{{ $value->image->listing_avif_srcset }}"
+                                            sizes="65px"
+                                        >
+                                    @endif
+                                    @if ($value->image->listing_webp_srcset)
+                                        <source
+                                            type="image/webp"
+                                            srcset="{{ $value->image->listing_webp_srcset }}"
+                                            sizes="65px"
+                                        >
+                                    @endif
+                                    <img
+                                        src="{{ $imageJpeg }}"
+                                        @if ($value->image->listing_jpeg_srcset)
+                                            srcset="{{ $value->image->listing_jpeg_srcset }}"
+                                        @endif
+                                        sizes="65px"
+                                        alt="{{ $product->name }} {{ $value->label }}"
+                                        width="65"
+                                        height="65"
+                                        loading="{{ $loop->index < 6 ? 'eager' : 'lazy' }}"
+                                        fetchpriority="{{ $loop->index < 6 ? 'high' : 'auto' }}"
+                                        decoding="async"
+                                    >
+                                </picture>
                             @endif
                         </li>
                     @endforeach

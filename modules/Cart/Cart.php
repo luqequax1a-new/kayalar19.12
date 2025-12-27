@@ -22,8 +22,38 @@ use Modules\Cart\Services\CartUpsellService;
 
 class Cart extends DarryldecodeCart implements JsonSerializable
 {
+    private ?Collection $cachedItems = null;
+
+
+    private function clearCache(): void
+    {
+        $this->cachedItems = null;
+    }
+
+
+
+    /**
+     * {@inheritdoc}
+     */
+    public function condition($condition): static
+    {
+        return parent::condition($condition);
+    }
+
+
+    /**
+     * {@inheritdoc}
+     */
+    public function clearCartConditions(): void
+    {
+        parent::clearCartConditions();
+    }
+
+
+
     /**
      * Get the current instance.
+
      *
      * @return $this
      */
@@ -50,7 +80,10 @@ class Cart extends DarryldecodeCart implements JsonSerializable
 
         parent::clear();
 
+        $this->clearCache();
+
         $this->clearCartConditions();
+
 
         try {
             \Log::info('[CART] clear.after', [
@@ -240,8 +273,53 @@ class Cart extends DarryldecodeCart implements JsonSerializable
             $item['quantity'] = (float) $qty;
             $cart->put($id, $item);
             $this->save($cart);
+
+            $this->clearCache();
         }
     }
+
+
+    /**
+     * {@inheritdoc}
+     */
+    public function add($id, $name = null, $price = null, $quantity = null, $attributes = [], $conditions = [], $associatedModel = null): static
+    {
+        parent::add($id, $name, $price, $quantity, $attributes, $conditions, $associatedModel);
+
+        $this->clearCache();
+
+        return $this;
+    }
+
+
+
+    /**
+     * {@inheritdoc}
+     */
+    public function update($id, $data): bool
+    {
+        $result = parent::update($id, $data);
+
+        $this->clearCache();
+
+        return $result;
+    }
+
+
+
+    /**
+     * {@inheritdoc}
+     */
+    public function remove($id): bool
+    {
+        $result = parent::remove($id);
+
+        $this->clearCache();
+
+        return $result;
+    }
+
+
 
 
     /**
@@ -268,11 +346,66 @@ class Cart extends DarryldecodeCart implements JsonSerializable
 
     public function items()
     {
-        return $this->getContent()
+        if ($this->cachedItems !== null) {
+            return $this->cachedItems;
+        }
+
+        return $this->cachedItems = $this->getContent()
             ->sortBy('attributes.created_at', SORT_REGULAR, true)
             ->map(function ($item) {
                 return new CartItem($item);
             });
+    }
+
+
+    public function loadStockAndRelations(): void
+    {
+        $items = $this->items();
+
+        if ($items->isEmpty()) {
+            return;
+        }
+
+        $products = $items->map->product;
+        $variants = $items->map->variant->filter();
+
+        // Eager load relations for models in session
+        if ($products->isNotEmpty()) {
+            \Illuminate\Database\Eloquent\Collection::make($products->all())->load(['files', 'variants', 'taxClass']);
+        }
+
+        if ($variants->isNotEmpty()) {
+            \Illuminate\Database\Eloquent\Collection::make($variants->all())->load(['files']);
+        }
+
+        // Pre-warm CartItem static caches for stock
+        $productIds = $products->pluck('id')->unique()->all();
+        $variantIds = $variants->pluck('id')->unique()->all();
+
+        if (! empty($productIds)) {
+            $fetchedProducts = Product::withName()
+                ->addSelect('id', 'in_stock', 'manage_stock', 'qty', 'is_active')
+                ->whereIn('id', $productIds)
+                ->get()
+                ->keyBy('id');
+
+            foreach ($fetchedProducts as $id => $p) {
+                CartItem::setProductStockCache($id, $p);
+            }
+        }
+
+        if (! empty($variantIds)) {
+            $fetchedVariants = ProductVariant::query()
+                ->without(['files'])
+                ->addSelect('id', 'in_stock', 'manage_stock', 'qty', 'is_active')
+                ->whereIn('id', $variantIds)
+                ->get()
+                ->keyBy('id');
+
+            foreach ($fetchedVariants as $id => $v) {
+                CartItem::setVariantStockCache($id, $v);
+            }
+        }
     }
 
 
@@ -495,6 +628,14 @@ class Cart extends DarryldecodeCart implements JsonSerializable
 
     public function addTaxes($addTaxesToCartRequest)
     {
+        // Store prices are VAT-inclusive: do not add taxes on top of total.
+        // Keep cart totals consistent for both guest and logged-in customers.
+        if (setting('prices_include_tax')) {
+            $this->removeTaxes();
+
+            return;
+        }
+
         $this->removeTaxes();
 
         $this->findTaxes(

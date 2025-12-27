@@ -25,6 +25,11 @@ class VariationValueResource extends JsonResource
                 value: fn () => [
                     'id' => $this->image?->id,
                     'path' => $this->image?->path,
+                    'url' => $this->image?->url,
+                    'thumb_jpeg_url' => $this->image?->thumb_jpeg_url,
+                    'thumb_webp_url' => $this->image?->thumb_webp_url,
+                    'detail_jpeg_url' => $this->image?->detail_jpeg_url,
+                    'detail_webp_url' => $this->image?->detail_webp_url,
                 ]
             ),
             'color' => $this->when(

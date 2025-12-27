@@ -40,8 +40,12 @@ class ProductRepository
                 'variations',
                 'variations.values',
                 'variations.values.files',
-                'variants',
-                'variants.files',
+                'variants' => function ($q) {
+                    $q->withoutGlobalScope('active')
+                        ->withTrashed()
+                        ->withBaseImage()
+                        ->orderBy('position');
+                },
                 'categories',
                 'tags',
                 'attributes.attribute.attributeSet',

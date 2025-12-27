@@ -1,6 +1,7 @@
 <?php
 
 return [
-    'hello' => 'Hello :name!',
-    'all_rights_reserved' => 'All rights reserved.',
+    'hello' => 'Merhaba :name!',
+    'all_rights_reserved' => 'Tüm hakları saklıdır.',
 ];
+

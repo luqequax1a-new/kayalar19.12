@@ -8,26 +8,30 @@
                             <div class="title">{{ trans('storefront::layouts.contact_us') }}</div>
 
                             <ul class="list-inline contact-info">
-                                @if (setting('store_phone') && ! setting('store_phone_hide'))
+                                @php($storePhone = (string) setting('store_phone'))
+                                @if ($storePhone !== '' && ! setting('store_phone_hide'))
+                                    @php($storePhoneSplit = intdiv(strlen($storePhone), 2))
                                     <li>
                                         <i class="las la-phone"></i>
 
                                         <a href="tel:+1 206 555 0100" class="store-phone">
-                                            <span>{{ substr(setting('store_phone'), 0 , strlen(setting('store_phone')) / 2) }}</span>
+                                            <span>{{ substr($storePhone, 0, $storePhoneSplit) }}</span>
                                             <span class="d-none">JUNK LOAD</span>
-                                            <span>{{ substr(setting('store_phone'), strlen(setting('store_phone')) / 2) }}</span>
+                                            <span>{{ substr($storePhone, $storePhoneSplit) }}</span>
                                         </a>
                                     </li>
                                 @endif
 
-                                @if (setting('store_email') && ! setting('store_email_hide'))
+                                @php($storeEmail = (string) setting('store_email'))
+                                @if ($storeEmail !== '' && ! setting('store_email_hide'))
+                                    @php($storeEmailSplit = intdiv(strlen($storeEmail), 2))
                                     <li>
                                         <i class="las la-envelope"></i>
 
                                         <a href="mailto:user@email.com" class="store-email">
-                                            <span>{{ substr(setting('store_email'), 0 , strlen(setting('store_email')) / 2) }}</span>
+                                            <span>{{ substr($storeEmail, 0, $storeEmailSplit) }}</span>
                                             <span class="d-none">JUNK LOAD</span>
-                                            <span>{{ substr(setting('store_email'), strlen(setting('store_email')) / 2) }}</span>
+                                            <span>{{ substr($storeEmail, $storeEmailSplit) }}</span>
                                         </a>
                                     </li>
                                 @endif

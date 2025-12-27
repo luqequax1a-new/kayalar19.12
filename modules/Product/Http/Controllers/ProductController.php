@@ -126,14 +126,21 @@ class ProductController extends BaseController
                                     $p = $product->clean();
                                     $p['variant_attribute_label'] = $variantLabel;
                                     $p['name'] = $product->name;
+                                    $p['listing_key'] = 'p' . (int) $product->id . '-v' . (int) $variant->id;
                                     $p['variant'] = $variant->toArray();
                                     $p['url'] = $variant->url() ?? $product->url();
                                     $p['base_image'] = ($variant->base_image ?? $product->base_image);
                                     $p['base_image_thumb'] = [
-                                        'path' => media_variant_url(($variant->base_image ?? $product->base_image), 400)
+                                        'path' => media_variant_url(
+                                            ($variant->base_image ?? $product->base_image),
+                                            (int) config('image_optimization.variants.widths.grid', 400)
+                                        )
                                     ];
                                     $p['variant']['base_image_thumb'] = [
-                                        'path' => media_variant_url(($variant->base_image ?? $product->base_image), 80)
+                                        'path' => media_variant_url(
+                                            ($variant->base_image ?? $product->base_image),
+                                            (int) config('image_optimization.variants.widths.thumb', 80)
+                                        )
                                     ];
                                     $p['formatted_price'] = $variant->formatted_price ?? $product->formatted_price;
                                     $p['formatted_price_range'] = null;
@@ -147,10 +154,14 @@ class ProductController extends BaseController
 
                         $base = $product->clean();
                         $base['variant_attribute_label'] = $variantLabel;
+                        $base['listing_key'] = 'p' . (int) $product->id;
                         $base['reviews_count'] = $product->reviews_count ?? ($product->relationLoaded('reviews') ? $product->reviews->count() : 0);
                         $base['rating_percent'] = $product->rating_percent;
                         $base['base_image_thumb'] = [
-                            'path' => media_variant_url($product->base_image, 400)
+                            'path' => media_variant_url(
+                                $product->base_image,
+                                (int) config('image_optimization.variants.widths.grid', 400)
+                            )
                         ];
                         $base['tag_badges'] = $tagBadges;
 
@@ -364,7 +375,7 @@ class ProductController extends BaseController
                         $computedVariantSlug = implode('-', $parts);
 
                         if ($computedVariantSlug !== '' && $computedVariantSlug === $candidateVariantSlug) {
-                            $product->variant = $variant;
+                            $product->setRelation('variant', $variant);
                             $variantResolvedFromCleanSlug = true;
                             break;
                         }
@@ -468,11 +479,13 @@ class ProductController extends BaseController
         $requestedVariant = request()->query('variant');
 
         if ($requestedVariant) {
-            $product->variant = $product->variants()
+            $matchedVariant = $product->variants()
                 ->withoutGlobalScope('active')
                 ->where('uid', $requestedVariant)
                 ->firstOrFail();
-            $valueUids = array_filter(explode('.', (string) $product->variant->uids));
+
+            $product->setRelation('variant', $matchedVariant);
+            $valueUids = array_filter(explode('.', (string) $matchedVariant->uids));
             $product->loadMissing(['variations.values', 'variations.values.files']);
             $readableParams = [];
             foreach ($product->variations as $variation) {
@@ -565,18 +578,18 @@ class ProductController extends BaseController
                         ->first();
 
                     if ($matched) {
-                        $product->variant = $matched;
+                        $product->setRelation('variant', $matched);
                     } else {
-                        $product->variant = $product->variants()
+                        $product->setRelation('variant', $product->variants()
                             ->withoutGlobalScope('active')
                             ->default()
-                            ->first();
+                            ->first());
                     }
                 } else {
-                    $product->variant = $product->variants()
+                    $product->setRelation('variant', $product->variants()
                         ->withoutGlobalScope('active')
                         ->default()
-                        ->first();
+                        ->first());
                 }
             }
         }
@@ -696,16 +709,16 @@ class ProductController extends BaseController
         $productId = (int) $id;
         $locale = locale();
 
-        $cacheKey = "storefront:product:{$productId}:related:{$locale}:v2";
+        $cacheKey = "storefront:product:{$productId}:related:{$locale}:v3";
 
         return Cache::store('file')->remember($cacheKey, now()->addMinutes(5), function () use ($productId) {
             $product = Product::query()->select(['id'])->findOrFail($productId);
 
             $items = $product->relatedProducts()
-                ->with(['variants', 'brand.translations', 'saleUnit', 'tags'])
+                ->with(['tags'])
                 ->withAvg('reviews', 'rating')
                 ->forCard()
-                ->take(8)
+                ->take(6)
                 ->get();
 
             return $this->normalizeProductsForCard($items);
@@ -785,7 +798,10 @@ class ProductController extends BaseController
             $base = $product->clean();
             $base['variant_attribute_label'] = $variantLabel;
             $base['base_image_thumb'] = [
-                'path' => media_variant_url($product->base_image, 400),
+                'path' => media_variant_url(
+                    $product->base_image,
+                    (int) config('image_optimization.variants.widths.grid', 400)
+                ),
             ];
             $base['tag_badges'] = $tagBadges;
 

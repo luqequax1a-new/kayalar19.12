@@ -21,6 +21,7 @@ use Modules\Payment\Gateways\Flutterwave;
 use Modules\Payment\Gateways\MercadoPago;
 use Modules\Payment\Gateways\AuthorizeNet;
 use Modules\Payment\Gateways\BankTransfer;
+use Modules\Payment\Gateways\Paytr;
 use Modules\Payment\Gateways\CheckPayment;
 
 class PaymentServiceProvider extends ServiceProvider
@@ -53,7 +54,7 @@ class PaymentServiceProvider extends ServiceProvider
         $this->registerCashOnDelivery();
         $this->registerBankTransfer();
         $this->registerCheckPayment();
-
+        $this->registerPaytr();
     }
 
 
@@ -206,6 +207,13 @@ class PaymentServiceProvider extends ServiceProvider
     {
         if ($this->enabled('sslcommerz')) {
             Gateway::register('sslcommerz', new SslCommerz());
+        }
+    }
+
+    private function registerPaytr()
+    {
+        if ($this->enabled('paytr')) {
+            Gateway::register('paytr', new Paytr());
         }
     }
 }

@@ -4,8 +4,12 @@
          : (is_string($data ?? null)
              ? ($data ?? 'product')
              : json_encode($data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT));
- @endphp
- <div x-data='ProductCard({{ $xDataParam }}, (typeof index !== "undefined" ? index : (typeof idx !== "undefined" ? idx : 0)))' class="product-card">
+
+     $xDataIndex = is_null($data ?? null) || is_string($data ?? null)
+         ? '(typeof index !== "undefined" ? index : (typeof idx !== "undefined" ? idx : 0))'
+         : (string) (int) ($idx ?? 0);
+@endphp
+ <div x-data='ProductCard({{ $xDataParam }}, {{ $xDataIndex }})' class="product-card">
     <div class="product-card-top">
         <a :href="productUrl" class="product-image" style="position: relative;">
             <template x-if="product.tag_badges && product.tag_badges.length">
@@ -31,31 +35,61 @@
                 </template>
             </template>
 
-            <div class="product-image-wrap" x-init="init && init()">
+            <div
+                class="product-image-wrap"
+                @mouseenter.once="(Array.isArray(galleryItems) && galleryItems.length > 1) && initGallery && initGallery()"
+                @touchstart.once="(Array.isArray(galleryItems) && galleryItems.length > 1) && initGallery && initGallery()"
+            >
                 <template x-if="Array.isArray(galleryItems) && galleryItems.length > 1">
                     <div class="product-image-carousel swiper" x-ref="gallery">
                         <div class="swiper-wrapper product-image-track">
                             <template x-for="(file, gidx) in galleryItems" :key="(file && file.path ? file.path : gidx)">
                                 <div class="swiper-slide product-image-slide">
-                                    <div
-                                        class="product-image-shell"
-                                        :data-real-img="(file?.fast_avif_url
-                                            || file?.fast_webp_url
-                                            || file?.grid_webp_url
-                                            || file?.grid_avif_url
-                                            || file?.detail_webp_url
-                                            || file?.detail_avif_url
-                                            || file?.path
-                                            || baseImage)"
-                                        :data-alt="productName"
-                                    >
-                                        <img
-                                            class="product-image-img lqip"
-                                            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23f2f2f2'/%3E%3Cstop offset='1' stop-color='%23e6e6e6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='40' height='40' fill='url(%23g)'/%3E%3Ccircle cx='12' cy='14' r='8' fill='%23ededed'/%3E%3Crect x='18' y='20' width='18' height='10' rx='3' fill='%23eaeaea'/%3E%3C/svg%3E"
-                                            width="400"
-                                            height="400"
-                                            decoding="async"
-                                        />
+                                    <div class="product-image-shell" :data-alt="productName">
+                                        <picture>
+                                            <template x-if="file && file.listing_avif_srcset">
+                                                <source
+                                                    type="image/avif"
+                                                    :srcset="file.listing_avif_srcset"
+                                                    :sizes="imageSizesGrid"
+                                                >
+                                            </template>
+                                            <template x-if="file && !file.listing_avif_srcset && (file.fast_avif_url || file.grid_avif_url || file.detail_avif_url)">
+                                                <source
+                                                    type="image/avif"
+                                                    :srcset="file.fast_avif_url || file.grid_avif_url || file.detail_avif_url"
+                                                    :sizes="imageSizesGrid"
+                                                >
+                                            </template>
+
+                                            <template x-if="file && file.listing_webp_srcset">
+                                                <source
+                                                    type="image/webp"
+                                                    :srcset="file.listing_webp_srcset"
+                                                    :sizes="imageSizesGrid"
+                                                >
+                                            </template>
+                                            <template x-if="file && !file.listing_webp_srcset && (file.fast_webp_url || file.grid_webp_url || file.detail_webp_url)">
+                                                <source
+                                                    type="image/webp"
+                                                    :srcset="file.fast_webp_url || file.grid_webp_url || file.detail_webp_url"
+                                                    :sizes="imageSizesGrid"
+                                                >
+                                            </template>
+
+                                            <img
+                                                class="product-image-img"
+                                                :src="file?.grid_jpeg_url || file?.detail_jpeg_url || file?.path || baseImage"
+                                                :srcset="file?.listing_jpeg_srcset || ''"
+                                                :sizes="imageSizesGrid"
+                                                :alt="productName"
+                                                :loading="(idx < 6 && gidx === 0) ? 'eager' : 'lazy'"
+                                                :fetchpriority="(idx < 6 && gidx === 0) ? 'high' : 'low'"
+                                                decoding="async"
+                                                width="400"
+                                                height="400"
+                                            />
+                                        </picture>
                                     </div>
                                 </div>
                             </template>
@@ -76,26 +110,44 @@
                 </template>
 
                 <template x-if="!(Array.isArray(galleryItems) && galleryItems.length > 1)">
-                    <div
-                        x-ref="pshell"
-                        class="product-image-shell"
-                        :data-real-img="(currentSourceFile?.fast_avif_url
-                            || currentSourceFile?.fast_webp_url
-                            || currentSourceFile?.grid_webp_url
-                            || currentSourceFile?.grid_avif_url
-                            || currentSourceFile?.detail_webp_url
-                            || currentSourceFile?.detail_avif_url
-                            || currentSourceFile?.path
-                            || baseImage)"
-                        :data-alt="productName"
-                    >
-                        <img
-                            class="product-image-img lqip"
-                            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23f2f2f2'/%3E%3Cstop offset='1' stop-color='%23e6e6e6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='40' height='40' fill='url(%23g)'/%3E%3Ccircle cx='12' cy='14' r='8' fill='%23ededed'/%3E%3Crect x='18' y='20' width='18' height='10' rx='3' fill='%23eaeaea'/%3E%3C/svg%3E"
-                            width="400"
-                            height="400"
-                            decoding="async"
-                        />
+                    <div x-ref="pshell" class="product-image-shell" :data-alt="productName">
+                        <picture>
+                            <template x-if="currentSourceFile?.listing_avif_srcset || imageSources.avif">
+                                <source
+                                    type="image/avif"
+                                    :srcset="currentSourceFile?.listing_avif_srcset || imageSources.avif"
+                                    :sizes="imageSizesGrid"
+                                >
+                            </template>
+
+                            <template x-if="currentSourceFile?.listing_webp_srcset || imageSources.webp">
+                                <source
+                                    type="image/webp"
+                                    :srcset="currentSourceFile?.listing_webp_srcset || imageSources.webp"
+                                    :sizes="imageSizesGrid"
+                                >
+                            </template>
+
+                            <template x-if="Boolean(currentSourceFile?.listing_jpeg_srcset)">
+                                <source
+                                    type="image/jpeg"
+                                    :srcset="currentSourceFile?.listing_jpeg_srcset"
+                                    :sizes="imageSizesGrid"
+                                >
+                            </template>
+
+                            <img
+                                class="product-image-img"
+                                :src="imageSources.fallback"
+                                :alt="productName"
+                                :loading="idx < 6 ? 'eager' : 'lazy'"
+                                :fetchpriority="idx < 6 ? 'high' : 'low'"
+                                decoding="async"
+                                width="400"
+                                height="400"
+                                :sizes="imageSizesGrid"
+                            />
+                        </picture>
                     </div>
                 </template>
             </div>
@@ -173,7 +225,8 @@
                 <template x-if="idx < 3">
                     <button type="button" class="variant-thumb" @mouseenter="previewVariant(variant)" @mouseleave="clearPreview()" @click="selectVariant(variant)">
                         <img
-                            :src="(variant.base_image?.thumb_webp_url
+                            :src="(variant.base_image_thumb?.path
+                                    || variant.base_image?.thumb_webp_url
                                     || variant.base_image?.thumb_jpeg_url
                                     || (variant.base_image && variant.base_image.path)
                                     || (baseImageThumb || baseImage))"

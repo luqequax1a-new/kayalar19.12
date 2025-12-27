@@ -8,7 +8,7 @@
 
 @section('content')
     <div class="grid clearfix">
-        <div class="row">
+        <div class="row dashboard-kpi-row">
             @hasAccess('admin.orders.index')
                 @include('admin::dashboard.grids.total_sales')
                 @include('admin::dashboard.grids.total_orders')
@@ -69,6 +69,10 @@
                         <a href="#" class="tab active" data-tab="trend">Trend</a>
                         <a href="#" class="tab" data-tab="customers">Müşteriler</a>
                         <a href="#" class="tab" data-tab="traffic">Kaynak</a>
+                        <a href="#" class="tab" data-tab="hourly">Saatlik</a>
+                        <a href="#" class="tab" data-tab="conversion">Dönüşüm</a>
+                        <a href="#" class="tab" data-tab="abandoned" style="color: #fa6d42;">Sepet Analizi</a>
+                        <a href="#" class="tab" data-tab="live">Canlı</a>
                     </div>
 
                     <div class="dashboard-analytics-tab-panels">
@@ -108,6 +112,73 @@
                                 </table>
                             </div>
                         </div>
+                        <div class="tab-panel" data-panel="hourly">
+                            <div class="canvas">
+                                <canvas class="chart" data-chart-hourly height="280"></canvas>
+                            </div>
+                        </div>
+                        <div class="tab-panel" data-panel="conversion">
+                            <div class="canvas conversion-chart-container">
+                                <canvas class="chart" data-chart-conversion height="280"></canvas>
+                            </div>
+                            <div class="conversion-metrics">
+                                <div class="metric">
+                                    <span class="label">Toplam Ziyaret</span>
+                                    <span class="value" data-conversion-visits>—</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="label">Toplam Sipariş</span>
+                                    <span class="value" data-conversion-orders>—</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-panel" data-panel="abandoned">
+                            <div class="canvas">
+                                <canvas class="chart" data-chart-abandoned height="280"></canvas>
+                            </div>
+                            <div class="abandoned-metrics" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 25px;">
+                                <div class="metric-card" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                    <div style="font-size: 12px; font-weight: 600; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Toplam Terk Edilen</div>
+                                    <div style="font-size: 28px; font-weight: 800; color: #78350f;" data-abandoned-total>—</div>
+                                </div>
+                                <div class="metric-card" style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                    <div style="font-size: 12px; font-weight: 600; color: #065f46; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Geri Kazanılan</div>
+                                    <div style="font-size: 28px; font-weight: 800; color: #047857;" data-recovered-total>—</div>
+                                </div>
+                                <div class="metric-card" style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                    <div style="font-size: 12px; font-weight: 600; color: #1e40af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Kazanılan Tutar</div>
+                                    <div style="font-size: 28px; font-weight: 800; color: #1e3a8a;" data-recovered-amount>—</div>
+                                </div>
+                                <div class="metric-card" style="background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                    <div style="font-size: 12px; font-weight: 600; color: #4338ca; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Dönüşüm Oranı</div>
+                                    <div style="font-size: 28px; font-weight: 800; color: #3730a3;" data-recovery-rate>—</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-panel" data-panel="live">
+                            <div class="dashboard-analytics-live" data-instant-tracking>
+                                <div class="dashboard-analytics-live__controls" data-instant-tracking-range>
+                                    <a href="#" class="range active" data-range="last_30_min">30 dk</a>
+                                    <a href="#" class="range" data-range="last_60_min">1 saat</a>
+                                    <a href="#" class="range" data-range="today">Bugün</a>
+                                </div>
+
+                                <div class="dashboard-analytics-live__cards">
+                                    <div class="live-metric">
+                                        <span class="label">Toplam Sepet</span>
+                                        <span class="value" data-it-carts-count>—</span>
+                                    </div>
+                                    <div class="live-metric">
+                                        <span class="label">Sepet Tutarı</span>
+                                        <span class="value" data-it-carts-amount>—</span>
+                                    </div>
+                                    <div class="live-metric">
+                                        <span class="label">Ziyaret</span>
+                                        <span class="value" data-it-visits-count>—</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -115,6 +186,7 @@
                     <script>
                         FleetCart.data.dashboardAnalyticsUrl = '{{ route('admin.dashboard.analytics.index') }}';
                         FleetCart.data.adminOrdersUrl = '{{ route('admin.orders.index') }}';
+                        FleetCart.data.cartActivityUrl = '{{ route('admin.dashboard.cart_activity.index') }}';
                     </script>
                 @endpush
             @endHasAccess
@@ -130,6 +202,12 @@
                     <div class="grid-header clearfix">
                         <h5 class="pull-left">En Çok Satanlar</h5>
 
+                        <div class="pull-left dashboard-top-products-tabs" data-top-entities-tabs>
+                            <a href="#" class="tab active" data-entity-tab="products">Ürünler</a>
+                            <a href="#" class="tab" data-entity-tab="categories">Kategoriler</a>
+                            <a href="#" class="tab" data-entity-tab="brands">Markalar</a>
+                        </div>
+
                         <div class="pull-right dashboard-top-products-limit" data-top-products-limit>
                             <a href="#" class="range" data-limit="5">5</a>
                             <a href="#" class="range active" data-limit="10">10</a>
@@ -143,12 +221,22 @@
                             <table class="table">
                                 <thead>
                                     <tr>
-                                        <th>Ürün</th>
+                                        <th data-top-col-title>Ürün</th>
                                         <th class="text-right">Adet</th>
                                         <th class="text-right">Ciro</th>
                                     </tr>
                                 </thead>
                                 <tbody data-top-products-body data-image-placeholder-url="{{ asset('build/assets/image-placeholder.png') }}">
+                                    <tr>
+                                        <td class="empty" colspan="3">{{ trans('admin::dashboard.no_data') }}</td>
+                                    </tr>
+                                </tbody>
+                                <tbody data-top-categories-body class="it-hidden">
+                                    <tr>
+                                        <td class="empty" colspan="3">{{ trans('admin::dashboard.no_data') }}</td>
+                                    </tr>
+                                </tbody>
+                                <tbody data-top-brands-body class="it-hidden">
                                     <tr>
                                         <td class="empty" colspan="3">{{ trans('admin::dashboard.no_data') }}</td>
                                     </tr>
@@ -159,6 +247,10 @@
                 </div>
             @endHasAccess
 
+            @hasAccess('admin.products.index')
+                @include('admin::dashboard.panels.low_stock')
+            @endHasAccess
+
             @hasAccess('admin.orders.index')
                 {{-- Terkedilen Sepetler paneli: şimdilik devre dışı. Açmak için bu satırı yorumdan çıkar. --}}
                 {{-- @include('admin::dashboard.panels.cart_activity') --}}
@@ -166,6 +258,7 @@
 
             @hasAccess('admin.users.index')
                 @include('admin::dashboard.panels.top_customers')
+                @include('admin::dashboard.panels.latest_customers')
             @endHasAccess
 
             @include('admin::dashboard.panels.latest_searches')
@@ -180,6 +273,10 @@
 @push('globals')
     @vite([
         "modules/Admin/Resources/assets/sass/dashboard.scss",
-        "modules/Admin/Resources/assets/js/dashboard.js",
+        "modules/Admin/Resources/assets/sass/enhanced_dashboard.scss",
+        "modules/Admin/Resources/assets/js/enhanced_dashboard.js",
+        "modules/Admin/Resources/assets/js/enhanced_dashboard_part2.js",
+        "modules/Admin/Resources/assets/js/instant_tracking.js",
+        "modules/Admin/Resources/assets/js/low_stock_widget.js",
     ])
 @endpush

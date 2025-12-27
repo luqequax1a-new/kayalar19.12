@@ -272,7 +272,9 @@ class ProductShowPageComposer
         };
 
         try {
-            $variants = $product->variants()->withoutGlobalScope('active')->get();
+            $variants = $product->relationLoaded('variants')
+                ? $product->variants
+                : $product->variants()->withoutGlobalScope('active')->get();
             $valid = $variants->filter(function ($v) {
                 try {
                     $price = optional($v->selling_price)->convertToCurrentCurrency()->amount();

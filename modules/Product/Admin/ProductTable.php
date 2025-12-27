@@ -25,13 +25,14 @@ class ProductTable extends AdminTable
     {
         return $this->newTable()
             ->editColumn('thumbnail', function ($product) {
-                return view('admin::partials.table.image', [
+                $image = view('admin::partials.table.image', [
                     'file' => ($product->base_image && $product->base_image->id)
                         ? $product->base_image
                         : (($product->variant && $product->variant->base_image && $product->variant->base_image->id)
                             ? $product->variant->base_image
                             : $product->base_image),
-                ]);
+                ])->render();
+                return "<div class='image-cell'>{$image}</div>";
             })
             ->editColumn('price', function (Product $product) {
                 if ($product->variants && $product->variants->count() > 0) {
@@ -104,25 +105,24 @@ class ProductTable extends AdminTable
             })
             ->editColumn('in_stock', function (Product $product) {
                 $clickable = (bool) $product->manage_stock || ($product->variants && $product->variants->where('manage_stock', true)->count() > 0);
+                $isInStock = $product->isInStock();
+                $badgeClass = $isInStock ? 'stock-badge' : 'stock-badge out-of-stock';
 
                 if ($product->variants && $product->variants->count() > 0) {
                     $activeVariants = $product->variants->where('is_active', true);
                     $count = $activeVariants->count();
-
                     $noManage = !$product->manage_stock && ($product->variants->where('manage_stock', true)->count() === 0);
 
                     if ($noManage) {
                         $inner = "<div class='stock-total'>" . e('Stokta') . "</div>"
-                            . "<div class='stock-count'>" . e("{$count} varyant") . "</div>";
-
-                        if ($clickable) {
-                            return "<a href='#' class='inventory-click' data-id='{$product->id}'>" . $inner . "</a>";
-                        }
-                        return "<div class='stock-cell-disabled'>" . $inner . "</div>";
+                            . "<div class='stock-count' style='font-size:10px; opacity:0.7; margin-left:5px;'>(" . e("{$count} v") . ")</div>";
+                        
+                        return $clickable 
+                            ? "<a href='#' class='inventory-click {$badgeClass}' data-id='{$product->id}'>{$inner}</a>"
+                            : "<div class='{$badgeClass}'>{$inner}</div>";
                     }
 
                     $sumQty = (float) $activeVariants->sum(function ($v) { return (float) $v->qty; });
-
                     $suffix = $product->saleUnit ? trim($product->saleUnit->getDisplaySuffix()) : '';
                     $value = fmod($sumQty, 1) === 0.0
                         ? (string) (int) $sumQty
@@ -130,31 +130,29 @@ class ProductTable extends AdminTable
                     $stockText = $suffix !== '' ? "$value $suffix" : $value;
 
                     $inner = "<div class='stock-total'>" . e($stockText) . "</div>"
-                        . "<div class='stock-count'>" . e("{$count} varyant") . "</div>";
+                        . "<div class='stock-count' style='font-size:10px; opacity:0.7; margin-left:5px;'>(" . e("{$count} v") . ")</div>";
 
-                    if ($clickable) {
-                        return "<a href='#' class='inventory-click' data-id='{$product->id}'>" . $inner . "</a>";
-                    }
-                    return "<div class='stock-cell-disabled'>" . $inner . "</div>";
+                    return $clickable 
+                        ? "<a href='#' class='inventory-click {$badgeClass}' data-id='{$product->id}'>{$inner}</a>"
+                        : "<div class='{$badgeClass}'>{$inner}</div>";
                 }
 
                 $text = !$product->manage_stock ? e('Stokta') : e($product->getFormattedStock());
-                if ($clickable) {
-                    return "<a href='#' class='inventory-click' data-id='{$product->id}'>" . $text . "</a>";
-                }
-                return $text;
+                return $clickable 
+                    ? "<a href='#' class='inventory-click {$badgeClass}' data-id='{$product->id}'>{$text}</a>"
+                    : "<div class='{$badgeClass}'>{$text}</div>";
             })
             ->editColumn('name', function (Product $product) {
                 $url = route('admin.products.edit', $product->id);
-                return "<a href='{$url}' class='name-link' title='Edit'>" . e($product->name) . "</a>";
+                return "<a href='{$url}' class='product-name-link' title='Düzenle'>" . e($product->name) . "</a>";
             })
             ->editColumn('status', function (Product $product) {
                 $checked = $product->is_active ? 'checked' : '';
 
-                return "<div class='switch'>
-                    <input type='checkbox' class='product-status-switch' id='product-{$product->id}-status' data-id='{$product->id}' {$checked} />
-                    <label for='product-{$product->id}-status'></label>
-                </div>";
+                return "<label class='switch'>
+                    <input type='checkbox' class='product-status-switch' data-id='{$product->id}' {$checked} />
+                    <span class='slider'></span>
+                </label>";
             })
             ->addColumn('actions', function (Product $product) {
                 $editUrl = route('admin.products.edit', $product->id);
@@ -171,26 +169,19 @@ class ProductTable extends AdminTable
                     </form>";
 
                 return "<div class='actions-grid'>
-                    <a href='{$editUrl}' class='action-edit' title='Edit' data-toggle='tooltip'>
-                        <svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none'>
-                            <path d='M4 20H20' stroke='#292D32' stroke-width='1.5' stroke-linecap='round'/>
-                            <path d='M16.44 3.56006L20.44 7.56006' stroke='#292D32' stroke-width='1.5' stroke-linecap='round'/>
-                            <path d='M14.02 5.98999L6.91 13.1C6.52 13.49 6.15 14.25 6.07 14.81L5.64 17.83C5.45 19.08 6.42 20.04 7.67 19.86L10.69 19.43C11.25 19.35 12.01 18.98 12.41 18.59L19.52 11.48' stroke='#292D32' stroke-width='1.5' stroke-linecap='round'/>
-                        </svg>
+                    <a href='{$editUrl}' class='btn-action-round' title='Düzenle' data-toggle='tooltip'>
+                        <svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z'></path></svg>
                     </a>
-                    <a href='{$viewUrl}' target='_blank' class='action-view' title='View' data-toggle='tooltip'>
-                        <svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none'>
-                            <path d='M2 12C2 12 5.99997 4 12 4C18 4 22 12 22 12C22 12 18 20 12 20C5.99997 20 2 12 2 12Z' stroke='#292D32' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/>
-                            <path d='M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z' stroke='#292D32' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/>
-                        </svg>
+                    <a href='{$viewUrl}' target='_blank' class='btn-action-round' title='Görüntüle' data-toggle='tooltip'>
+                        <svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z'></path><circle cx='12' cy='12' r='3'></circle></svg>
                     </a>
-                    {$duplicateForm}
-                    <a href='#' class='action-delete' data-id='{$deleteId}' title='Delete' data-toggle='tooltip' data-confirm>
-                        <svg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none'>
-                            <path d='M9 3H15' stroke='#292D32' stroke-width='1.5' stroke-linecap='round'/>
-                            <path d='M4 7H20' stroke='#292D32' stroke-width='1.5' stroke-linecap='round'/>
-                            <path d='M7 7L7.5 19C7.5 20.1046 8.39543 21 9.5 21H14.5C15.6046 21 16.5 20.1046 16.5 19L17 7' stroke='#292D32' stroke-width='1.5' stroke-linecap='round'/>
-                        </svg>
+                    <form method='POST' action='" . e(route('admin.products.duplicate', $product->id)) . "' style='display:inline'>" . csrf_field() . "
+                        <button type='submit' class='btn-action-round' title='Kopyala' data-toggle='tooltip' style='border:1px solid #e5e7eb;'>
+                            <svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='9' y='9' width='13' height='13' rx='2' ry='2'></rect><path d='M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'></path></svg>
+                        </button>
+                    </form>
+                    <a href='#' class='btn-action-round delete' data-id='{$deleteId}' title='Sil' data-toggle='tooltip'>
+                        <svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='3 6 5 6 21 6'></polyline><path d='M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2'></path><line x1='10' y1='11' x2='10' y2='17'></line><line x1='14' y1='11' x2='14' y2='17'></line></svg>
                     </a>
                 </div>";
             });

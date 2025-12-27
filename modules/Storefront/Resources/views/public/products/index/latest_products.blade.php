@@ -12,12 +12,39 @@
                             @foreach ($latestProductChunks as $latestProduct)
                                 <div x-data='ProductCard(@json($latestProduct))' class="vertical-product-card">
                                     <a :href="productUrl" class="product-image">
-                                        <img
-                                            :src="baseImage"
-                                            :class="{ 'image-placeholder': !hasBaseImage }"
-                                            :alt="productName"
-                                            loading="lazy"
-                                        />
+                                        <picture>
+                                            <template x-if="currentSourceFile?.listing_avif_srcset">
+                                                <source
+                                                    type="image/avif"
+                                                    :srcset="currentSourceFile.listing_avif_srcset"
+                                                    sizes="80px"
+                                                >
+                                            </template>
+                                            <template x-if="currentSourceFile?.listing_webp_srcset">
+                                                <source
+                                                    type="image/webp"
+                                                    :srcset="currentSourceFile.listing_webp_srcset"
+                                                    sizes="80px"
+                                                >
+                                            </template>
+                                            <template x-if="Boolean(currentSourceFile?.listing_jpeg_srcset)">
+                                                <source
+                                                    type="image/jpeg"
+                                                    :srcset="currentSourceFile.listing_jpeg_srcset"
+                                                    sizes="80px"
+                                                >
+                                            </template>
+
+                                            <img
+                                                :src="currentSourceFile?.thumb_jpeg_url || currentSourceFile?.card_jpeg_url || currentSourceFile?.grid_jpeg_url || currentSourceFile?.path || baseImage"
+                                                :class="{ 'image-placeholder': !hasBaseImage }"
+                                                :alt="productName"
+                                                loading="lazy"
+                                                decoding="async"
+                                                width="80"
+                                                height="80"
+                                            />
+                                        </picture>
 
                                         <div class="product-image-layer"></div>
                                     </a>

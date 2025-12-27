@@ -10,7 +10,7 @@ class TicketTable extends AdminTable
     {
         return $this->newTable()
             ->editColumn('user', function ($ticket) {
-                return optional($ticket->user)->email;
+                return optional($ticket->user)->email ?: ($ticket->guest_email ?? null);
             })
             ->editColumn('status', function ($ticket) {
                 $status = (string) $ticket->status;
@@ -18,7 +18,9 @@ class TicketTable extends AdminTable
                     case 'closed':
                         return 'Kapalı';
                     case 'waiting_admin':
+                        return 'Admin Bekleniyor';
                     case 'waiting_customer':
+                        return 'Müşteri Bekleniyor';
                     case 'open':
                     default:
                         return 'Açık';

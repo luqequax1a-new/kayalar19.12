@@ -13,12 +13,44 @@
                     >
                         <div class="swiper-wrapper">
                             @foreach ($slider->slides as $slide)
+                                @php
+                                    $slideFile = $slide->file ?? null;
+                                    $slideAvifSrcset = $slideFile?->ikas_avif_srcset ?: null;
+                                    $slideWebpSrcset = $slideFile?->ikas_webp_srcset ?: null;
+                                    $slideJpegSrcset = $slideFile?->ikas_jpeg_srcset ?: null;
+                                    $slideFallback = $slideFile?->detail_jpeg_url
+                                        ?? $slideFile?->grid_jpeg_url
+                                        ?? $slideFile?->path;
+                                    $slideAlt = strip_tags($slide->caption_1 ?? '') ?: 'Hero slide';
+                                @endphp
+
                                 <a href="{{ $slide->call_to_action_url }}" class="swiper-slide">
                                     <div
                                         class="slider-bg-image"
                                         data-swiper-parallax-x="50%"
-                                        style="background-image: url({{ $slide->file->path }})"
                                     >
+                                        @if (!empty($slideFallback))
+                                            <picture>
+                                                @if (!empty($slideAvifSrcset))
+                                                    <source srcset="{{ $slideAvifSrcset }}" sizes="100vw" type="image/avif">
+                                                @endif
+
+                                                @if (!empty($slideWebpSrcset))
+                                                    <source srcset="{{ $slideWebpSrcset }}" sizes="100vw" type="image/webp">
+                                                @endif
+
+                                                <img
+                                                    src="{{ $slideFallback }}"
+                                                    @if (!empty($slideJpegSrcset))
+                                                        srcset="{{ $slideJpegSrcset }}"
+                                                    @endif
+                                                    sizes="100vw"
+                                                    alt="{{ $slideAlt }}"
+                                                    loading="eager"
+                                                    decoding="async"
+                                                >
+                                            </picture>
+                                        @endif
                                     </div>
 
                                     <div class="slide-content {{ $slide->isAlignedLeft() ? 'align-left' : 'align-right' }}">

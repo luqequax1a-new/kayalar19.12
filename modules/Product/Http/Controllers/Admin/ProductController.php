@@ -591,7 +591,9 @@ class ProductController
 
         $query = Product::query()
             ->withoutGlobalScope('active')
-            ->with(['primaryCategory', 'brand'])
+            ->with(['primaryCategory', 'brand', 'variants' => function ($q) {
+                $q->withoutGlobalScope('active')->withBaseImage();
+            }])
             ->withBaseImage();
 
         $this->applyBulkFilters($query, $filters, $combine);
@@ -602,36 +604,26 @@ class ProductController
             ->limit(50)
             ->get()
             ->map(function (Product $product) {
-                $rawPrice = $product->getAttribute('price');
-                $rawSpecial = $product->getAttribute('special_price');
+                // Get active price and special price using model logic (handles dates, percentage, etc.)
+                $hasSpecial = $product->hasSpecialPrice();
+                $priceObj = $product->price;
+                $specialObj = $hasSpecial ? $product->getSpecialPrice() : null;
 
-                $price = null;
-                $priceFormatted = null;
-                if ($rawPrice instanceof \Modules\Support\Money) {
-                    $price = $rawPrice->amount();
-                    $priceFormatted = $rawPrice->format();
-                } elseif (is_numeric($rawPrice)) {
-                    $price = (float) $rawPrice;
-                    try {
-                        $priceFormatted = \Modules\Support\Money::inDefaultCurrency($price)->format();
-                    } catch (\Throwable $e) {
-                        $priceFormatted = number_format($price, 2);
+                // Fallback to default variant if main product has no price
+                if ($product->variants->isNotEmpty() && (!$priceObj || $priceObj->isZero())) {
+                    $defaultVariant = $product->variants->where('is_default', 1)->first() ?? $product->variants->first();
+                    if ($defaultVariant) {
+                        $hasSpecial = $defaultVariant->hasSpecialPrice();
+                        $priceObj = $defaultVariant->price;
+                        $specialObj = $hasSpecial ? $defaultVariant->getSpecialPrice() : null;
                     }
                 }
 
-                $special = null;
-                $specialFormatted = null;
-                if ($rawSpecial instanceof \Modules\Support\Money) {
-                    $special = $rawSpecial->amount();
-                    $specialFormatted = $rawSpecial->format();
-                } elseif ($rawSpecial !== null && $rawSpecial !== '' && is_numeric($rawSpecial)) {
-                    $special = (float) $rawSpecial;
-                    try {
-                        $specialFormatted = \Modules\Support\Money::inDefaultCurrency($special)->format();
-                    } catch (\Throwable $e) {
-                        $specialFormatted = number_format($special, 2);
-                    }
-                }
+                $price = $priceObj ? $priceObj->amount() : null;
+                $priceFormatted = $priceObj ? $priceObj->convertToCurrentCurrency()->format() : null;
+                
+                $special = $specialObj ? $specialObj->amount() : null;
+                $specialFormatted = $specialObj ? $specialObj->convertToCurrentCurrency()->format() : null;
 
                 $category = $product->primaryCategory;
                 $categoryName = '';
@@ -656,7 +648,15 @@ class ProductController
                 $imageUrl = null;
                 $baseImage = $product->base_image ?? null;
 
-                if ($baseImage) {
+                // Fallback to default variant image if product base image is empty
+                if ((!$baseImage || !$baseImage->exists) && $product->variants->isNotEmpty()) {
+                    $defaultVariant = $product->variants->where('is_default', 1)->first() ?? $product->variants->first();
+                    if ($defaultVariant) {
+                        $baseImage = $defaultVariant->base_image;
+                    }
+                }
+
+                if ($baseImage && $baseImage->exists) {
                     $path = null;
 
                     if (is_array($baseImage)) {
@@ -681,15 +681,22 @@ class ProductController
                     }
                 }
 
+                $vCount = $product->variants->count();
+                $displayName = $product->name;
+                if ($vCount > 0) {
+                    $displayName .= " ({$vCount} Varyant)";
+                }
+
                 return [
                     'id' => $product->id,
-                    'name' => $product->name,
+                    'name' => $displayName,
                     'brand' => optional($product->brand)->name,
                     'category' => $categoryName,
                     'price' => $price,
                     'price_formatted' => $priceFormatted,
                     'special_price' => $special,
                     'special_price_formatted' => $specialFormatted,
+                    'has_special_price' => $hasSpecial,
                     'image' => $imageUrl,
                 ];
             });
@@ -827,12 +834,68 @@ class ProductController
                     }
                 }
 
-                if ($attribute === 'short_description') {
+                if ($attribute === 'name' || $attribute === 'short_description' || $attribute === 'description') {
                     if ($mode === 'set' && is_string($value) && $value !== '') {
                         foreach ($product->translations as $translation) {
-                            $translation->short_description = $value;
+                            $translation->{$attribute} = $value;
                             $translation->save();
                         }
+                    } elseif ($mode === 'search_replace' && is_array($value)) {
+                        $search = $value['search'] ?? '';
+                        $replace = $value['replace'] ?? '';
+                        if ($search !== '') {
+                            foreach ($product->translations as $translation) {
+                                $currentText = $translation->{$attribute} ?? '';
+                                $translation->{$attribute} = str_replace($search, $replace, $currentText);
+                                $translation->save();
+                            }
+                        }
+                    }
+                }
+
+                if ($attribute === 'sku') {
+                    $currentSku = $product->sku ?? '';
+                    if ($mode === 'set') {
+                        $baseUpdates['sku'] = $value;
+                    } elseif ($mode === 'prefix' && is_string($value) && $value !== '') {
+                        $baseUpdates['sku'] = $value . $currentSku;
+                    } elseif ($mode === 'suffix' && is_string($value) && $value !== '') {
+                        $baseUpdates['sku'] = $currentSku . $value;
+                    }
+                }
+
+                if ($attribute === 'brand') {
+                    if ($mode === 'set' && $value) {
+                        $baseUpdates['brand_id'] = (int) $value;
+                    } elseif ($mode === 'clear') {
+                        $baseUpdates['brand_id'] = null;
+                    }
+                }
+
+                if ($attribute === 'status') {
+                    if ($mode === 'set') {
+                        $baseUpdates['is_active'] = (int) $value === 1 ? 1 : 0;
+                    }
+                }
+
+                if ($attribute === 'manage_stock') {
+                    if ($mode === 'set') {
+                        $baseUpdates['manage_stock'] = (int) $value === 1 ? 1 : 0;
+                    }
+                }
+
+                if ($attribute === 'qty') {
+                    $rawCurrent = (float) ($product->qty ?? 0);
+                    $newQty = $rawCurrent;
+                    if ($mode === 'set' && is_numeric($value)) {
+                        $newQty = (float) $value;
+                    } elseif (($mode === 'increase' || $mode === 'decrease') && is_numeric($value)) {
+                        $delta = (float) $value;
+                        $newQty = $mode === 'increase' ? $rawCurrent + $delta : $rawCurrent - $delta;
+                    }
+                    $baseUpdates['qty'] = max(0, $newQty);
+                    if ($baseUpdates['qty'] > 0) {
+                        $baseUpdates['in_stock'] = 1;
                     }
                 }
             }
@@ -905,24 +968,43 @@ class ProductController
                                 });
                         });
                     });
-                } elseif ($attribute === 'price') {
+                } elseif ($attribute === 'price' || $attribute === 'qty') {
                     if (!is_numeric($value)) {
                         continue;
                     }
                     $v = (float) $value;
+                    $dbField = $attribute === 'price' ? 'price' : 'qty';
 
-                    $outer->{$method}(function ($q) use ($operator, $v) {
+                    $outer->{$method}(function ($q) use ($operator, $v, $dbField) {
                         if ($operator === '>=') {
-                            $q->where('price', '>=', $v);
+                            $q->where($dbField, '>=', $v);
                         } elseif ($operator === '<=') {
-                            $q->where('price', '<=', $v);
+                            $q->where($dbField, '<=', $v);
                         } elseif ($operator === '>') {
-                            $q->where('price', '>', $v);
+                            $q->where($dbField, '>', $v);
                         } elseif ($operator === '<') {
-                            $q->where('price', '<', $v);
+                            $q->where($dbField, '<', $v);
                         } elseif ($operator === '=') {
-                            $q->where('price', '=', $v);
+                            $q->where($dbField, '=', $v);
                         }
+                    });
+                } elseif ($attribute === 'sku') {
+                    if (!is_string($value) || trim($value) === '') {
+                        continue;
+                    }
+                    $outer->{$method}(function ($q) use ($operator, $value) {
+                        if ($operator === 'contains') {
+                            $q->where('sku', 'like', '%' . $value . '%');
+                        } elseif ($operator === '=') {
+                            $q->where('sku', $value);
+                        }
+                    });
+                } elseif ($attribute === 'status') {
+                    if ($value === null || $value === '') {
+                        continue;
+                    }
+                    $outer->{$method}(function ($q) use ($value) {
+                        $q->where('is_active', (int) $value);
                     });
                 }
             }

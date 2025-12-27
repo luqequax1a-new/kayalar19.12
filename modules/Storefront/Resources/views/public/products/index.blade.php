@@ -133,6 +133,28 @@
     @endif
 @endpush
 
+@push('lcp_preload')
+    <style>
+        @media (max-width: 576px) {
+            .product-search-wrap .grid-view-products {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 12px;
+            }
+
+            .product-search-wrap .grid-view-products-item {
+                min-width: 0;
+            }
+
+            .product-search-wrap .product-card,
+            .product-search-wrap .product-image,
+            .product-search-wrap .product-image-shell {
+                width: 100%;
+            }
+        }
+    </style>
+@endpush
+
 @section('canonical')
     @php
         $baseUrl = url()->current();
@@ -222,30 +244,104 @@
 @endsection
 
 @push('globals')
+    @php
+        $initialProductsCollection = null;
+        try {
+            if (isset($initialProducts) && $initialProducts) {
+                $initialProductsCollection = method_exists($initialProducts, 'getCollection')
+                    ? $initialProducts->getCollection()
+                    : $initialProducts;
+            }
+        } catch (\Throwable $e) {
+            $initialProductsCollection = null;
+        }
+
+        $initialTotal = 0;
+        $initialFrom = null;
+        $initialTo = null;
+        try {
+            if (isset($initialProducts) && $initialProducts && method_exists($initialProducts, 'total')) {
+                $initialTotal = (int) $initialProducts->total();
+                $initialFrom = $initialProducts->firstItem();
+                $initialTo = $initialProducts->lastItem();
+            }
+        } catch (\Throwable $e) {
+            $initialTotal = 0;
+            $initialFrom = null;
+            $initialTo = null;
+        }
+
+        $initialProductsHtml = '';
+        $initialPaginationHtml = '';
+        $initialShowingText = '';
+
+        try {
+            if ($initialProductsCollection && $initialProductsCollection->count()) {
+                $initialProductsHtml = view(
+                    request('viewMode', 'grid') === 'list'
+                        ? 'storefront::public.products.index.list_view_products'
+                        : 'storefront::public.partials.products.grid',
+                    [
+                        'products' => $initialProductsCollection,
+                        'productsPaginator' => $initialProducts ?? null,
+                    ]
+                )->render();
+            }
+        } catch (\Throwable $e) {
+            $initialProductsHtml = '';
+        }
+
+        try {
+            if (isset($initialProducts) && $initialProducts && method_exists($initialProducts, 'total')) {
+                if ((int) $initialProducts->total() > (int) request('perPage', 20)) {
+                    $initialPaginationHtml = view('storefront::public.partials.pagination')->render();
+                }
+            }
+        } catch (\Throwable $e) {
+            $initialPaginationHtml = '';
+        }
+
+        try {
+            if ($initialTotal > 0) {
+                $initialShowingText = trans('storefront::products.showing_results', [
+                    'from' => $initialFrom,
+                    'to' => $initialTo,
+                    'total' => $initialTotal,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            $initialShowingText = '';
+        }
+    @endphp
+
     <script>
         window.FleetCart = window.FleetCart || { data: {}, langs: {} };
 
-        FleetCart.data['initialQuery'] = '{{ addslashes(request('query')) }}';
-        FleetCart.data['initialBrandName'] = '{{ addslashes($brandName ?? '') }}';
-        FleetCart.data['initialBrandBanner'] = '{{ addslashes($brandBanner ?? '') }}';
-        FleetCart.data['initialBrandSlug'] = '{{ addslashes(request('brand')) }}';
-        FleetCart.data['initialCategoryName'] = '{{ addslashes($categoryName ?? '') }}';
-        FleetCart.data['initialCategoryBanner'] = '{{ addslashes($categoryBanner ?? '') }}';
-        FleetCart.data['initialCategorySlug'] = '{{ addslashes(request('category')) }}';
+        FleetCart.data['initialQuery'] = '{{ addslashes((string) request('query', '')) }}';
+        FleetCart.data['initialBrandName'] = '{{ addslashes((string) ($brandName ?? '')) }}';
+        FleetCart.data['initialBrandBanner'] = '{{ addslashes((string) ($brandBanner ?? '')) }}';
+        FleetCart.data['initialBrandSlug'] = '{{ addslashes((string) request('brand', '')) }}';
+        FleetCart.data['initialCategoryName'] = '{{ addslashes((string) ($categoryName ?? '')) }}';
+        FleetCart.data['initialCategoryBanner'] = '{{ addslashes((string) ($categoryBanner ?? '')) }}';
+        FleetCart.data['initialCategorySlug'] = '{{ addslashes((string) request('category', '')) }}';
         FleetCart.data['initialCategoryDescriptionHtml'] = @json(isset($category) ? ($category->description ?? '') : '');
         FleetCart.data['initialCategoryFaqItems'] = @json(isset($category) && is_array($category->faq_items) ? $category->faq_items : []);
-        FleetCart.data['initialTagName'] = '{{ addslashes($tagName ?? '') }}';
-        FleetCart.data['initialTagSlug'] = '{{ addslashes(request('tag')) }}';
+        FleetCart.data['initialTagName'] = '{{ addslashes((string) ($tagName ?? '')) }}';
+        FleetCart.data['initialTagSlug'] = '{{ addslashes((string) request('tag', '')) }}';
         FleetCart.data['initialAttribute'] = @json((object) request('attribute', []));
         FleetCart.data['minPrice'] = {{ $minPrice }};
         FleetCart.data['maxPrice'] = {{ $maxPrice }};
-        FleetCart.data['initialSort'] = '{{ addslashes(request('sort', 'latest')) }}';
-        FleetCart.data['initialPage'] = {{ addslashes(request('page', 1)) }};
-        FleetCart.data['initialPerPage'] = {{ addslashes(request('perPage', 20)) }};
-        FleetCart.data['initialViewMode'] = '{{ addslashes(request('viewMode', 'grid')) }}';
+        FleetCart.data['initialSort'] = '{{ addslashes((string) request('sort', 'latest')) }}';
+        FleetCart.data['initialPage'] = {{ (int) request('page', 1) }};
+        FleetCart.data['initialPerPage'] = {{ (int) request('perPage', 20) }};
+        FleetCart.data['initialViewMode'] = '{{ addslashes((string) request('viewMode', 'grid')) }}';
         FleetCart.data['initialProducts'] = @json($initialProducts ?? null);
         FleetCart.data['initialAttributes'] = @json($initialAttributes ?? null);
         FleetCart.data['initialCategoryData'] = @json($initialCategoryData ?? null);
+        FleetCart.data['initialTotal'] = {{ (int) ($initialTotal ?? 0) }};
+        FleetCart.data['initialShowingText'] = @json($initialShowingText ?? '');
+        FleetCart.data['initialProductsHtml'] = @json($initialProductsHtml ?? '');
+        FleetCart.data['initialPaginationHtml'] = @json($initialPaginationHtml ?? '');
         FleetCart.langs['storefront::products.showing_results'] = '{{ trans("storefront::products.showing_results") }}';
     </script>
 
