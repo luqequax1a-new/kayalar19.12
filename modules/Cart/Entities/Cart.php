@@ -35,6 +35,14 @@ class Cart extends Model
     protected $fillable = [
         'id',
         'data',
+        'user_id',
+        'customer_email',
+        'customer_first_name',
+        'customer_last_name',
+        'customer_phone',
+        'is_recovered',
+        'recovered_at',
+        'order_id',
     ];
 
 

@@ -71,7 +71,6 @@
                         <a href="#" class="tab" data-tab="traffic">Kaynak</a>
                         <a href="#" class="tab" data-tab="hourly">Saatlik</a>
                         <a href="#" class="tab" data-tab="conversion">Dönüşüm</a>
-                        <a href="#" class="tab" data-tab="abandoned" style="color: #fa6d42;">Sepet Analizi</a>
                         <a href="#" class="tab" data-tab="live">Canlı</a>
                     </div>
 
@@ -132,29 +131,6 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="tab-panel" data-panel="abandoned">
-                            <div class="canvas">
-                                <canvas class="chart" data-chart-abandoned height="280"></canvas>
-                            </div>
-                            <div class="abandoned-metrics" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-top: 25px;">
-                                <div class="metric-card" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-                                    <div style="font-size: 12px; font-weight: 600; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Toplam Terk Edilen</div>
-                                    <div style="font-size: 28px; font-weight: 800; color: #78350f;" data-abandoned-total>—</div>
-                                </div>
-                                <div class="metric-card" style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-                                    <div style="font-size: 12px; font-weight: 600; color: #065f46; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Geri Kazanılan</div>
-                                    <div style="font-size: 28px; font-weight: 800; color: #047857;" data-recovered-total>—</div>
-                                </div>
-                                <div class="metric-card" style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-                                    <div style="font-size: 12px; font-weight: 600; color: #1e40af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Kazanılan Tutar</div>
-                                    <div style="font-size: 28px; font-weight: 800; color: #1e3a8a;" data-recovered-amount>—</div>
-                                </div>
-                                <div class="metric-card" style="background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%); padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
-                                    <div style="font-size: 12px; font-weight: 600; color: #4338ca; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">Dönüşüm Oranı</div>
-                                    <div style="font-size: 28px; font-weight: 800; color: #3730a3;" data-recovery-rate>—</div>
-                                </div>
-                            </div>
-                        </div>
                         <div class="tab-panel" data-panel="live">
                             <div class="dashboard-analytics-live" data-instant-tracking>
                                 <div class="dashboard-analytics-live__controls" data-instant-tracking-range>
@@ -165,16 +141,16 @@
 
                                 <div class="dashboard-analytics-live__cards">
                                     <div class="live-metric">
-                                        <span class="label">Toplam Sepet</span>
+                                        <span class="label">Ziyaret</span>
+                                        <span class="value" data-it-visits-count>—</span>
+                                    </div>
+                                    <div class="live-metric">
+                                        <span class="label">Aktif Sepet</span>
                                         <span class="value" data-it-carts-count>—</span>
                                     </div>
                                     <div class="live-metric">
-                                        <span class="label">Sepet Tutarı</span>
+                                        <span class="label">Sepet Değeri</span>
                                         <span class="value" data-it-carts-amount>—</span>
-                                    </div>
-                                    <div class="live-metric">
-                                        <span class="label">Ziyaret</span>
-                                        <span class="value" data-it-visits-count>—</span>
                                     </div>
                                 </div>
                             </div>

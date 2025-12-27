@@ -104,9 +104,21 @@ class OrderTable extends AdminTable
                     'email' => $order->customer_email,
                     'phone' => $order->customer_phone,
                     'products' => $order->products->map(function($p) {
+                        $variantSegments = [];
+
+                        if ($p->hasAnyVariation()) {
+                            foreach ($p->variations as $variation) {
+                                $valueLabel = $variation->values->first()?->label;
+
+                                if ($valueLabel) {
+                                    $variantSegments[] = $variation->name . ': ' . $valueLabel;
+                                }
+                            }
+                        }
+
                         return [
                             'name' => $p->product_name,
-                            'variant' => $p->product_variant?->name,
+                            'variant' => !empty($variantSegments) ? implode(' · ', $variantSegments) : null,
                             'sku' => $p->product_sku,
                             'qty' => $p->qty,
                             'unit' => $p->unit_label,

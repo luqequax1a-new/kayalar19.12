@@ -175,8 +175,6 @@ function renderActiveTabFromCache(root, activeKey, data) {
         const numberFormat = getApi()?.numberFormat || ((v) => String(v ?? ""));
         if (visitsEl) visitsEl.textContent = numberFormat(data?.conversion?.visits);
         if (ordersEl) ordersEl.textContent = numberFormat(data?.conversion?.orders);
-    } else if (activeKey === "abandoned") {
-        getApi()?.renderAbandonedChart?.(data.daily || []);
     }
 
     requestAnimationFrame(() => resizeCharts());

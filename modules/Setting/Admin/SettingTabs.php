@@ -36,7 +36,6 @@ class SettingTabs extends Tabs
             ->add($this->mail())
             ->add($this->newsletter())
             ->add($this->reviewCampaign())
-            ->add($this->abandonedCart())
             ->add($this->googleRecaptcha())
             ->add($this->customCssJs());
 
@@ -297,24 +296,6 @@ class SettingTabs extends Tabs
             ]);
 
             $tab->view('setting::admin.settings.tabs.review_campaign');
-        });
-    }
-
-
-    private function abandonedCart()
-    {
-        return tap(new Tab('abandoned_cart', 'Terk Edilmiş Sepet Ayarları'), function (Tab $tab) {
-            $tab->weight(34);
-
-            $tab->fields([
-                'abandoned_cart_reminder_enabled',
-                'abandoned_cart_reminder_delay_hours',
-                'abandoned_cart_coupon_enabled',
-                'abandoned_cart_coupon_discount_percent',
-                'abandoned_cart_coupon_valid_days',
-            ]);
-
-            $tab->view('setting::admin.settings.tabs.abandoned_cart');
         });
     }
 

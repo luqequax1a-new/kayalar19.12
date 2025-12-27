@@ -10,11 +10,22 @@
     </div>
 
     <div class="instant-tracking-cards" data-instant-tracking-cards>
+        <div class="card metric visits">
+            <div class="it-card-head">
+                <span class="it-icon" aria-hidden="true"></span>
+                <div class="it-title">
+                    <div class="label">Toplam Ziyaret</div>
+                    <div class="sub">Gerçek Ziyaret</div>
+                </div>
+            </div>
+            <div class="value"><span data-it-visits-count>—</span></div>
+        </div>
+        
         <div class="card metric carts">
             <div class="it-card-head">
                 <span class="it-icon" aria-hidden="true"></span>
                 <div class="it-title">
-                    <div class="label">Toplam Sepet</div>
+                    <div class="label">Aktif Sepet</div>
                     <div class="sub">Sepet Sayısı</div>
                 </div>
             </div>
@@ -25,21 +36,11 @@
             <div class="it-card-head">
                 <span class="it-icon" aria-hidden="true"></span>
                 <div class="it-title">
-                    <div class="label">Toplam Sepet</div>
-                    <div class="sub">Sepet Tutarı</div>
+                    <div class="label">Sepet Değeri</div>
+                    <div class="sub">Toplam Tutar</div>
                 </div>
             </div>
             <div class="value" data-it-carts-amount>—</div>
-        </div>
-        <div class="card metric visits">
-            <div class="it-card-head">
-                <span class="it-icon" aria-hidden="true"></span>
-                <div class="it-title">
-                    <div class="label">Toplam Ziyaret</div>
-                    <div class="sub">Gerçek Ziyaret</div>
-                </div>
-            </div>
-            <div class="value"><span data-it-visits-count>—</span></div>
         </div>
     </div>
 </div>

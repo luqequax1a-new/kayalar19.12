@@ -13,9 +13,11 @@ class AddSupersededAtToCartsTable extends Migration
      */
     public function up()
     {
-        Schema::table('carts', function (Blueprint $table) {
-            $table->timestamp('superseded_at')->nullable()->after('is_recovered');
-        });
+        if (!Schema::hasColumn('carts', 'superseded_at')) {
+            Schema::table('carts', function (Blueprint $table) {
+                $table->timestamp('superseded_at')->nullable();
+            });
+        }
     }
 
     /**
@@ -25,8 +27,10 @@ class AddSupersededAtToCartsTable extends Migration
      */
     public function down()
     {
-        Schema::table('carts', function (Blueprint $table) {
-            $table->dropColumn('superseded_at');
-        });
+        if (Schema::hasColumn('carts', 'superseded_at')) {
+            Schema::table('carts', function (Blueprint $table) {
+                $table->dropColumn('superseded_at');
+            });
+        }
     }
 }

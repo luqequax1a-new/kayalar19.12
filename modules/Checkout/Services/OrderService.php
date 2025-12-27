@@ -570,18 +570,6 @@ class OrderService
                 'recovered_at' => now(),
                 'order_id' => $order->id,
             ]);
-
-        // Also mark the original abandoned cart as recovered if we tracked it via session
-        if (session()->has('recovered_from_cart_id')) {
-            $abandonedId = session()->get('recovered_from_cart_id');
-            \Modules\Cart\Entities\Cart::where('id', $abandonedId)
-                ->update([
-                    'is_recovered' => true,
-                    'recovered_at' => now(),
-                    'order_id' => $order->id,
-                ]);
-            session()->forget('recovered_from_cart_id');
-        }
     }
 
 

@@ -629,7 +629,26 @@ attachReviewsTabListener();
 
 Alpine.data(
     "ProductShow",
-    ({ product, variant, reviewCount, avgRating, ratingBreakdown, flashSalePrice }) => ({
+    ({ product, variant, reviewCount, avgRating, ratingBreakdown, flashSalePrice }) => {
+        // Pre-initialize variant state from SSR to prevent flash during Alpine hydration
+        const initialVariations = {};
+        const initialActiveValues = {};
+        
+        if (variant && variant.uids && product.variations) {
+            const uids = String(variant.uids).split(".").filter(Boolean);
+            uids.forEach((uid) => {
+                product.variations.some((variation) => {
+                    const value = variation.values.find((v) => String(v.uid) === String(uid));
+                    if (value) {
+                        initialActiveValues[variation.uid] = value.label;
+                        initialVariations[variation.uid] = String(uid);
+                        return true;
+                    }
+                });
+            });
+        }
+        
+        return {
         product: product,
         item: variant || product,
         optionPrices: {},
@@ -639,10 +658,10 @@ Alpine.data(
         cartItemForm: {
             product_id: product.id,
             qty: getDefaultQty(product),
-            variations: {},
+            variations: initialVariations,
             options: {},
         },
-        activeVariationValues: {},
+        activeVariationValues: initialActiveValues,
         variationImagePath: null,
         showDescriptionContent: false,
         showMore: false,
@@ -669,6 +688,18 @@ Alpine.data(
         // Review kuponu için: review request mailinden gelen order_id query parametresi
         orderIdFromQuery: null,
 
+        normalizeUids(uids) {
+            try {
+                return String(uids || "")
+                    .split(".")
+                    .filter(Boolean)
+                    .sort()
+                    .join(".");
+            } catch (_) {
+                return "";
+            }
+        },
+
         prefetchVariantMedia(variationIndex, valueIndex) {
             try {
                 if (!this.hasAnyVariant) return;
@@ -688,7 +719,9 @@ Alpine.data(
                     .sort()
                     .join(".");
 
-                const variant = this.product.variants?.find((v) => v && v.uids === selectedUids);
+                const variant = this.product.variants?.find(
+                    (v) => v && this.normalizeUids(v.uids) === selectedUids
+                );
 
                 const urls = [];
 
@@ -1202,8 +1235,25 @@ Alpine.data(
             this.setOldMediaLength();
             this.initGalleryPreviewZoom();
             bindGalleryVideoOverlayState();
-            this.setActiveVariationsValue();
-            this.setVariant(); // Ensure item matches variations on load
+            
+            // Defer variant state initialization to prevent overwriting SSR state
+            this.$nextTick(() => {
+                try {
+                    // Only sync if we don't already have a valid selection from SSR
+                    const hasVariations = Object.keys(this.cartItemForm.variations || {}).length > 0;
+                    const hasActiveValues = Object.keys(this.activeVariationValues || {}).length > 0;
+                    
+                    if (!hasVariations && !hasActiveValues && this.item?.uids) {
+                        this.setActiveVariationsValue();
+                    }
+                    
+                    // Only call setVariant if we have a selection to sync
+                    if (hasVariations) {
+                        this.setVariant();
+                    }
+                } catch (_) { }
+            });
+            
             this.setDescriptionContentHeight();
             this.setCustomTabContentHeight();
             this.setCustomTab2ContentHeight();
@@ -1884,14 +1934,26 @@ Alpine.data(
                 .sort()
                 .join(".");
 
+            if (!selectedUids) {
+                return;
+            }
+
             const variant = this.product.variants.find(
-                (variant) => variant.uids === selectedUids
+                (variant) => this.normalizeUids(variant?.uids) === selectedUids
             );
 
             if (variant !== undefined) {
                 this.item = { ...variant };
                 return;
             }
+
+            // If we already have an item (SSR-selected variant), don't overwrite it with an empty
+            // placeholder unless the current selection truly diverges from that item's uids.
+            try {
+                if (this.item && this.normalizeUids(this.item?.uids) === selectedUids) {
+                    return;
+                }
+            } catch (_) { }
 
             // Set empty variant data if variant does not exist
             const uid = md5(
@@ -2633,5 +2695,6 @@ Alpine.data(
                 },
             });
         },
-    })
+    };
+    }
 );

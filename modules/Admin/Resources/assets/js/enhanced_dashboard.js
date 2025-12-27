@@ -7,7 +7,6 @@ let hourlyChart = null;
 let conversionChart = null;
 let orderStatusChart = null;
 let stockStatusChart = null;
-let abandonedChart = null;
 let trafficMetric = "orders";
 let topProductsLimit = 10;
 
@@ -478,127 +477,6 @@ function renderConversionChart(conversion) {
     });
 }
 
-
-function renderAbandonedChart(daily) {
-    const el = document.querySelector("[data-chart-abandoned]");
-    if (!el) return;
-
-    const labels = daily.map((d) => d.date);
-    const abandoned = daily.map((d) => Number(d.abandoned || 0));
-    const recovered = daily.map((d) => Number(d.recovered || 0));
-
-    if (abandonedChart) abandonedChart.destroy();
-
-    abandonedChart = new Chart(el, {
-        type: "bar",
-        data: {
-            labels,
-            datasets: [
-                {
-                    label: "Terk Edilen",
-                    data: abandoned,
-                    backgroundColor: "rgba(250, 109, 66, .85)",
-                    borderColor: "rgba(250, 109, 66, 1)",
-                    borderWidth: 1,
-                    borderRadius: 8,
-                },
-                {
-                    label: "Geri Kazanılan",
-                    data: recovered,
-                    backgroundColor: "rgba(92, 200, 88, .85)",
-                    borderColor: "rgba(92, 200, 88, 1)",
-                    borderWidth: 1,
-                    borderRadius: 8,
-                },
-            ],
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: 'top',
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(14, 30, 62, 0.9)',
-                    titleColor: '#fff',
-                    bodyColor: '#fff',
-                    borderColor: '#e2e8f0',
-                    borderWidth: 1,
-                    cornerRadius: 8,
-                    displayColors: false,
-                    callbacks: {
-                        label(ctx) {
-                            const index = ctx.dataIndex;
-                            const item = daily[index];
-                            const label = ctx.dataset.label;
-                            const count = Number(ctx.parsed.y || 0).toLocaleString();
-
-                            let amount = '';
-                            if (ctx.datasetIndex === 0) { // Terk Edilen
-                                amount = item.formatted_abandoned_amount || '0 ₺';
-                            } else { // Geri Kazanılan
-                                amount = item.formatted_recovered_amount || '0 ₺';
-                            }
-
-                            return `${label}: ${count} - Tutar: ${amount}`;
-                        },
-                    },
-                },
-            },
-            scales: {
-                x: {
-                    grid: { display: false },
-                },
-                y: {
-                    beginAtZero: true,
-                    grid: { color: 'rgba(226, 232, 240, 0.5)' },
-                    ticks: { precision: 0 },
-                },
-            },
-        },
-    });
-
-    // Calculate and display metrics
-    const totalAbandoned = abandoned.reduce((sum, val) => sum + val, 0);
-    const totalRecovered = recovered.reduce((sum, val) => sum + val, 0);
-    const recoveryRate = totalAbandoned > 0 ? ((totalRecovered / totalAbandoned) * 100).toFixed(1) : 0;
-
-    // Calculate total recovered amount
-    let totalRecoveredAmount = 0;
-    daily.forEach(item => {
-        totalRecoveredAmount += Number(item.recovered_amount || 0);
-    });
-
-    // Debug logging
-    console.log('Dashboard Metrics Debug:', {
-        totalAbandoned,
-        totalRecovered,
-        totalRecoveredAmount,
-        recoveryRate,
-        dailyData: daily
-    });
-
-    // Format amount (assuming default currency symbol is ₺)
-    const formattedAmount = new Intl.NumberFormat('tr-TR', {
-        style: 'currency',
-        currency: 'TRY',
-        minimumFractionDigits: 2
-    }).format(totalRecoveredAmount);
-
-    // Update DOM elements
-    const abandonedTotalEl = document.querySelector('[data-abandoned-total]');
-    const recoveredTotalEl = document.querySelector('[data-recovered-total]');
-    const recoveredAmountEl = document.querySelector('[data-recovered-amount]');
-    const recoveryRateEl = document.querySelector('[data-recovery-rate]');
-
-    if (abandonedTotalEl) abandonedTotalEl.textContent = totalAbandoned.toLocaleString();
-    if (recoveredTotalEl) recoveredTotalEl.textContent = totalRecovered.toLocaleString();
-    if (recoveredAmountEl) recoveredAmountEl.textContent = formattedAmount;
-    if (recoveryRateEl) recoveryRateEl.textContent = `%${recoveryRate}`;
-}
-
 function renderOrderStatusChart(data) {
     const el = document.querySelector("[data-chart-order-status]");
     if (!el || !data) return;
@@ -681,7 +559,6 @@ function resizeCharts() {
         conversionChart?.resize();
         orderStatusChart?.resize();
         stockStatusChart?.resize();
-        abandonedChart?.resize();
     } catch (e) {
     }
 }
@@ -696,7 +573,6 @@ window.EnhancedDashboardAnalytics = {
     renderConversionChart,
     renderOrderStatusChart,
     renderStockStatusChart,
-    renderAbandonedChart,
     resizeCharts,
     setTrafficMetric(metric) {
         trafficMetric = metric === "revenue" ? "revenue" : "orders";

@@ -157,7 +157,7 @@
                     <div style="flex: 1;">
                         <div style="font-weight:600; color:#1e293b; font-size:13px; margin-bottom:2px;">${p.name}</div>
                         <div style="color:#64748b; font-size:12px;">
-                            ${p.variant ? `<span>Varyant: ${p.variant}</span> | ` : ''}
+                            ${p.variant ? `<span>${p.variant}</span> | ` : ''}
                             <span>SKU: ${p.sku}</span>
                         </div>
                     </div>
