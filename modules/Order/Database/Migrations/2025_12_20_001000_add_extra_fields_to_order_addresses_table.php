@@ -10,16 +10,16 @@ return new class extends Migration
     {
         Schema::table('order_addresses', function (Blueprint $table) {
             if (! Schema::hasColumn('order_addresses', 'address_2')) {
-                $table->string('address_2')->nullable()->after('address_line');
+                $table->string('address_2')->nullable();
             }
             if (! Schema::hasColumn('order_addresses', 'zip')) {
-                $table->string('zip')->nullable()->after('district');
+                $table->string('zip')->nullable();
             }
             if (! Schema::hasColumn('order_addresses', 'country')) {
-                $table->string('country')->nullable()->after('zip');
+                $table->string('country')->nullable();
             }
             if (! Schema::hasColumn('order_addresses', 'billing_email')) {
-                $table->string('billing_email')->nullable()->after('country');
+                $table->string('billing_email')->nullable();
             }
         });
     }

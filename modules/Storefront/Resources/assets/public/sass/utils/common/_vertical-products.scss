@@ -308,6 +308,34 @@
     }
 }
 
+@media screen and (max-width: 767px) {
+    .vertical-products-wrap {
+        .row {
+            > div {
+                width: 100%;
+                max-width: 100%;
+                flex: 0 0 100%;
+                
+                &:not(:first-child) {
+                    .vertical-products {
+                        margin-top: 30px;
+                    }
+                }
+            }
+        }
+        
+        &.flash-sale-enabled {
+            .row {
+                > div {
+                    width: 100%;
+                    max-width: 100%;
+                    flex: 0 0 100%;
+                }
+            }
+        }
+    }
+}
+
 @media screen and (max-width: 576px) {
     .daily-deals {
         .daily-deals-inner {
@@ -322,6 +350,20 @@
                 left: 50%;
                 top: 50%;
                 transform: translate(-50%, -50%);
+            }
+        }
+    }
+    
+    .vertical-products-wrap {
+        margin-top: 30px;
+        
+        .vertical-products {
+            .vertical-products-header {
+                margin-bottom: 15px;
+                
+                .section-title {
+                    font-size: 16px;
+                }
             }
         }
     }

@@ -5,6 +5,7 @@
                 <tr>
                     <th></th>
                     <th>{{ trans('attribute::admin.form.value') }}</th>
+                    <th class="attribute-color-column">{{ trans('attribute::attributes.filterable_types.color') }}</th>
                     <th></th>
                 </tr>
             </thead>

@@ -25,12 +25,14 @@ class Attribute extends Model
      * @var array
      */
     protected $with = ['translations'];
+    public const FILTERABLE_TYPES = ['checkbox', 'radio', 'dropdown', 'range', 'color'];
+
     /**
      * The attributes that are mass assignable.
      *
      * @var array
      */
-    protected $fillable = ['attribute_set_id', 'slug', 'is_filterable'];
+    protected $fillable = ['attribute_set_id', 'slug', 'is_filterable', 'filterable_type'];
 
     /**
      * The attributes that should be cast to native types.

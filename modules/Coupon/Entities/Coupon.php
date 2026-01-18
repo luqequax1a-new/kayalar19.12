@@ -55,6 +55,9 @@ class Coupon extends Model
         'customer_id',
         'redeemed_order_id',
         'redeemed_at',
+        'exclude_sale_items',
+        'show_in_account',
+        'show_in_checkout',
     ];
 
     /**
@@ -67,7 +70,11 @@ class Coupon extends Model
         'is_active' => 'boolean',
         'start_date' => 'datetime',
         'end_date' => 'datetime',
-        'deleted_at' => 'datetime'
+        'deleted_at' => 'datetime',
+        'redeemed_at' => 'datetime',
+        'exclude_sale_items' => 'boolean',
+        'show_in_account' => 'boolean',
+        'show_in_checkout' => 'boolean',
     ];
 
     /**
@@ -180,6 +187,44 @@ class Coupon extends Model
     }
 
 
+    public function timesUsedByCustomer($customerEmail = null)
+    {
+        if (auth()->guest() && is_null($customerEmail)) {
+            return 0;
+        }
+
+        $customerEmail = $customerEmail ?: auth()->user()->email;
+
+        return $this->orders()
+            ->where('customer_email', $customerEmail)
+            ->count();
+    }
+
+
+    public function remainingUsageForCustomer($customerEmail = null)
+    {
+        $remainingPerCustomer = null;
+        if (!is_null($this->usage_limit_per_customer)) {
+            $remainingPerCustomer = max(0, $this->usage_limit_per_customer - $this->timesUsedByCustomer($customerEmail));
+        }
+
+        $remainingGlobal = null;
+        if (!is_null($this->usage_limit_per_coupon)) {
+            $remainingGlobal = max(0, $this->usage_limit_per_coupon - $this->used);
+        }
+
+        if (is_null($remainingPerCustomer) && is_null($remainingGlobal)) {
+            return null;
+        }
+
+        if (!is_null($remainingPerCustomer) && !is_null($remainingGlobal)) {
+            return min($remainingPerCustomer, $remainingGlobal);
+        }
+
+        return $remainingPerCustomer ?? $remainingGlobal;
+    }
+
+
     public function orders()
     {
         return $this->hasMany(Order::class)->withTrashed();
@@ -266,6 +311,12 @@ class Coupon extends Model
     }
 
 
+    public function customer()
+    {
+        return $this->belongsTo(User::class, 'customer_id');
+    }
+
+
     public function getValueAttribute($value)
     {
         if ($this->is_percent) {
@@ -305,7 +356,7 @@ class Coupon extends Model
      */
     public function table()
     {
-        return new CouponTable($this->newQuery()->withoutGlobalScope('active'));
+        return new CouponTable($this->newQuery()->withoutGlobalScope('active')->with('customer'));
     }
 
 

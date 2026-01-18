@@ -39,7 +39,11 @@ class ProductEditResource extends JsonResource
             'variations' => VariationResource::collection($this->variations()->orderBy('position')->get()),
             'options' => OptionResource::collection($this->options),
             'variants' => ProductVariantResource::collection($this->variants()->withoutGlobalScope('active')->orderBy('position')->get()),
-            'media' => $this->filterFiles(['base_image', 'additional_images'])->get()->map->only('id', 'path'),
+            'media' => collect([])
+                ->concat($this->filterFiles('base_image')->get()->map->only('id', 'path'))
+                ->concat($this->filterFiles('additional_images')->get()->map->only('id', 'path'))
+                ->values()
+                ->all(),
             'product_media' => $this->productMedia()->orderBy('position')->get(['id','product_id','variant_id','type','path','poster','position','is_active']),
             'price' => $this->price?->convertToCurrentCurrency()->amount(),
             'tax_class_id' => $this->tax_class_id ?? '',

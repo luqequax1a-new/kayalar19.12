@@ -8,4 +8,5 @@ return [
     'reset_password' => 'Reset Password',
     'no_further_action_is_required' => 'If you did not request a password reset, no further action is required.',
     'if_you\\’re_having_trouble' => 'If you’re having trouble clicking the "Reset Password" button, copy and paste the URL below into your web browser:',
+    'two_factor_code_subject' => 'Your Login Verification Code',
 ];

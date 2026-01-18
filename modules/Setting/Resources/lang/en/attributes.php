@@ -8,6 +8,7 @@ return [
     'reviews_enabled' => 'Reviews & Ratings',
     'auto_approve_reviews' => 'Auto Approve Reviews',
     'cookie_bar_enabled' => 'Cookie Bar',
+    'two_factor_auth_enabled' => 'Admin Two Factor Authentication (2FA)',
 
     'maintenance_mode' => 'Maintenance Mode',
 
@@ -106,10 +107,17 @@ return [
     'review_request_email_promo' => 'Email Promo',
 
     'abandoned_cart_reminder_enabled' => 'Abandoned Cart Auto Reminder',
+    'abandoned_cart_reminder_1_enabled' => '1st Reminder Active',
+    'abandoned_cart_reminder_2_enabled' => '2nd Reminder Active',
+    'abandoned_cart_reminder_3_enabled' => '3rd Reminder Active',
     'abandoned_cart_reminder_delay_hours' => 'Reminder Delay (Hours)',
     'abandoned_cart_coupon_enabled' => 'Create Coupon Automatically?',
     'abandoned_cart_coupon_discount_percent' => 'Coupon Discount Percent (%)',
     'abandoned_cart_coupon_valid_days' => 'Coupon Validity (Days)',
+    'abandoned_cart_reminder_2_delay_hours' => '2nd Reminder Gecikmesi (Hours)',
+    'abandoned_cart_coupon_2_discount_percent' => '2nd Coupon Discount Percent (%)',
+    'abandoned_cart_reminder_3_delay_hours' => '3rd Reminder Gecikmesi (Hours)',
+    'abandoned_cart_coupon_3_discount_percent' => '3rd Coupon Discount Percent (%)',
     'abandoned_cart_email_title' => 'Email Title',
     'abandoned_cart_email_intro' => 'Email Intro',
 
@@ -253,7 +261,7 @@ return [
     'bank_transfer_enabled' => 'Status',
     'translatable.bank_transfer_label' => 'Label',
     'translatable.bank_transfer_description' => 'Description',
-    'translatable.bank_transfer_instructions' => 'Instructions',
+    'translatable.bank_transfer_instructions' => 'Payment Instructions',
 
     'check_payment_enabled' => 'Status',
     'translatable.check_payment_label' => 'Label',

@@ -105,8 +105,13 @@ class DashboardAnalyticsController
         $totNew = array_sum(array_column($daily, 'new_customers'));
         $totReturning = array_sum(array_column($daily, 'returning_customers'));
 
+        // Calculate unique customers across entire period for accurate repeat rate
+        $uniqueCustomerStats = $this->getUniqueCustomerStats($start, $end);
+        $uniqueNew = $uniqueCustomerStats['new'];
+        $uniqueReturning = $uniqueCustomerStats['returning'];
+
         $aov = $totOrders > 0 ? $totRevenue / $totOrders : 0.0;
-        $repeatRate = ($totNew + $totReturning) > 0 ? $totReturning / ($totNew + $totReturning) : 0.0;
+        $repeatRate = ($uniqueNew + $uniqueReturning) > 0 ? $uniqueReturning / ($uniqueNew + $uniqueReturning) : 0.0;
 
         return response()->json([
             'daily' => $daily,
@@ -114,8 +119,8 @@ class DashboardAnalyticsController
                 'orders' => (int) $totOrders,
                 'revenue' => (float) $totRevenue,
                 'aov' => (float) $aov,
-                'new_customers' => (int) $totNew,
-                'returning_customers' => (int) $totReturning,
+                'new_customers' => (int) $uniqueNew,
+                'returning_customers' => (int) $uniqueReturning,
                 'repeat_rate' => (float) $repeatRate,
             ],
             'top_products' => $topProducts,
@@ -458,5 +463,34 @@ class DashboardAnalyticsController
         }
 
         return $url;
+    }
+
+    protected function getUniqueCustomerStats(Carbon $start, Carbon $end): array
+    {
+        $customerKeyExpr = "COALESCE(CAST(customer_id AS CHAR), CONCAT('email:', customer_email))";
+
+        // Get first order date for each customer (across all time, not just the period)
+        $firstOrdersSub = Order::query()
+            ->withoutCanceledOrders()
+            ->selectRaw("{$customerKeyExpr} as customer_key")
+            ->selectRaw('MIN(created_at) as first_order_at')
+            ->groupBy(DB::raw($customerKeyExpr));
+
+        // Count unique customers in the period
+        $stats = DB::table('orders as o')
+            ->joinSub($firstOrdersSub, 'c', function ($join) use ($customerKeyExpr) {
+                $join->on(DB::raw($customerKeyExpr), '=', 'c.customer_key');
+            })
+            ->whereNull('o.deleted_at')
+            ->whereNotIn('o.status', [Order::CANCELED, Order::REFUNDED])
+            ->whereBetween('o.created_at', [$start, $end])
+            ->selectRaw("COUNT(DISTINCT CASE WHEN c.first_order_at >= ? AND c.first_order_at <= ? THEN c.customer_key END) as new_customers", [$start, $end])
+            ->selectRaw("COUNT(DISTINCT CASE WHEN c.first_order_at < ? THEN c.customer_key END) as returning_customers", [$start])
+            ->first();
+
+        return [
+            'new' => (int) ($stats->new_customers ?? 0),
+            'returning' => (int) ($stats->returning_customers ?? 0),
+        ];
     }
 }

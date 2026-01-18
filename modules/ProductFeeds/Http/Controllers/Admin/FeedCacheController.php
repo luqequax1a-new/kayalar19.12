@@ -7,6 +7,10 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Str;
 use Modules\ProductFeeds\Http\Controllers\Public\GoogleFeedController;
 use Modules\ProductFeeds\Http\Controllers\Public\MetaFeedController;
+use Modules\ProductFeeds\Http\Controllers\Public\TrendyolFeedController;
+use Modules\ProductFeeds\Http\Controllers\Public\HepsiburadaFeedController;
+use Modules\ProductFeeds\Http\Controllers\Public\PinterestFeedController;
+use Modules\ProductFeeds\Http\Controllers\Public\TikTokFeedController;
 use Modules\ProductFeeds\Services\FeedCacheService;
 
 class FeedCacheController extends Controller
@@ -17,21 +21,35 @@ class FeedCacheController extends Controller
 
     public function refresh(string $channel): RedirectResponse
     {
-        $validChannels = ['google', 'meta'];
+        $validChannels = ['google', 'meta', 'trendyol', 'hepsiburada', 'pinterest', 'tiktok'];
 
         if (! in_array($channel, $validChannels, true)) {
             abort(404);
         }
 
-        switch ($channel) {
-            case 'google':
-                $controller = app(GoogleFeedController::class);
-                $controller->regenerateCache();
-                break;
-            case 'meta':
-                $controller = app(MetaFeedController::class);
-                $controller->regenerateCache();
-                break;
+        try {
+            switch ($channel) {
+                case 'google':
+                    app(GoogleFeedController::class)->regenerateCache();
+                    break;
+                case 'meta':
+                    app(MetaFeedController::class)->regenerateCache();
+                    break;
+                case 'trendyol':
+                    app(TrendyolFeedController::class)->regenerateCache();
+                    break;
+                case 'hepsiburada':
+                    app(HepsiburadaFeedController::class)->regenerateCache();
+                    break;
+                case 'pinterest':
+                    app(PinterestFeedController::class)->regenerateCache();
+                    break;
+                case 'tiktok':
+                    app(TikTokFeedController::class)->regenerateCache();
+                    break;
+            }
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', $e->getMessage());
         }
 
         return redirect()->back()->with('success', trans('product_feeds::messages.cache_refreshed'));

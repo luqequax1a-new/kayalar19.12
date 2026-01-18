@@ -153,7 +153,18 @@ class Setting extends Model
             return $this->translateOrDefault(locale())->value ?? null;
         }
 
-        return unserialize($this->plain_value);
+        if (is_null($this->plain_value)) {
+            return null;
+        }
+
+        try {
+            return unserialize($this->plain_value);
+        } catch (\Exception $e) {
+            // Eğer veri serialize edilmemişse (manuel SQL ile girilmişse) 
+            // JSON olup olmadığını kontrol et, değilse direkt döndür.
+            $decoded = json_decode($this->plain_value, true);
+            return json_last_error() === JSON_ERROR_NONE ? $decoded : $this->plain_value;
+        }
     }
 
 
@@ -166,6 +177,10 @@ class Setting extends Model
      */
     public function setPlainValueAttribute($value)
     {
-        $this->attributes['plain_value'] = serialize($value);
+        if (is_array($value)) {
+            $this->attributes['plain_value'] = serialize($value);
+        } else {
+            $this->attributes['plain_value'] = $value;
+        }
     }
 }

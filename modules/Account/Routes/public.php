@@ -22,6 +22,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('account/wishlist/products/{product}', 'AccountWishlistProductController@destroy')->name('account.wishlist.products.destroy');
 
     Route::get('account/reviews', 'AccountReviewController@index')->name('account.reviews.index');
+    Route::get('account/coupons', 'AccountCouponsController@index')->name('account.coupons.index');
 
     Route::get('account/addresses', 'AccountAddressController@index')->name('account.addresses.index');
     Route::post('account/addresses', 'AccountAddressController@store')->name('account.addresses.store');
@@ -29,5 +30,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('account/addresses/{id}', 'AccountAddressController@destroy')->name('account.addresses.destroy');
     Route::post('account/addresses/change-default', 'AccountAddressController@changeDefault')->name('account.addresses.change_default');
 });
+
+Route::get('order-tracking', 'OrderTrackingController@index')->name('order_tracking.index');
+Route::post('order-tracking', 'OrderTrackingController@show')->name('order_tracking.show');
 
 

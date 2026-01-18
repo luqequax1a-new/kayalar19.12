@@ -18,6 +18,12 @@ Alpine.data(
         suggestions: {
             categories: [],
             products: [],
+            bestSellers: [],
+            popularCategories: [],
+            popularSearches: [],
+            bestSellingCategories: [],
+            bestSellingBrands: [],
+            recentSearches: [],
             remaining: 0,
         },
 
@@ -26,14 +32,16 @@ Alpine.data(
                 return false;
             }
 
-            return this.hasAnySuggestion;
+            return this.hasAnySuggestion || this.hasAnyPopularSuggestion;
         },
 
         get moreResultsUrl() {
             if (this.userSelectedCategory && this.form.category) {
-                return `/categories/${this.form.category}/products?query=${this.form.query}&viewMode=grid`;
+                // Category search - use clean URL
+                return `/${this.form.category}?query=${this.form.query}`;
             }
-            return `/products?query=${this.form.query}&viewMode=grid`;
+            // All products search
+            return `/${window.FleetCart.productsPageSlug}?query=${this.form.query}`;
         },
 
         get hasAnySuggestion() {
@@ -44,10 +52,25 @@ Alpine.data(
             return this.suggestions.categories.length !== 0;
         },
 
+        get hasAnyPopularSuggestion() {
+            return this.suggestions.bestSellers.length !== 0 ||
+                this.suggestions.popularCategories.length !== 0 ||
+                this.suggestions.popularSearches.length !== 0 ||
+                this.suggestions.bestSellingCategories.length !== 0 ||
+                this.suggestions.bestSellingBrands.length !== 0 ||
+                this.suggestions.recentSearches.length !== 0;
+        },
+
         get allSuggestions() {
             return [
                 ...this.suggestions.categories,
                 ...this.suggestions.products,
+                ...this.suggestions.recentSearches.map(term => ({ name: term, url: `/${window.FleetCart.productsPageSlug}?query=${term}`, slug: 'recent-' + term, type: 'search' })),
+                ...this.suggestions.popularSearches.map(term => ({ name: term, url: `/${window.FleetCart.productsPageSlug}?query=${term}`, slug: 'popular-' + term, type: 'search' })),
+                ...this.suggestions.popularCategories,
+                ...this.suggestions.bestSellingCategories,
+                ...this.suggestions.bestSellingBrands,
+                ...this.suggestions.bestSellers,
             ];
         },
 
@@ -65,14 +88,10 @@ Alpine.data(
             this.$watch(
                 "form.query",
                 throttle((newQuery) => {
-                    if (newQuery === "") {
-                        this.clearSuggestions();
-                    } else {
-                        this.showSuggestions = true;
+                    this.showSuggestions = true;
 
-                        this.fetchSuggestions();
-                    }
-                }, 1000)
+                    this.fetchSuggestions();
+                }, 500)
             );
 
             this.$watch("showMiniSearch", (newValue) => {
@@ -85,7 +104,27 @@ Alpine.data(
                 this.hideSuggestions();
             });
 
+            this.loadRecentSearches();
             this.fetchSuggestions();
+        },
+
+        loadRecentSearches() {
+            const recent = localStorage.getItem('recentSearches');
+            this.suggestions.recentSearches = recent ? JSON.parse(recent) : [];
+        },
+
+        saveRecentSearch(term) {
+            if (!term) return;
+            let recent = localStorage.getItem('recentSearches');
+            recent = recent ? JSON.parse(recent) : [];
+            recent = [term, ...recent.filter(t => t !== term)].slice(0, 5);
+            localStorage.setItem('recentSearches', JSON.stringify(recent));
+            this.suggestions.recentSearches = recent;
+        },
+
+        clearRecentSearches() {
+            localStorage.removeItem('recentSearches');
+            this.suggestions.recentSearches = [];
         },
 
         hideSkeleton() {
@@ -108,8 +147,6 @@ Alpine.data(
         },
 
         async fetchSuggestions() {
-            if (this.form.query === "") return;
-
             const params = { query: this.form.query };
             if (this.userSelectedCategory && this.form.category) {
                 params.category = this.form.category;
@@ -124,6 +161,11 @@ Alpine.data(
 
             this.suggestions.categories = data.categories;
             this.suggestions.products = data.products;
+            this.suggestions.bestSellers = data.best_sellers || [];
+            this.suggestions.popularCategories = data.popular_categories || [];
+            this.suggestions.popularSearches = data.popular_searches || [];
+            this.suggestions.bestSellingCategories = data.best_selling_categories || [];
+            this.suggestions.bestSellingBrands = data.best_selling_brands || [];
             this.suggestions.remaining = data.remaining;
         },
 
@@ -131,6 +173,8 @@ Alpine.data(
             if (!this.form.query) {
                 return;
             }
+
+            this.saveRecentSearch(this.form.query);
 
             if (this.activeSuggestion) {
                 window.location.href = this.activeSuggestion.url;
@@ -141,14 +185,18 @@ Alpine.data(
             }
 
             if (this.userSelectedCategory && this.form.category) {
-                window.location.href = `/categories/${this.form.category}/products?query=${this.form.query}&viewMode=grid`;
+                window.location.href = `/categories/${this.form.category}/products?query=${this.form.query}`;
                 return;
             }
-            window.location.href = `/products?query=${this.form.query}&viewMode=grid`;
+            window.location.href = `/${window.FleetCart.productsPageSlug}?query=${this.form.query}`;
         },
 
         showExistingSuggestions() {
             this.showSuggestions = true;
+
+            if (this.form.query === '' && !this.hasAnyPopularSuggestion) {
+                this.fetchSuggestions();
+            }
         },
 
         clearSuggestions() {
@@ -160,6 +208,7 @@ Alpine.data(
             this.showSuggestions = false;
 
             this.clearActiveSuggestion();
+            this.clearSuggestions();
         },
 
         isActiveSuggestion(suggestion) {

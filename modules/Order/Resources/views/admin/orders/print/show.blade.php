@@ -181,6 +181,13 @@
                                     @foreach ($order->products as $product)
                                         <tr>
                                             <td>
+                                                @if ($product->is_upsell)
+                                                    <div style="margin-bottom: 2px;">
+                                                        <span style="display: inline-block; background-color:#fef3c7;color:#92400e; font-size: 10px; font-weight: 600; border-radius: 4px; padding: 1px 6px; text-transform: uppercase;">
+                                                            {{ trans('storefront::upsell.offer_badge') }}
+                                                        </span>
+                                                    </div>
+                                                @endif
                                                 <span>{{ $product->name }}</span>
 
                                                 @if ($product->hasAnyVariation())
@@ -219,7 +226,12 @@
                                             <td>
                                                 <label
                                                     class="visible-xs">{{ trans('order::print.unit_price') }}:</label>
-                                                <span>{{ $product->unit_price->convert($order->currency, $order->currency_rate)->format($order->currency) }}</span>
+                                                <span>
+                                                    @if ($product->is_upsell && $product->original_price)
+                                                        <span style="color: #94a3b8; font-size: 11px; text-decoration: line-through; margin-right: 4px;">{{ $product->original_price->convert($order->currency, $order->currency_rate)->format($order->currency) }}</span>
+                                                    @endif
+                                                    {{ $product->unit_price->convert($order->currency, $order->currency_rate)->format($order->currency) }}
+                                                </span>
                                             </td>
 
                                             <td>
@@ -229,7 +241,12 @@
                                             <td>
                                                 <label
                                                     class="visible-xs">{{ trans('order::print.line_total') }}:</label>
-                                                <span>{{ $product->line_total->convert($order->currency, $order->currency_rate)->format($order->currency) }}</span>
+                                                <span>
+                                                    @if ($product->is_upsell && $product->original_price)
+                                                        <span style="color: #94a3b8; font-size: 11px; text-decoration: line-through; margin-right: 4px;">{{ $product->original_price->multiply($product->qty)->convert($order->currency, $order->currency_rate)->format($order->currency) }}</span>
+                                                    @endif
+                                                    {{ $product->line_total->convert($order->currency, $order->currency_rate)->format($order->currency) }}
+                                                </span>
                                             </td>
                                         </tr>
                                     @endforeach

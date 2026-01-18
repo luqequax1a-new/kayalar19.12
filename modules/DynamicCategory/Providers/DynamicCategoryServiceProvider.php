@@ -19,8 +19,6 @@ class DynamicCategoryServiceProvider extends ServiceProvider
         $this->loadTranslationsFrom(__DIR__ . '/../Resources/lang', 'dynamic_category');
         $this->loadViewsFrom(__DIR__ . '/../Resources/views', 'dynamic_category');
 
-        $this->loadRoutesFrom(__DIR__ . '/../Routes/admin.php');
-
         TabManager::register('dynamic_categories', DynamicCategoryTabs::class);
     }
 

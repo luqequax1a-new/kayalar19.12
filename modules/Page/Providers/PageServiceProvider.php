@@ -26,11 +26,14 @@ class PageServiceProvider extends ServiceProvider
 
     private function registerPageRoute()
     {
+        // Disabled: UrlResolverController handles clean page URLs now
+        /*
         $this->app->booted(function () {
             Route::get('{slug}', [PageController::class, 'show'])
                 ->prefix(LaravelLocalization::setLocale())
                 ->middleware(['localize', 'locale_session_redirect', 'localization_redirect', 'web'])
                 ->name('pages.show');
         });
+        */
     }
 }

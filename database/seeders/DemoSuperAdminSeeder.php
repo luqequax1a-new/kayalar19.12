@@ -17,24 +17,33 @@ class DemoSuperAdminSeeder extends Seeder
      */
     public function run()
     {
-        $superAdminUser = User::create([
-            'first_name' => 'Super',
-            'last_name' => 'Admin',
-            'email' => 'superadmin@email.com',
-            'phone' => '0123456789',
-            'password' => Hash::make('j4xxCc7^4R['),
-        ]);
+        $superAdminUser = User::where('email', 'superadmin@email.com')->first();
+        if (!$superAdminUser) {
+            $superAdminUser = User::create([
+                'first_name' => 'Super',
+                'last_name' => 'Admin',
+                'email' => 'superadmin@email.com',
+                'phone' => '0123456789',
+                'password' => Hash::make('j4xxCc7^4R['),
+            ]);
 
-        $activation = Activation::create($superAdminUser);
-        Activation::complete($superAdminUser, $activation->code);
+            $activation = Activation::create($superAdminUser);
+            Activation::complete($superAdminUser, $activation->code);
+        }
 
         $superAdminRole = $this->createSuperAdminRole();
-        $superAdminUser->roles()->attach($superAdminRole);
+        $superAdminUser->roles()->syncWithoutDetaching($superAdminRole);
     }
 
 
     private function createSuperAdminRole()
     {
+        $role = Role::whereHas('translations', function ($query) {
+            $query->where('name', 'Super Admin');
+        })->first();
+
+        if ($role) return $role;
+
         return Role::create([
             'name' => 'Super Admin',
             'permissions' => $this->getAdminRolePermissions(),

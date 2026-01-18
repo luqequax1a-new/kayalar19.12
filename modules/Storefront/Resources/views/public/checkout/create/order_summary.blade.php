@@ -3,8 +3,6 @@
         <div class="order-summary-top">
             <h3 class="section-title">{{ trans('storefront::checkout.order_summary') }}</h3>
 
-            @include('storefront::public.partials.cart.upsell_box', ['upsellOffer' => $upsellOffer ?? null])
-
             @include('storefront::public.checkout.create.cart_items_skeleton')
 
             <template x-if="cartFetched">
@@ -18,12 +16,21 @@
                                         'image-placeholder': !hasBaseImage,
                                     }"
                                     :alt="productName"
+                                    loading="lazy"
                                 />
 
                                 <span class="qty-count" x-text="Number(cartItem.qty).toString()"></span>
                             </a>
 
                             <div class="product-info">
+                                <template x-if="cartItem.upsell && typeof cartItem.upsell === 'object' && Object.keys(cartItem.upsell).length > 0 && cartItem.upsell.is_upsell">
+                                    <div style="margin-bottom: 2px;">
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold" style="background-color:#fef3c7;color:#92400e; font-size: 10px; border-radius: 4px;">
+                                            🎁 Sepet Teklifi
+                                        </span>
+                                    </div>
+                                </template>
+
                                 <a
                                     :href="productUrl"
                                     class="product-name"
@@ -63,7 +70,12 @@
                                 </template>
                             </div>
                             
-                            <div class="product-price" x-text="formatCurrency(lineTotal(cartItem.qty)).replace(/,00$/, '').replace(/^₺/, '₺ ')"></div>
+                            <div class="product-price">
+                                <template x-if="cartItem.upsell && typeof cartItem.upsell === 'object' && Object.keys(cartItem.upsell).length > 0 && cartItem.upsell.is_upsell && cartItem.upsell.original_price">
+                                    <span style="color: #94a3b8; font-size: 11px; text-decoration: line-through; margin-right: 4px;" x-text="formatCurrency(cartItem.upsell.original_price * cartItem.qty).replace(/,00$/, '')"></span>
+                                </template>
+                                <span :style="cartItem.upsell && typeof cartItem.upsell === 'object' && Object.keys(cartItem.upsell).length > 0 && cartItem.upsell.is_upsell ? 'color: #10b981; font-weight: 700;' : ''" x-text="formatCurrency(lineTotal(cartItem.qty)).replace(/,00$/, '').replace(/^₺/, '₺ ')"></span>
+                            </div>
                         </li>
                     </template>
                 </ul>

@@ -1,152 +1,215 @@
-window.admin.removeSubmitButtonOffsetOn(["#logo", "#courier"]);
 
-let currencyRateExchangeService = $("#currency_rate_exchange_service");
+import sehirler from "@modules/../sehirler.json";
+import ilceler from "@modules/../ilceler.json";
 
-$(`#${currencyRateExchangeService.val()}-service`).removeClass("hide");
+(function ($) {
+    "use strict";
 
-currencyRateExchangeService.on("change", (e) => {
-    $(".currency-rate-exchange-service").addClass("hide");
+    let storeCountry = $("#store_country");
+    let storeStateInputWrapper = $(".store-state.input");
+    let storeStateSelectWrapper = $(".store-state.select");
+    let storeStateInput = $("#store_state_input");
+    let storeStateSelect = $("#store_state_select");
 
-    $(`#${e.currentTarget.value}-service`).removeClass("hide");
-});
+    let storeCityInputWrapper = $(".store-city.input");
+    let storeCitySelectWrapper = $(".store-city.select");
+    let storeCityInput = $("#store_city_input");
+    let storeCitySelect = $("#store_city_select");
 
-$("#auto_refresh_currency_rates").on("change", () => {
-    $("#auto-refresh-currency-rates-frequency-field").toggleClass("hide");
-});
-
-$("#auto_refresh_currency_rates").on("change", () => {
-    $("#auto-refresh-frequency-field").toggleClass("hide");
-});
-
-let smsService = $("#sms_service");
-
-$(`#${smsService.val()}-service`).removeClass("hide");
-
-smsService.on("change", (e) => {
-    $(".sms-service").addClass("hide");
-
-    $(`#${e.currentTarget.value}-service`).removeClass("hide");
-});
-
-$("#google_recaptcha_enabled").on("change", () => {
-    $("#google-recaptcha-fields").toggleClass("hide");
-});
-
-$("#facebook_login_enabled").on("change", () => {
-    $("#facebook-login-fields").toggleClass("hide");
-});
-
-$("#google_login_enabled").on("change", () => {
-    $("#google-login-fields").toggleClass("hide");
-});
-
-$("#paypal_enabled").on("change", () => {
-    $("#paypal-fields").toggleClass("hide");
-});
-
-$("#stripe_enabled").on("change", () => {
-    $("#stripe-fields").toggleClass("hide");
-});
-
-$("#paytm_enabled").on("change", () => {
-    $("#paytm-fields").toggleClass("hide");
-});
-
-$("#razorpay_enabled").on("change", () => {
-    $("#razorpay-fields").toggleClass("hide");
-});
-
-$("#instamojo_enabled").on("change", () => {
-    $("#instamojo-fields").toggleClass("hide");
-});
-
-$("#paystack_enabled").on("change", () => {
-    $("#paystack-fields").toggleClass("hide");
-});
-
-$("#authorizenet_enabled").on("change", () => {
-    $("#authorizenet-fields").toggleClass("hide");
-});
-
-$("#mercadopago_enabled").on("change", () => {
-    $("#mercadopago-fields").toggleClass("hide");
-});
-
-$("#flutterwave_enabled").on("change", () => {
-    $("#flutterwave-fields").toggleClass("hide");
-});
-
-$("#iyzico_enabled").on("change", () => {
-    $("#iyzico-fields").toggleClass("hide");
-});
-
-$("#bkash_enabled").on("change", () => {
-    $("#bkash-fields").toggleClass("hide");
-});
-
-$("#nagad_enabled").on("change", () => {
-    $("#nagad-fields").toggleClass("hide");
-});
-
-$("#sslcommerz_enabled").on("change", () => {
-    $("#sslcommerz-fields").toggleClass("hide");
-});
-
-$("#paytr_enabled").on("change", () => {
-    $("#paytr-fields").toggleClass("hide");
-});
-
-$("#payfast_enabled").on("change", () => {
-    $("#payfast-fields").toggleClass("hide");
-});
-
-$("#bank_transfer_enabled").on("change", () => {
-    $("#bank-transfer-fields").toggleClass("hide");
-});
-
-$("#check_payment_enabled").on("change", () => {
-    $("#check-payment-fields").toggleClass("hide");
-});
-
-$("#store_country").on("change", (e) => {
-    let oldState = $("#store_state").val();
-
-    axios({
-        method: "GET",
-        url: `/countries/${e.currentTarget.value}/states`,
-        baseURL: FleetCart.baseUrl,
-    }).then(({ data }) => {
-        $(".store-state").addClass("hide");
-
-        if (_.isEmpty(data)) {
-            return $(".store-state.input")
-                .removeClass("hide")
-                .find("input")
-                .val(oldState);
-        }
-
-        let options = "";
-
-        for (let code in data) {
-            options += `<option value="${code}">${data[code]}</option>`;
-        }
-
-        $(".store-state.select")
-            .removeClass("hide")
-            .find("select")
-            .html(options)
-            .val(oldState);
-    });
-});
-
-$(function () {
-    $("#store_country").trigger("change");
-
-    if ($("#logo").hasClass("active")) {
-        $("#logo")
-            .parent()
-            .find('button[type="submit"]')
-            .parent()
-            .removeClass("col-md-offset-2");
+    // Case insensitive title case for TR
+    function trTitleCase(name) {
+        if (name === null || name === undefined) return name;
+        const mapUpperToLower = { I: "ı", İ: "i", Ç: "ç", Ş: "ş", Ğ: "ğ", Ü: "ü", Ö: "ö" };
+        let s = String(name);
+        s = s.replace(/[IİÇŞĞÜÖ]/g, (ch) => mapUpperToLower[ch] || ch);
+        s = s.toLowerCase();
+        const mapLowerToUpper = { i: "İ", ı: "I", ç: "Ç", ş: "Ş", ğ: "Ğ", ü: "Ü", ö: "Ö" };
+        return s
+            .split(/([\s\-]+)/)
+            .map((part, idx) => {
+                if (idx % 2 === 1) return part;
+                if (!part) return part;
+                const first = part.charAt(0);
+                const rest = part.slice(1);
+                const firstU = mapLowerToUpper[first] || first.toUpperCase();
+                return firstU + rest;
+            })
+            .join("");
     }
-});
+
+    const SEHIRLER = sehirler.map((s) => ({ ...s, sehir_adi: trTitleCase(s.sehir_adi) }));
+    const ILCELER = ilceler.map((d) => ({ ...d, sehir_adi: trTitleCase(d.sehir_adi), ilce_adi: trTitleCase(d.ilce_adi) }));
+
+    function normalizeTR(s) {
+        if (!s) return s;
+        const map = { İ: 'I', ı: 'I', i: 'I', I: 'I', Ç: 'C', ç: 'c', Ş: 'S', ş: 's', Ğ: 'G', ğ: 'g', Ü: 'U', ü: 'u', Ö: 'O', ö: 'o' };
+        return String(s)
+            .replace(/[İıiIÇçŞşĞğÜüÖö]/g, (m) => map[m])
+            .normalize('NFD').replace(/\p{Diacritic}/gu, '')
+            .toUpperCase();
+    }
+
+    function getTrans(key, defaultVal) {
+        if (window.trans) {
+            let res = window.trans(key);
+            if (res && res !== key) return res;
+        }
+        return defaultVal || "Select...";
+    }
+
+    function updateStateSelect(states, selectedState) {
+        if ($.isEmptyObject(states)) {
+            storeStateSelectWrapper.addClass("hide");
+            storeStateInputWrapper.removeClass("hide");
+            storeStateSelect.prop("disabled", true);
+            storeStateInput.prop("disabled", false);
+        } else {
+            storeStateInputWrapper.addClass("hide");
+            storeStateSelectWrapper.removeClass("hide");
+            storeStateInput.prop("disabled", true);
+            storeStateSelect.prop("disabled", false);
+
+            storeStateSelect.empty();
+            let placeholder = getTrans("admin::admin.form.please_select", "Please Select");
+            storeStateSelect.append('<option value="">' + placeholder + '</option>');
+
+            $.each(states, function (code, name) {
+                let selected = code == selectedState ? "selected" : "";
+                storeStateSelect.append('<option value="' + code + '" ' + selected + '>' + name + '</option>');
+            });
+
+            if (storeStateSelect[0].selectize) {
+                storeStateSelect[0].selectize.destroy();
+                storeStateSelect.selectize();
+            }
+        }
+    }
+
+    function updateCitySelect(districts, selectedCity) {
+        if (!districts || districts.length === 0) {
+            storeCitySelectWrapper.addClass("hide");
+            storeCityInputWrapper.removeClass("hide");
+            storeCitySelect.prop("disabled", true);
+            storeCityInput.prop("disabled", false);
+        } else {
+            storeCityInputWrapper.addClass("hide");
+            storeCitySelectWrapper.removeClass("hide");
+            storeCityInput.prop("disabled", true);
+            storeCitySelect.prop("disabled", false);
+
+            storeCitySelect.empty();
+            let placeholder = getTrans("admin::admin.form.please_select", "Please Select");
+            storeCitySelect.append('<option value="">' + placeholder + '</option>');
+
+            $.each(districts, function (idx, district) {
+                let val = district.ilce_adi; // Checkout uses name or id? Checkout seems to use name for state but ID/Name mix for district. Admin usually saves Name for City.
+                // Checkout: map((d) => ({ id: d.ilce_id ?? d.ilce_adi, name: d.ilce_adi ?? String(d) }))
+                // Store City is usually text, so we should probably save the Name.
+                let selected = val == selectedCity ? "selected" : "";
+                storeCitySelect.append('<option value="' + val + '" ' + selected + '>' + val + '</option>');
+            });
+
+            if (storeCitySelect[0].selectize) {
+                storeCitySelect[0].selectize.destroy();
+                storeCitySelect.selectize();
+            }
+        }
+    }
+
+    function fetchStates(countryCode) {
+        if (!countryCode) return;
+
+        // Current values
+        // Determine current state value. If we are just switching countries, it might be empty.
+        // If we are loading, it might be populated.
+        // We can try to take value from Input or Select.
+        // Ensure we don't get 'undefined' string
+        let currentState = storeStateSelect.val() || storeStateInput.val() || storeStateSelect.data('initial-value') || "";
+
+        if (countryCode === 'TR') {
+            // Use SEHIRLER
+            let states = {};
+            SEHIRLER.forEach(s => {
+                states[s.sehir_id] = s.sehir_adi;
+            });
+            updateStateSelect(states, currentState);
+
+            // Trigger state change to populate cities if state is selected
+            if (currentState) {
+                handleStateChange(currentState);
+            }
+        } else {
+            // Standard AJAX
+            $.ajax({
+                type: "GET",
+                url: window.route ? window.route("countries.states.index", countryCode) : `/countries/${countryCode}/states`,
+                success: function (states) {
+                    updateStateSelect(states, currentState);
+                    // For non-TR, we don't have districts (cities), so show input for city
+                    updateCitySelect([], null);
+                }
+            });
+        }
+    }
+
+    function handleStateChange(stateValue) {
+        let currentCountry = storeCountry.val();
+        let currentCity = storeCitySelect.val() || storeCityInput.val() || storeCitySelect.data('initial-value') || "";
+
+        if (currentCountry === 'TR' && stateValue) {
+            // Filter ILCELER
+            // Checkout logic:
+            // const districtsForProvince = ILCELER.filter((d) => String(d.sehir_id) === String(provinceValue));
+            let districts = ILCELER.filter(d => String(d.sehir_id) === String(stateValue));
+            updateCitySelect(districts, currentCity);
+        } else {
+            // Show input if not TR or no state
+            updateCitySelect([], currentCity);
+        }
+    }
+
+    if (storeCountry.length > 0) {
+        // Store initial values in data attributes if needed, or just grab from value
+        // Blade renders value into input.
+
+        // Initial Load
+        fetchStates(storeCountry.val());
+
+        storeCountry.on("change", function () {
+            // Clear downstream selections on country change
+            storeStateInput.val('');
+            storeStateSelect.val('');
+            if (storeStateSelect[0].selectize) storeStateSelect[0].selectize.clear();
+
+            storeCityInput.val('');
+            storeCitySelect.val('');
+            if (storeCitySelect[0].selectize) storeCitySelect[0].selectize.clear();
+
+            fetchStates(this.value);
+        });
+
+        storeStateSelect.on("change", function () {
+            handleStateChange(this.value);
+        });
+    }
+
+    // Generic Toggle for Settings (Google, Facebook, Payment Gateways, etc.)
+    // Scans for checkboxes sticking to convention: name="{prefix}_enabled" -> id="{prefix}-fields"
+    // e.g. google_login_enabled -> google-login-fields
+    $('input[type=checkbox][name$="_enabled"]').on('change', function () {
+        let name = $(this).attr('name');
+        let prefix = name.replace('_enabled', '').replace(/_/g, '-');
+        let targetId = '#' + prefix + '-fields';
+
+        let $target = $(targetId);
+
+        if ($target.length > 0) {
+            if (this.checked) {
+                $target.removeClass('hide');
+            } else {
+                $target.addClass('hide');
+            }
+        }
+    });
+
+})(jQuery);

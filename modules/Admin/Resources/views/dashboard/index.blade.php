@@ -3,7 +3,23 @@
 @section('title', trans('admin::dashboard.dashboard'))
 
 @section('content_header')
-    <h3 class="pull-left">{{ trans('admin::dashboard.dashboard') }}</h3>
+    <div class="dashboard-header-wrapper">
+        <div class="dashboard-header-left">
+            <h3>{{ trans('admin::dashboard.dashboard') }}</h3>
+        </div>
+        <div class="dashboard-quick-actions">
+            @hasAccess('admin.orders.index')
+                <a href="{{ route('admin.orders.index') }}" class="btn btn-default btn-actions">
+                    <i class="fa fa-shopping-cart"></i> Siparişler
+                </a>
+            @endHasAccess
+            @hasAccess('admin.products.create')
+                <a href="{{ route('admin.products.create') }}" class="btn btn-primary btn-actions">
+                    <i class="fa fa-plus"></i> Yeni Ürün
+                </a>
+            @endHasAccess
+        </div>
+    </div>
 @endsection
 
 @section('content')
@@ -25,7 +41,7 @@
     </div>
 
     <div class="row">
-        <div class="col-md-7">
+        <div class="col-md-6">
             @hasAccess('admin.orders.index')
                 {{-- Satış Analizi (legacy Sales Analytics paneli): Şimdilik gizlendi. Tekrar açmak için aşağıdaki include satırını yorumdan çıkar. --}}
                 {{-- @include('admin::dashboard.panels.sales_analytics') --}}
@@ -34,7 +50,7 @@
             @hasAccess('admin.orders.index')
                 <div class="dashboard-panel dashboard-analytics" data-dashboard-analytics>
                     <div class="grid-header clearfix">
-                        <h5 class="pull-left">Analytics</h5>
+                        <h5 class="text-center">Analytics</h5>
 
                         <div class="pull-right dashboard-range-selector" data-dashboard-range-selector>
                             <a href="#" class="range" data-range="today">Bugün</a>
@@ -68,9 +84,10 @@
                     <div class="dashboard-analytics-tabs" data-dashboard-analytics-tabs>
                         <a href="#" class="tab active" data-tab="trend">Trend</a>
                         <a href="#" class="tab" data-tab="customers">Müşteriler</a>
-                        <a href="#" class="tab" data-tab="traffic">Kaynak</a>
-                        <a href="#" class="tab" data-tab="hourly">Saatlik</a>
-                        <a href="#" class="tab" data-tab="conversion">Dönüşüm</a>
+                        <a href="#" class="tab" data-tab="traffic"><i class="fa fa-share-alt"></i> Kaynak</a>
+                        <a href="#" class="tab" data-tab="categories"><i class="fa fa-folder-open"></i> Kategoriler</a>
+                        <a href="#" class="tab" data-tab="brands"><i class="fa fa-tag"></i> Markalar</a>
+                        <a href="#" class="tab" data-tab="conversion"><i class="fa fa-shopping-cart"></i> Dönüşüm</a>
                         <a href="#" class="tab" data-tab="live">Canlı</a>
                     </div>
 
@@ -98,9 +115,9 @@
                                 <table class="table">
                                     <thead>
                                         <tr>
-                                            <th>Kaynak</th>
+                                            <th>Satış Kaynağı</th>
                                             <th class="text-right">Sipariş</th>
-                                            <th class="text-right">Ciro</th>
+                                            <th class="text-right">Toplam Ciro</th>
                                         </tr>
                                     </thead>
                                     <tbody data-traffic-body>
@@ -111,9 +128,14 @@
                                 </table>
                             </div>
                         </div>
-                        <div class="tab-panel" data-panel="hourly">
+                        <div class="tab-panel" data-panel="categories">
                             <div class="canvas">
-                                <canvas class="chart" data-chart-hourly height="280"></canvas>
+                                <canvas class="chart" data-chart-categories height="280"></canvas>
+                            </div>
+                        </div>
+                        <div class="tab-panel" data-panel="brands">
+                            <div class="canvas">
+                                <canvas class="chart" data-chart-brands height="280"></canvas>
                             </div>
                         </div>
                         <div class="tab-panel" data-panel="conversion">
@@ -172,75 +194,15 @@
             @endHasAccess
         </div>
 
-        <div class="col-md-5">
-            @hasAccess('admin.products.index')
-                <div class="dashboard-panel dashboard-top-products">
-                    <div class="grid-header clearfix">
-                        <h5 class="pull-left">En Çok Satanlar</h5>
+        <div class="col-md-6">
+            @include('admin::dashboard.panels.notifications')
 
-                        <div class="pull-left dashboard-top-products-tabs" data-top-entities-tabs>
-                            <a href="#" class="tab active" data-entity-tab="products">Ürünler</a>
-                            <a href="#" class="tab" data-entity-tab="categories">Kategoriler</a>
-                            <a href="#" class="tab" data-entity-tab="brands">Markalar</a>
-                        </div>
+            {{-- Birleşik İçgörüler Widget'ı --}}
+            @include('admin::dashboard.panels.insights_hub')
 
-                        <div class="pull-right dashboard-top-products-limit" data-top-products-limit>
-                            <a href="#" class="range" data-limit="5">5</a>
-                            <a href="#" class="range active" data-limit="10">10</a>
-                            <a href="#" class="range" data-limit="15">15</a>
-                            <a href="#" class="range" data-limit="20">20</a>
-                        </div>
-                    </div>
-
-                    <div class="dashboard-top-products-scroll">
-                        <div class="table-responsive dashboard-top-products-table">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th data-top-col-title>Ürün</th>
-                                        <th class="text-right">Adet</th>
-                                        <th class="text-right">Ciro</th>
-                                    </tr>
-                                </thead>
-                                <tbody data-top-products-body data-image-placeholder-url="{{ asset('build/assets/image-placeholder.png') }}">
-                                    <tr>
-                                        <td class="empty" colspan="3">{{ trans('admin::dashboard.no_data') }}</td>
-                                    </tr>
-                                </tbody>
-                                <tbody data-top-categories-body class="it-hidden">
-                                    <tr>
-                                        <td class="empty" colspan="3">{{ trans('admin::dashboard.no_data') }}</td>
-                                    </tr>
-                                </tbody>
-                                <tbody data-top-brands-body class="it-hidden">
-                                    <tr>
-                                        <td class="empty" colspan="3">{{ trans('admin::dashboard.no_data') }}</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            @endHasAccess
-
-            @hasAccess('admin.products.index')
-                @include('admin::dashboard.panels.low_stock')
-            @endHasAccess
-
+            {{-- Abandoned Cart --}}
             @hasAccess('admin.orders.index')
-                {{-- Terkedilen Sepetler paneli: şimdilik devre dışı. Açmak için bu satırı yorumdan çıkar. --}}
-                {{-- @include('admin::dashboard.panels.cart_activity') --}}
-            @endHasAccess
-
-            @hasAccess('admin.users.index')
-                @include('admin::dashboard.panels.top_customers')
-                @include('admin::dashboard.panels.latest_customers')
-            @endHasAccess
-
-            @include('admin::dashboard.panels.latest_searches')
-
-            @hasAccess('admin.reviews.index')
-                @include('admin::dashboard.panels.latest_reviews')
+                @include('admin::dashboard.panels.abandoned_cart_widget')
             @endHasAccess
         </div>
     </div>
@@ -254,5 +216,6 @@
         "modules/Admin/Resources/assets/js/enhanced_dashboard_part2.js",
         "modules/Admin/Resources/assets/js/instant_tracking.js",
         "modules/Admin/Resources/assets/js/low_stock_widget.js",
+        "modules/Admin/Resources/assets/js/insights_hub.js",
     ])
 @endpush

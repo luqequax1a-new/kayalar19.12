@@ -8,4 +8,5 @@ return [
     'maximum_spend' => 'Bu kuponu uygulamak için :amount tutarından az harcamalısınız',
     'inapplicable' => 'Bu kupon sepetinize uygulanamaz',
     'usage_limit_reached' => 'Kupon kullanım limiti doldu',
+    'exclude_sale_items' => 'Bu kupon indirimli ürünlerde kullanılamaz.',
 ];

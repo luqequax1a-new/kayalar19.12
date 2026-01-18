@@ -4,8 +4,7 @@ namespace Modules\SizeChart\Http\Controllers\Admin;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\DB;
 use Modules\Tag\Entities\Tag;
 use Modules\Product\Entities\Product;
 use Modules\Category\Entities\Category;
@@ -26,44 +25,48 @@ class SizeChartController
 
     protected string|array $validation = SaveSizeChartRequest::class;
 
-    public function store(SaveSizeChartRequest $request): RedirectResponse|JsonResponse
+    public function store(SaveSizeChartRequest $request)
     {
-        $this->disableSearchSyncing();
+        return DB::transaction(function () use ($request) {
+            $this->disableSearchSyncing();
 
-        $sizeChart = SizeChart::create($request->except(array_keys($request->query())));
+            $sizeChart = SizeChart::create($request->except(array_keys($request->query())));
 
-        $this->syncAssignments($sizeChart, $request);
+            $this->syncAssignments($sizeChart, $request);
 
-        if ($request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => trans('admin::messages.resource_created', ['resource' => trans($this->label)]),
-            ]);
-        }
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => trans('admin::messages.resource_created', ['resource' => trans($this->label)]),
+                ]);
+            }
 
-        return redirect()->route('admin.size_charts.index')
-            ->withSuccess(trans('admin::messages.resource_created', ['resource' => trans($this->label)]));
+            return redirect()->route('admin.size_charts.index')
+                ->withSuccess(trans('admin::messages.resource_created', ['resource' => trans($this->label)]));
+        });
     }
 
-    public function update(int $id, SaveSizeChartRequest $request): RedirectResponse|JsonResponse
+    public function update(int $id, SaveSizeChartRequest $request)
     {
-        $sizeChart = SizeChart::withoutGlobalScope('active')->findOrFail($id);
+        return DB::transaction(function () use ($id, $request) {
+            $sizeChart = SizeChart::withoutGlobalScope('active')->findOrFail($id);
 
-        $this->disableSearchSyncing();
+            $this->disableSearchSyncing();
 
-        $sizeChart->update($request->except(array_keys($request->query())));
+            $sizeChart->update($request->except(array_keys($request->query())));
 
-        $this->syncAssignments($sizeChart, $request);
+            $this->syncAssignments($sizeChart, $request);
 
-        if ($request->wantsJson()) {
-            return response()->json([
-                'success' => true,
-                'message' => trans('admin::messages.resource_updated', ['resource' => trans($this->label)]),
-            ]);
-        }
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => trans('admin::messages.resource_updated', ['resource' => trans($this->label)]),
+                ]);
+            }
 
-        return redirect()->route('admin.size_charts.index')
-            ->withSuccess(trans('admin::messages.resource_updated', ['resource' => trans($this->label)]));
+            return redirect()->route('admin.size_charts.index')
+                ->withSuccess(trans('admin::messages.resource_updated', ['resource' => trans($this->label)]));
+        });
     }
 
     public function searchProducts(Request $request)
@@ -72,7 +75,8 @@ class SizeChartController
 
         return Product::query()
             ->withoutGlobalScope('active')
-            ->with(['translations'])
+            ->select(['id']) // Optimize query
+            ->with(['translations:id,product_id,name']) // Load only necessary fields
             ->when($query !== '', function ($q) use ($query) {
                 $q->whereHas('translations', function ($tq) use ($query) {
                     $tq->where('name', 'like', "%{$query}%");
@@ -90,36 +94,41 @@ class SizeChartController
 
     private function syncAssignments(SizeChart $sizeChart, Request $request): void
     {
-        $sizeChart->assignments()->delete();
+        // Assignment list to bulk insert
+        $assignments = [];
+        $now = now();
 
-        $categoryIds = array_filter((array) $request->input('categories', []));
-        foreach ($categoryIds as $categoryId) {
-            SizeChartAssignment::create([
+        $addAssignment = function ($type, $id) use (&$assignments, $sizeChart, $now) {
+            if (empty($id)) return;
+            $assignments[] = [
                 'size_chart_id' => $sizeChart->id,
-                'assignable_type' => Category::class,
-                'assignable_id' => (int) $categoryId,
+                'assignable_type' => $type,
+                'assignable_id' => (int) $id,
                 'priority' => 0,
-            ]);
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        };
+
+        foreach (array_filter((array) $request->input('categories', [])) as $id) {
+            $addAssignment(Category::class, $id);
         }
 
-        $tagIds = array_filter((array) $request->input('tags', []));
-        foreach ($tagIds as $tagId) {
-            SizeChartAssignment::create([
-                'size_chart_id' => $sizeChart->id,
-                'assignable_type' => Tag::class,
-                'assignable_id' => (int) $tagId,
-                'priority' => 0,
-            ]);
+        foreach (array_filter((array) $request->input('tags', [])) as $id) {
+            $addAssignment(Tag::class, $id);
         }
 
         $productId = $request->input('product_id');
         if (!empty($productId)) {
-            SizeChartAssignment::create([
-                'size_chart_id' => $sizeChart->id,
-                'assignable_type' => Product::class,
-                'assignable_id' => (int) $productId,
-                'priority' => 0,
-            ]);
+            $addAssignment(Product::class, $productId);
+        }
+
+        // Delete existing assignments
+        $sizeChart->assignments()->delete();
+
+        // Insert new ones (if any)
+        if (!empty($assignments)) {
+            SizeChartAssignment::insert($assignments);
         }
     }
 }

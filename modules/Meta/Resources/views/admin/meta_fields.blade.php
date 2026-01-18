@@ -1,5 +1,5 @@
-@if ($entity->slug ?? false)
-    {{ Form::text('slug', trans('page::attributes.slug'), $errors, $entity, ['required' => true]) }}
+@if (method_exists($entity, 'setSlug') || $entity->slug)
+    {{ Form::text('slug', trans('page::attributes.slug'), $errors, $entity, ['labelCol' => 3]) }}
 @endif
 
 <div class="form-group">

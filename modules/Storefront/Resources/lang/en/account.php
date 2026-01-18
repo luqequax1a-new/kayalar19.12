@@ -14,6 +14,7 @@ return [
         'my_downloads' => 'My Downloads',
         'my_wishlist' => 'My Wishlist',
         'my_reviews' => 'My Reviews',
+        'my_coupons' => 'My Coupons',
         'my_addresses' => 'My Addresses',
         'my_profile' => 'My Profile',
         'logout' => 'Logout',
@@ -76,6 +77,18 @@ return [
     'reviews' => [
         'rating' => 'Rating',
         'no_reviews' => 'You haven\'t reviewed any product yet.',
+    ],
+    'coupons' => [
+        'no_coupons' => 'You don\'t have any coupons yet.',
+        'copy_code' => 'Copy Code',
+        'expires_on' => 'Expires On:',
+        'minimum_spend' => 'Min Spend:',
+        'usage_limit' => 'Usage Limit:',
+        'unlimited' => 'Unlimited',
+        'show_coupons' => 'Show My Coupons',
+        'hide_coupons' => 'Hide',
+        'active' => 'ACTIVE',
+        'passive' => 'PASSIVE',
     ],
     'addresses' => [
         'confirm' => 'Are you sure want to delete this address?',

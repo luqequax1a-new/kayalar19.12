@@ -1,0 +1,1227 @@
+@extends('admin::layout')
+
+@section('title', 'Terk Edilmiş Sepetler')
+
+@section('content_header')
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+            <h3 style="margin: 0; font-size: 28px; font-weight: 700; color: #2c3e50;">
+                <i class="fa fa-shopping-cart" style="color: #667eea;"></i> Terk Edilmiş Sepetler
+            </h3>
+            <p style="margin: 5px 0 0 0; color: #7f8c8d; font-size: 14px;">
+                <i class="fa fa-calendar"></i> Son 90 günlük sepet takibi
+            </p>
+        </div>
+        <ol class="breadcrumb" style="margin: 0; background: transparent;">
+            <li><a href="{{ route('admin.dashboard.index') }}">{{ trans('admin::dashboard.dashboard') }}</a></li>
+            <li><a href="#">{{ trans('admin::sidebar.automations') }}</a></li>
+            <li class="active">Terk Edilmiş Sepetler</li>
+        </ol>
+    </div>
+@endsection
+
+@push('styles')
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap.min.css">
+<style>
+    body.skin-blue .content-wrapper {
+        background: #f5f7fa;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.04);
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--accent-color);
+        transition: width 0.3s ease;
+    }
+
+    .stat-card:hover::before {
+        width: 8px;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+
+    .stat-card.warning { --accent-color: #f39c12; }
+    .stat-card.success { --accent-color: #00a65a; }
+    .stat-card.info { --accent-color: #3c8dbc; }
+    .stat-card.primary { --accent-color: #667eea; }
+
+    .stat-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+        margin-bottom: 16px;
+        background: var(--accent-color);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .stat-label {
+        font-size: 13px;
+        color: #7f8c8d;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .stat-value {
+        font-size: 32px;
+        font-weight: 800;
+        color: #2c3e50;
+        margin-bottom: 8px;
+        line-height: 1;
+    }
+
+    .stat-description {
+        font-size: 12px;
+        color: #95a5a6;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* Modern Table Styles */
+    .carts-container {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.04);
+    }
+
+    .carts-header {
+        padding: 24px 28px;
+        border-bottom: 2px solid #f5f7fa;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .carts-header h4 {
+        margin: 0;
+        color: #fff;
+        font-size: 20px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .carts-body {
+        padding: 0;
+    }
+
+    .cart-card {
+        padding: 20px 28px;
+        border-bottom: 1px solid #f0f0f0;
+        transition: all 0.2s ease;
+        display: grid;
+        grid-template-columns: 2fr 2fr 1fr 1.5fr 1fr 1fr 1.5fr auto;
+        gap: 16px;
+        align-items: center;
+    }
+
+    .cart-card:hover {
+        background: #f8f9fa;
+    }
+
+    .cart-card:last-child {
+        border-bottom: none;
+    }
+
+    .cart-card-header {
+        padding: 16px 28px;
+        background: #f8f9fa;
+        border-bottom: 2px solid #e9ecef;
+        display: grid;
+        grid-template-columns: 2fr 2fr 1fr 1.5fr 1fr 1fr 1.5fr auto;
+        gap: 16px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: #6c757d;
+    }
+
+    .cart-field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .cart-field-label {
+        font-size: 11px;
+        color: #95a5a6;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        display: none; /* Hidden on desktop, shown on mobile */
+    }
+
+    .cart-field-value {
+        font-size: 14px;
+        color: #2c3e50;
+        font-weight: 500;
+    }
+
+    .customer-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .customer-name {
+        font-weight: 700;
+        color: #2c3e50;
+        font-size: 14px;
+    }
+
+    .customer-email {
+        font-size: 13px;
+        color: #7f8c8d;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        white-space: nowrap;
+    }
+
+    .status-badge.success {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-badge.info {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .status-badge.warning {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-badge.secondary {
+        background: #e9ecef;
+        color: #6c757d;
+    }
+
+    .status-badge.primary {
+        background: #cfe2ff;
+        color: #084298;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+    }
+
+    .btn-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-size: 14px;
+    }
+
+    .btn-icon.btn-view {
+        background: #e3f2fd;
+        color: #1976d2;
+    }
+
+    .btn-icon.btn-view:hover {
+        background: #1976d2;
+        color: #fff;
+    }
+
+    .btn-icon.btn-email {
+        background: #fff3e0;
+        color: #f57c00;
+    }
+
+    .btn-icon.btn-email:hover {
+        background: #f57c00;
+        color: #fff;
+    }
+
+    .items-count {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        background: #f8f9fa;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .date-display {
+        font-size: 13px;
+        color: #6c757d;
+    }
+
+    .empty-state {
+        padding: 60px 20px;
+        text-align: center;
+    }
+
+    .empty-state-icon {
+        font-size: 64px;
+        color: #dee2e6;
+        margin-bottom: 20px;
+    }
+
+    .empty-state-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+
+    .empty-state-text {
+        font-size: 14px;
+        color: #6c757d;
+    }
+
+    /* Pagination */
+    .pagination-wrapper {
+        padding: 20px 28px;
+        border-top: 1px solid #f0f0f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .pagination {
+        margin: 0;
+    }
+
+    .pagination > li > a,
+    .pagination > li > span {
+        border-radius: 8px;
+        margin: 0 4px;
+        border: 1px solid #dee2e6;
+        color: #495057;
+        font-weight: 600;
+    }
+
+    .pagination > li.active > a,
+    .pagination > li.active > span {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-color: #667eea;
+    }
+
+    .pagination > li > a:hover {
+        background: #f8f9fa;
+        border-color: #dee2e6;
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+        .cart-card,
+        .cart-card-header {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .cart-field-label {
+            display: block;
+        }
+
+        .cart-card-header {
+            display: none;
+        }
+
+        .action-buttons {
+            justify-content: flex-start;
+        }
+    }
+
+    /* Loading State */
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255,255,255,0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+    }
+
+    .spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+@endpush
+
+@section('content')
+    {{-- Statistics Grid --}}
+    <div class="stats-grid">
+        <div class="stat-card warning">
+            <div class="stat-icon">
+                <i class="fa fa-shopping-cart"></i>
+            </div>
+            <div class="stat-label">Terk Edilen Sepetler</div>
+            <div class="stat-value">{{ number_format($stats['total_abandoned']) }}</div>
+            <div class="stat-description">
+                <i class="fa fa-calendar"></i>
+                <span>Son 30 gün</span>
+            </div>
+        </div>
+
+        <div class="stat-card success">
+            <div class="stat-icon">
+                <i class="fa fa-check-circle"></i>
+            </div>
+            <div class="stat-label">Kurtarılan Sepetler</div>
+            <div class="stat-value">{{ number_format($stats['total_recovered']) }}</div>
+            <div class="stat-description">
+                <i class="fa fa-line-chart"></i>
+                <span>{{ $stats['recovery_rate'] }}% başarı oranı</span>
+            </div>
+        </div>
+
+        <div class="stat-card info">
+            <div class="stat-icon">
+                <i class="fa fa-money"></i>
+            </div>
+            <div class="stat-label">Kurtarılan Gelir</div>
+            <div class="stat-value" style="font-size: 26px;">{{ $stats['recovered_revenue'] }}</div>
+            <div class="stat-description">
+                <i class="fa fa-arrow-up"></i>
+                <span>Toplam kazanç</span>
+            </div>
+        </div>
+
+        <div class="stat-card primary">
+            <div class="stat-icon">
+                <i class="fa fa-mouse-pointer"></i>
+            </div>
+            <div class="stat-label">Email Tıklamaları</div>
+            <div class="stat-value">{{ number_format($stats['clicked_carts']) }}</div>
+            <div class="stat-description">
+                <i class="fa fa-envelope-open"></i>
+                <span>Hatırlatma etkileşimi</span>
+            </div>
+        </div>
+    </div>
+
+    {{-- Carts List --}}
+    <div class="carts-container">
+        <div class="carts-header">
+            <h4>
+                <i class="fa fa-list"></i>
+                Sepet Listesi
+            </h4>
+        </div>
+
+        <div class="carts-body">
+            <div class="cart-card-header">
+                <div>Müşteri</div>
+                <div>E-posta</div>
+                <div>Ürünler</div>
+                <div>Durum</div>
+                <div>Tıklama</div>
+                <div>Hatırlatma</div>
+                <div>Tarih</div>
+                <div>İşlemler</div>
+            </div>
+
+            <div id="carts-list">
+                <div class="loading-overlay">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="pagination-wrapper" id="pagination-container" style="display: none;">
+            <div class="pagination-info">
+                <span id="showing-text"></span>
+            </div>
+            <ul class="pagination" id="pagination"></ul>
+        </div>
+    </div>
+@endsection
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+$(document).ready(function() {
+    let currentPage = 1;
+    let totalPages = 1;
+
+    function loadCarts(page = 1) {
+        const listContainer = $('#carts-list');
+        listContainer.html('<div class="loading-overlay"><div class="spinner"></div></div>');
+
+        $.ajax({
+            url: '{{ route("admin.abandoned_carts.index") }}',
+            data: {
+                table: true,
+                start: (page - 1) * 25,
+                length: 25
+            },
+            success: function(response) {
+                renderCarts(response.data);
+                updatePagination(response.recordsFiltered, page);
+            },
+            error: function() {
+                listContainer.html(`
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><i class="fa fa-exclamation-triangle"></i></div>
+                        <div class="empty-state-title">Hata Oluştu</div>
+                        <div class="empty-state-text">Sepetler yüklenirken bir hata oluştu.</div>
+                    </div>
+                `);
+            }
+        });
+    }
+
+    function renderCarts(carts) {
+        const listContainer = $('#carts-list');
+        
+        if (carts.length === 0) {
+            listContainer.html(`
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="fa fa-shopping-cart"></i></div>
+                    <div class="empty-state-title">Henüz Terk Edilmiş Sepet Yok</div>
+                    <div class="empty-state-text">Müşteriler sepetlerini terk ettiğinde burada görünecekler.</div>
+                </div>
+            `);
+            return;
+        }
+
+        let html = '';
+        carts.forEach(cart => {
+            const customerName = cart.customer_name || '-';
+            const customerEmail = cart.customer_email || '-';
+            const itemsCount = cart.items_count || 0;
+            const date = cart.updated_at || '-';
+
+            html += `
+                <div class="cart-card">
+                    <div class="cart-field">
+                        <div class="cart-field-label">Müşteri</div>
+                        <div class="customer-info">
+                            <div class="customer-name">${customerName}</div>
+                        </div>
+                    </div>
+
+                    <div class="cart-field">
+                        <div class="cart-field-label">E-posta</div>
+                        <div class="customer-email">${customerEmail}</div>
+                    </div>
+
+                    <div class="cart-field">
+                        <div class="cart-field-label">Ürünler</div>
+                        <div class="items-count">
+                            <i class="fa fa-shopping-bag"></i>
+                            ${itemsCount}
+                        </div>
+                    </div>
+
+                    <div class="cart-field">
+                        <div class="cart-field-label">Durum</div>
+                        ${cart.is_recovered}
+                    </div>
+
+                    <div class="cart-field">
+                        <div class="cart-field-label">Tıklama</div>
+                        ${cart.is_clicked}
+                    </div>
+
+                    <div class="cart-field">
+                        <div class="cart-field-label">Hatırlatma</div>
+                        ${cart.reminder_count}
+                    </div>
+
+                    <div class="cart-field">
+                        <div class="cart-field-label">Tarih</div>
+                        <div class="date-display">${date}</div>
+                    </div>
+
+                    <div class="cart-field">
+                        <div class="cart-field-label">İşlemler</div>
+                        ${cart.actions}
+                    </div>
+                </div>
+            `;
+        });
+
+        listContainer.html(html);
+    }
+
+    function updatePagination(total, currentPage) {
+        const perPage = 25;
+        totalPages = Math.ceil(total / perPage);
+        
+        if (totalPages <= 1) {
+            $('#pagination-container').hide();
+            return;
+        }
+
+        $('#pagination-container').show();
+        
+        const start = ((currentPage - 1) * perPage) + 1;
+        const end = Math.min(currentPage * perPage, total);
+        $('#showing-text').text(`${start}-${end} / ${total} sepet gösteriliyor`);
+
+        let paginationHtml = '';
+        
+        // Previous button
+        paginationHtml += `
+            <li class="${currentPage === 1 ? 'disabled' : ''}">
+                <a href="#" data-page="${currentPage - 1}">
+                    <i class="fa fa-chevron-left"></i>
+                </a>
+            </li>
+        `;
+
+        // Page numbers
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                paginationHtml += `
+                    <li class="${i === currentPage ? 'active' : ''}">
+                        <a href="#" data-page="${i}">${i}</a>
+                    </li>
+                `;
+            } else if (i === currentPage - 3 || i === currentPage + 3) {
+                paginationHtml += '<li class="disabled"><span>...</span></li>';
+            }
+        }
+
+        // Next button
+        paginationHtml += `
+            <li class="${currentPage === totalPages ? 'disabled' : ''}">
+                <a href="#" data-page="${currentPage + 1}">
+                    <i class="fa fa-chevron-right"></i>
+                </a>
+            </li>
+        `;
+
+        $('#pagination').html(paginationHtml);
+    }
+
+    // Pagination click handler
+    $(document).on('click', '#pagination a', function(e) {
+        e.preventDefault();
+        const page = parseInt($(this).data('page'));
+        if (page >= 1 && page <= totalPages) {
+            currentPage = page;
+            loadCarts(page);
+            $('html, body').animate({ scrollTop: $('.carts-container').offset().top - 100 }, 300);
+        }
+    });
+
+    // Send Reminder Handler
+    $(document).on('click', '.send-reminder-btn', function(e) {
+        e.preventDefault();
+        
+        var btn = $(this);
+        var cartId = btn.data('cart-id');
+        
+        if (!confirm('Bu sepet için hatırlatma e-postası göndermek istediğinize emin misiniz?')) {
+            return;
+        }
+        
+        btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i>');
+        
+        $.ajax({
+            url: '/admin/abandoned-carts/' + cartId + '/send-reminder',
+            type: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert(response.message);
+                    loadCarts(currentPage);
+                } else {
+                    alert('Hata: ' + response.message);
+                }
+            },
+            error: function(xhr) {
+                var message = 'Bir hata oluştu!';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    message = xhr.responseJSON.message;
+                }
+                alert(message);
+            },
+            complete: function() {
+                btn.prop('disabled', false).html('<i class="fa fa-envelope"></i>');
+            }
+        });
+    });
+
+    // Initial load
+    loadCarts(1);
+});
+</script>
+@endpush
+
+
+@section('content_header')
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+            <h3 style="margin: 0; font-size: 28px; font-weight: 700; color: #2c3e50;">
+                <i class="fa fa-shopping-cart" style="color: #667eea;"></i> Terkedilmiş Sepetler
+            </h3>
+            <p style="margin: 5px 0 0 0; color: #7f8c8d; font-size: 14px;">
+                <i class="fa fa-calendar"></i> Son 30 günlük performans özeti
+            </p>
+        </div>
+        <ol class="breadcrumb" style="margin: 0; background: transparent;">
+            <li><a href="{{ route('admin.dashboard.index') }}">{{ trans('admin::dashboard.dashboard') }}</a></li>
+            <li><a href="#">{{ trans('admin::sidebar.automations') }}</a></li>
+            <li class="active">Terkedilmiş Sepetler</li>
+        </ol>
+    </div>
+@endsection
+
+@push('styles')
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap.min.css">
+<style>
+    body.skin-blue .content-wrapper {
+        background: #f5f7fa;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.04);
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: var(--accent-color);
+        transition: width 0.3s ease;
+    }
+
+    .stat-card:hover::before {
+        width: 8px;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    }
+
+    .stat-card.warning { --accent-color: #f39c12; }
+    .stat-card.success { --accent-color: #00a65a; }
+    .stat-card.info { --accent-color: #3c8dbc; }
+    .stat-card.primary { --accent-color: #667eea; }
+
+    .stat-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+        margin-bottom: 16px;
+        background: var(--accent-color);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .stat-label {
+        font-size: 13px;
+        color: #7f8c8d;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .stat-value {
+        font-size: 32px;
+        font-weight: 800;
+        color: #2c3e50;
+        margin-bottom: 8px;
+        line-height: 1;
+    }
+
+    .stat-description {
+        font-size: 12px;
+        color: #95a5a6;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .content-card {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        margin-bottom: 24px;
+        overflow: hidden;
+        border: 1px solid rgba(0,0,0,0.04);
+    }
+
+    .card-header {
+        padding: 24px 28px;
+        border-bottom: 2px solid #f5f7fa;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .card-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #2c3e50;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .card-title i {
+        color: #667eea;
+        font-size: 22px;
+    }
+
+    .card-body {
+        padding: 28px;
+    }
+
+    .chart-legend {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        background: #f8f9fa;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .legend-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+
+    .legend-dot.warning { background: #f39c12; }
+    .legend-dot.success { background: #00a65a; }
+
+    .table-wrapper {
+        background: #fff;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        border: 1px solid rgba(0,0,0,0.04);
+    }
+
+    .table-wrapper table {
+        margin-bottom: 0 !important;
+    }
+
+    .table-wrapper thead {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .table-wrapper thead th {
+        color: #fff !important;
+        border: none !important;
+        padding: 18px 16px !important;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 11px;
+        letter-spacing: 1px;
+    }
+
+    .table-wrapper tbody td {
+        padding: 16px !important;
+        vertical-align: middle !important;
+        border-color: #f0f0f0 !important;
+        font-size: 14px;
+    }
+
+    .table-wrapper tbody tr {
+        transition: all 0.2s ease;
+    }
+
+    .table-wrapper tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    .badge-modern {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        border-color: #667eea !important;
+        color: #fff !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        background: #f8f9fa !important;
+        border-color: #ddd !important;
+        color: #333 !important;
+    }
+
+    #abandonedCartChart {
+        max-height: 350px;
+    }
+</style>
+@endpush
+
+@section('content')
+    {{-- Statistics Grid --}}
+    <div class="stats-grid">
+        <div class="stat-card warning">
+            <div class="stat-icon">
+                <i class="fa fa-shopping-cart"></i>
+            </div>
+            <div class="stat-label">Terk Edilen Sepetler</div>
+            <div class="stat-value">{{ number_format($stats['total_abandoned']) }}</div>
+            <div class="stat-description">
+                <i class="fa fa-calendar"></i>
+                <span>Son 30 gün</span>
+            </div>
+        </div>
+
+        <div class="stat-card success">
+            <div class="stat-icon">
+                <i class="fa fa-check-circle"></i>
+            </div>
+            <div class="stat-label">Kurtarılan Sepetler</div>
+            <div class="stat-value">{{ number_format($stats['total_recovered']) }}</div>
+            <div class="stat-description">
+                <i class="fa fa-line-chart"></i>
+                <span>{{ $stats['recovery_rate'] }}% başarı oranı</span>
+            </div>
+        </div>
+
+        <div class="stat-card info">
+            <div class="stat-icon">
+                <i class="fa fa-money"></i>
+            </div>
+            <div class="stat-label">Kurtarılan Gelir</div>
+            <div class="stat-value" style="font-size: 26px;">{{ $stats['recovered_revenue'] }}</div>
+            <div class="stat-description">
+                <i class="fa fa-arrow-up"></i>
+                <span>Toplam kazanç</span>
+            </div>
+        </div>
+
+        <div class="stat-card primary">
+            <div class="stat-icon">
+                <i class="fa fa-mouse-pointer"></i>
+            </div>
+            <div class="stat-label">Email Tıklamaları</div>
+            <div class="stat-value">{{ number_format($stats['clicked_carts']) }}</div>
+            <div class="stat-description">
+                <i class="fa fa-envelope-open"></i>
+                <span>Hatırlatma etkileşimi</span>
+            </div>
+        </div>
+    </div>
+
+    {{-- Chart Card --}}
+    <div class="content-card">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fa fa-area-chart"></i>
+                Performans Grafiği (Son 14 Gün)
+            </div>
+            <div class="chart-legend">
+                <div class="legend-item">
+                    <span class="legend-dot warning"></span>
+                    <span>Terk Edilen</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot success"></span>
+                    <span>Kurtarılan</span>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <canvas id="abandonedCartChart"></canvas>
+        </div>
+    </div>
+
+    {{-- DataTable Card --}}
+    <div class="content-card">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fa fa-list"></i>
+                Sepet Listesi
+            </div>
+        </div>
+        <div class="table-wrapper" style="border-radius: 0 0 16px 16px;">
+            <table class="table table-hover" id="abandoned-carts-table">
+                <thead>
+                    <tr>
+                        <th><i class="fa fa-user"></i> Müşteri</th>
+                        <th><i class="fa fa-envelope"></i> E-posta</th>
+                        <th><i class="fa fa-shopping-bag"></i> Ürün</th>
+                        <th><i class="fa fa-flag"></i> Durum</th>
+                        <th><i class="fa fa-mouse-pointer"></i> Tıklama</th>
+                        <th><i class="fa fa-bell"></i> Hatırlatma</th>
+                        <th><i class="fa fa-clock-o"></i> Tarih</th>
+                        <th data-sort="false"><i class="fa fa-cog"></i> İşlem</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+@endsection
+
+@push('scripts')
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // DataTable
+            $('#abandoned-carts-table').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: '{{ route("admin.abandoned_carts.index") }}?table=true',
+                columns: [
+                    { data: 'customer_name', name: 'customer_name' },
+                    { data: 'customer_email', name: 'customer_email' },
+                    { data: 'items_count', name: 'items_count', searchable: false },
+                    { data: 'is_recovered', name: 'is_recovered' },
+                    { data: 'is_clicked', name: 'is_clicked' },
+                    { data: 'reminder_count', name: 'reminder_count', searchable: false },
+                    { data: 'updated_at', name: 'updated_at' },
+                    { data: 'actions', name: 'actions', orderable: false, searchable: false }
+                ],
+                order: [[6, 'desc']],
+                pageLength: 25,
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Turkish.json'
+                },
+                drawCallback: function() {
+                    $('.badge').addClass('badge-modern');
+                }
+            });
+
+            // Chart
+            const ctx = document.getElementById('abandonedCartChart').getContext('2d');
+            
+            fetch('{{ route("admin.abandoned_carts.index") }}?chart=true')
+                .then(response => response.json())
+                .then(data => {
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.labels,
+                            datasets: [
+                                {
+                                    label: 'Terk Edilen',
+                                    data: data.abandoned,
+                                    borderColor: '#f39c12',
+                                    backgroundColor: 'rgba(243, 156, 18, 0.08)',
+                                    borderWidth: 3,
+                                    tension: 0.4,
+                                    fill: true,
+                                    pointRadius: 6,
+                                    pointHoverRadius: 8,
+                                    pointBackgroundColor: '#f39c12',
+                                    pointBorderColor: '#fff',
+                                    pointBorderWidth: 3,
+                                    pointHoverBackgroundColor: '#fff',
+                                    pointHoverBorderColor: '#f39c12',
+                                    pointHoverBorderWidth: 3
+                                },
+                                {
+                                    label: 'Kurtarılan',
+                                    data: data.recovered,
+                                    borderColor: '#00a65a',
+                                    backgroundColor: 'rgba(0, 166, 90, 0.08)',
+                                    borderWidth: 3,
+                                    tension: 0.4,
+                                    fill: true,
+                                    pointRadius: 6,
+                                    pointHoverRadius: 8,
+                                    pointBackgroundColor: '#00a65a',
+                                    pointBorderColor: '#fff',
+                                    pointBorderWidth: 3,
+                                    pointHoverBackgroundColor: '#fff',
+                                    pointHoverBorderColor: '#00a65a',
+                                    pointHoverBorderWidth: 3
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(44, 62, 80, 0.95)',
+                                    padding: 16,
+                                    titleFont: { size: 15, weight: 'bold' },
+                                    bodyFont: { size: 14 },
+                                    cornerRadius: 12,
+                                    displayColors: true,
+                                    boxWidth: 12,
+                                    boxHeight: 12,
+                                    boxPadding: 6
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    ticks: {
+                                        precision: 0,
+                                        font: { size: 13, weight: '500' },
+                                        color: '#7f8c8d',
+                                        padding: 10
+                                    },
+                                    grid: {
+                                        color: 'rgba(0,0,0,0.04)',
+                                        drawBorder: false
+                                    }
+                                },
+                                x: {
+                                    ticks: {
+                                        font: { size: 13, weight: '500' },
+                                        color: '#7f8c8d',
+                                        padding: 10
+                                    },
+                                    grid: {
+                                        display: false,
+                                        drawBorder: false
+                                    }
+                                }
+                            },
+                            interaction: {
+                                intersect: false,
+                                mode: 'index'
+                            }
+                        }
+                    });
+                });
+
+            // Send Reminder Handler
+            $(document).on('click', '.send-reminder-btn', function(e) {
+                e.preventDefault();
+                
+                var btn = $(this);
+                var cartId = btn.data('cart-id');
+                
+                if (!confirm('Bu sepet için hatırlatma e-postası göndermek istediğinize emin misiniz?')) {
+                    return;
+                }
+                
+                btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i>');
+                
+                $.ajax({
+                    url: '/admin/abandoned-carts/' + cartId + '/send-reminder',
+                    type: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            alert(response.message);
+                            $('#abandoned-carts-table').DataTable().ajax.reload();
+                        } else {
+                            alert('Hata: ' + response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        var message = 'Bir hata oluştu!';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            message = xhr.responseJSON.message;
+                        }
+                        alert(message);
+                    },
+                    complete: function() {
+                        btn.prop('disabled', false).html('<i class="fa fa-envelope"></i>');
+                    }
+                });
+            });
+        });
+    </script>
+@endpush

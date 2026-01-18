@@ -7,6 +7,7 @@ return [
         'name' => 'Ad',
         'code' => 'Kod',
         'discount' => 'İndirim',
+        'customer' => 'Müşteri',
     ],
     'tabs' => [
         'group' => [
@@ -23,5 +24,7 @@ return [
         ],
         'allow_free_shipping' => 'Ücretsiz kargo izni',
         'enable_the_coupon' => 'Kuponu aktifleştir',
+        'exclude_sale_items' => 'İndirimli ürünleri hariç tut',
+        'show_in_checkout' => 'Kullanılabilir kuponlar listesinde göster',
     ],
 ];

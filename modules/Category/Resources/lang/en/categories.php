@@ -3,6 +3,7 @@
 return [
     'category' => 'Category',
     'categories' => 'Categories',
+    'main_category' => 'Main Category (All Products)',
     'tree' => [
         'add_root_category' => 'Add Root Category',
         'add_sub_category' => 'Add Subcategory',

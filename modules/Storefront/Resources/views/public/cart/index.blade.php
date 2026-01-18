@@ -20,6 +20,8 @@
 
                                 @include('storefront::public.cart.index.cart_summary')
                             </div>
+                            
+                            @include('storefront::public.partials.cart.upsell_offers', ['upsellData' => $upsellData ?? null])
                         </div>
                     </template>
 

@@ -74,14 +74,6 @@ class CheckoutController extends Controller
             $customerService->register($request)->login();
         }
 
-        Log::channel('checkout')->info('checkout.place_order_request', [
-            'user_id' => optional($request->user())->id,
-            'cart_id' => null,
-            'session_id' => $request->session()->getId(),
-            'shipping_method' => $request->input('shipping_method'),
-            'payment_method' => $request->input('payment_method'),
-        ]);
-
         $order = $orderService->create($request);
         
         $gateway = Gateway::get($request->payment_method);
@@ -100,14 +92,9 @@ class CheckoutController extends Controller
             ? $response['redirectUrl']
             : route('checkout.complete.store', ['orderId' => $order->id, 'paymentMethod' => $request->payment_method]);
 
-        Log::channel('checkout')->info('checkout.order_created', [
-            'user_id' => optional($request->user())->id,
-            'order_id' => $order->id,
-            'payment_method' => $request->input('payment_method'),
-            'redirect_to' => $redirectTo,
+        return response()->json([
+            'redirectUrl' => $redirectTo,
         ]);
-
-        return response()->json($response);
     }
 
 
@@ -122,16 +109,40 @@ class CheckoutController extends Controller
 
         $cart = Cart::instance();
         $cart->loadStockAndRelations();
-        $upsellOffer = $upsellService->resolveBestRule($cart);
+        $upsellData = $upsellService->resolveBestRule($cart);
 
         return view('storefront::public.checkout.create', [
             'cart' => $cart,
-            'upsellOffer' => $upsellOffer,
+            'upsellData' => $upsellData,
             'countries' => Country::supported(),
             'gateways' => Gateway::all(),
             'defaultAddress' => auth()->user()->defaultAddress ?? new DefaultAddress,
             'addresses' => $this->getAddresses(),
             'termsPageURL' => Page::urlForPage(setting('storefront_terms_page')),
+            'availableCoupons' => $availableCoupons = \Modules\Coupon\Entities\Coupon::where('is_active', true)
+                ->where(function ($query) {
+                    $query->whereNull('customer_id')
+                        ->orWhere('customer_id', auth()->id());
+                })
+                ->where(function ($query) {
+                    $query->whereNull('start_date')
+                        ->orWhere('start_date', '<=', now());
+                })
+                ->where(function ($query) {
+                    $query->whereNull('end_date')
+                        ->orWhere('end_date', '>=', now());
+                })
+                ->where('show_in_checkout', true)
+                ->orderBy('end_date', 'asc')
+                ->get()
+                ->filter(function ($coupon) {
+                    if ($coupon->is_review_coupon || $coupon->is_abandoned_cart_coupon) {
+                        return !$coupon->isRedeemed();
+                    }
+                    return !$coupon->usageLimitReached(auth()->user()->email ?? null);
+                }),
+            'hasPersonalCoupons' => auth()->check() && $availableCoupons->contains(fn($c) => !is_null($c->customer_id)),
+            'couponCount' => $availableCoupons->count(),
         ]);
     }
 
@@ -245,13 +256,7 @@ class CheckoutController extends Controller
                 ],
             ]);
         } finally {
-            $time = round((microtime(true) - $start) * 1000);
-            $queries = DB::getQueryLog();
-            Log::channel('checkout')->info('checkout.update.profile', [
-                'ms' => $time,
-                'query_count' => count($queries),
-                'sample_queries' => array_slice($queries, 0, 5),
-            ]);
+            DB::disableQueryLog();
         }
     }
 
@@ -276,20 +281,23 @@ class CheckoutController extends Controller
         $sessionId = session()->getId();
         $cartIds = [$sessionId . '_cart_items', $sessionId . '_cart_conditions'];
 
+        // Extract customer info from request
+        // Email and phone come from root level (form.customer_email, form.customer_phone)
+        // Names come from shipping object (form.shipping.first_name, form.shipping.last_name)
         $data = [
-            'customer_email' => $request->input('billing.email') ?? $request->input('customer_email'),
-            'customer_first_name' => $request->input('billing.first_name'),
-            'customer_last_name' => $request->input('billing.last_name'),
-            'customer_phone' => $request->input('billing.phone') ?? $request->input('customer_phone'),
+            'customer_email' => $request->input('customer_email') ?? $request->input('billing.billing_email'),
+            'customer_first_name' => $request->input('shipping.first_name') ?? $request->input('billing.first_name'),
+            'customer_last_name' => $request->input('shipping.last_name') ?? $request->input('billing.last_name'),
+            'customer_phone' => $request->input('customer_phone') ?? $request->input('shipping.phone') ?? $request->input('billing.phone'),
             'user_id' => auth()->id(),
         ];
 
         // Filter out null values to avoid overwriting with empty data
-        $data = array_filter($data);
+        $data = array_filter($data, function($value) {
+            return !is_null($value) && $value !== '';
+        });
 
         if (!empty($data)) {
-            \Log::info('Syncing customer info to cart:', $data);
-            
             // Validate email before saving to avoid breaking mailer later
             if (!empty($data['customer_email'])) {
                 $validator = \Illuminate\Support\Facades\Validator::make($data, [
@@ -297,14 +305,16 @@ class CheckoutController extends Controller
                 ]);
                 
                 if ($validator->fails()) {
-                    \Log::info('Invalid email format, not saving email to cart: ' . $data['customer_email']);
+                    \Log::warning('Invalid email format, not saving email to cart: ' . $data['customer_email']);
                     unset($data['customer_email']);
                 }
             }
 
-            \Modules\Cart\Entities\Cart::whereIn('id', $cartIds)->update($data);
-        } else {
-            \Log::info('No customer info to sync. Request input:', $request->all());
+            if (!empty($data)) {
+                foreach ($cartIds as $cartId) {
+                    \Modules\Cart\Entities\Cart::whereIn('id', $cartIds)->update($data);
+                }
+            }
         }
     }
 }

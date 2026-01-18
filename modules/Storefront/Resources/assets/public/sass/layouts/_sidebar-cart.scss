@@ -13,7 +13,7 @@
     box-shadow: 2.5px 4.33px 40px 5px rgba(12, 31, 46, 0.1);
     opacity: 0;
     visibility: hidden;
-    z-index: 200;
+    z-index: $z-index-sidebar;
     transition: var(--transition-200);
 
     &.active {

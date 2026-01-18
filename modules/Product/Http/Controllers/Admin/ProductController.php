@@ -6,6 +6,8 @@ use Illuminate\Http\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Contracts\View\View;
 use Modules\Product\Entities\Product;
+use Illuminate\Support\Facades\Mail;
+use Modules\Product\Mail\AdminStockAlertMail;
 use Modules\Product\Listeners\SendBackInStockNotifications;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Foundation\Application;
@@ -18,10 +20,130 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Http\Request;
 use Modules\Brand\Entities\Brand;
 use Modules\Category\Entities\Category;
+use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 class ProductController
 {
     use HasCrudActions;
+
+    private function getStats(Request $request): array
+    {
+        $base = Product::query()
+            ->withoutGlobalScope('active')
+            ->when($request->has('brand_id') && $request->brand_id !== null && $request->brand_id !== '', function (Builder $q) use ($request) {
+                $q->where('brand_id', (int) $request->brand_id);
+            })
+            ->when($request->has('category_id') && $request->category_id !== null && $request->category_id !== '', function (Builder $q) use ($request) {
+                $categoryId = (int) $request->category_id;
+
+                $q->where(function ($sub) use ($categoryId) {
+                    $sub->where('primary_category_id', $categoryId)
+                        ->orWhereHas('categories', function ($cat) use ($categoryId) {
+                            $cat->where('categories.id', $categoryId);
+                        });
+                });
+            })
+            ->when($request->has('is_active') && $request->is_active !== null && $request->is_active !== '', function (Builder $q) use ($request) {
+                $q->where('is_active', (int) $request->is_active);
+            })
+            ->when($request->has('price_min') && $request->price_min !== null && $request->price_min !== '', function (Builder $q) use ($request) {
+                $min = (float) str_replace(',', '.', (string) $request->price_min);
+                $q->where('selling_price', '>=', $min);
+            })
+            ->when($request->has('price_max') && $request->price_max !== null && $request->price_max !== '', function (Builder $q) use ($request) {
+                $max = (float) str_replace(',', '.', (string) $request->price_max);
+                $q->where('selling_price', '<=', $max);
+            })
+            ->when($request->has('created_from') && $request->created_from !== null && $request->created_from !== '', function (Builder $q) use ($request) {
+                try {
+                    $from = \Illuminate\Support\Carbon::parse((string) $request->created_from)->startOfDay();
+                    $q->where('created_at', '>=', $from);
+                } catch (\Throwable $e) {
+                }
+            })
+            ->when($request->has('created_to') && $request->created_to !== null && $request->created_to !== '', function (Builder $q) use ($request) {
+                try {
+                    $to = \Illuminate\Support\Carbon::parse((string) $request->created_to)->endOfDay();
+                    $q->where('created_at', '<=', $to);
+                } catch (\Throwable $e) {
+                }
+            })
+            ->when($request->has('has_special') && $request->has_special !== null && $request->has_special !== '', function (Builder $q) use ($request) {
+                $flag = (string) $request->has_special;
+
+                if ($flag === '1') {
+                    $now = \Illuminate\Support\Carbon::now();
+                    $q->whereNotNull('special_price')
+                        ->where('special_price', '>', 0)
+                        ->where(function ($sq) use ($now) {
+                            $sq->whereNull('special_price_start')
+                                ->orWhere('special_price_start', '<=', $now);
+                        })
+                        ->where(function ($sq) use ($now) {
+                            $sq->whereNull('special_price_end')
+                                ->orWhere('special_price_end', '>=', $now);
+                        });
+                }
+
+                if ($flag === '0') {
+                    $q->where(function ($sq) {
+                        $sq->whereNull('special_price')->orWhere('special_price', '<=', 0);
+                    });
+                }
+            });
+
+        $total = (clone $base)->count();
+        $active = (clone $base)->where('is_active', 1)->count();
+        $inactive = (clone $base)->where('is_active', 0)->count();
+
+        $pvAgg = DB::table('product_variants as pv')
+            ->selectRaw("pv.product_id,
+                COUNT(*) as active_variants,
+                SUM(CASE WHEN pv.manage_stock = 1 THEN 1 ELSE 0 END) as active_manage_variants,
+                SUM(CASE WHEN pv.manage_stock = 0 OR pv.qty > 0 THEN 1 ELSE 0 END) as in_stock_variants,
+                SUM(pv.qty) as sum_qty")
+            ->whereNull('pv.deleted_at')
+            ->where('pv.is_active', 1)
+            ->groupBy('pv.product_id');
+
+        $stockBase = (clone $base)
+            ->leftJoinSub($pvAgg, 'pv_stats', function ($join) {
+                $join->on('products.id', '=', 'pv_stats.product_id');
+            });
+
+        $inStockExpr = "(
+            (COALESCE(pv_stats.active_variants,0) > 0 AND COALESCE(pv_stats.in_stock_variants,0) > 0)
+            OR
+            (COALESCE(pv_stats.active_variants,0) = 0 AND (products.manage_stock = 0 OR products.qty > 0))
+        )";
+
+        $outOfStockExpr = "(
+            (COALESCE(pv_stats.active_variants,0) > 0 AND COALESCE(pv_stats.in_stock_variants,0) = 0)
+            OR
+            (COALESCE(pv_stats.active_variants,0) = 0 AND products.manage_stock = 1 AND products.qty <= 0)
+        )";
+
+        $lowStockExpr = "(
+            (COALESCE(pv_stats.active_variants,0) = 0 AND products.manage_stock = 1 AND products.qty > 0 AND products.qty < 10)
+            OR
+            (COALESCE(pv_stats.active_variants,0) > 0 AND COALESCE(pv_stats.active_manage_variants,0) > 0 AND COALESCE(pv_stats.sum_qty,0) > 0 AND COALESCE(pv_stats.sum_qty,0) < 10)
+        )";
+
+        $inStock = (clone $stockBase)->whereRaw($inStockExpr)->distinct('products.id')->count('products.id');
+        $outOfStock = (clone $stockBase)->whereRaw($outOfStockExpr)->distinct('products.id')->count('products.id');
+        $lowStock = (clone $stockBase)->whereRaw($lowStockExpr)->distinct('products.id')->count('products.id');
+
+        return [
+            'total' => $total,
+            'active' => $active,
+            'inactive' => $inactive,
+            'in_stock' => $inStock,
+            'out_of_stock' => $outOfStock,
+            'low_stock' => $lowStock,
+        ];
+    }
 
     /**
      * Model for the resource.
@@ -61,18 +183,94 @@ class ProductController
     public function index(Request $request)
     {
         // Preserve default search behavior from HasCrudActions
-        if ($request->has('query')) {
-            return $this->getModel()
-                ->search($request->get('query'))
-                ->query()
-                ->limit($request->get('limit', 10))
-                ->get();
+        // Specific request to get variants for a selected product
+        if ($request->has('variants_only') && $request->has('product_id')) {
+            $product = $this->getModel()->with('variants.files')->find($request->get('product_id'));
+            if (!$product) return response()->json([]);
+            
+            $productImageUrl = $product->base_image->url;
+            return $product->variants->map(function($variant) use ($productImageUrl) {
+                // For variants: Use variant's selling price (special if active, else normal)
+                return [
+                    'id' => $variant->id,
+                    'name' => $variant->name,
+                    'sku' => $variant->sku,
+                    'price' => (float) $variant->selling_price->amount(),
+                    'base_image' => [
+                        'path' => $variant->base_image->url ?: $productImageUrl,
+                    ],
+                ];
+            });
+        }
+
+        if ($request->has('query') || $request->has('initial')) {
+            $searchTerm = $request->get('query');
+            
+            $query = $this->getModel()
+                ->when($searchTerm, function($q) use ($searchTerm) {
+                    $q->where(function($sq) use ($searchTerm) {
+                        $sq->whereHas('translations', function ($t) use ($searchTerm) {
+                            $t->where('name', 'like', "%{$searchTerm}%");
+                        })
+                        ->orWhere('sku', 'like', "%{$searchTerm}%");
+                    });
+                })
+                ->with(['files', 'variant.files', 'categories']) // Only load default variant for quick fallback
+                ->limit($request->get('limit', 15));
+
+            if (!$searchTerm) {
+                $query->latest();
+            }
+
+            return $query->get()->map(function($product) {
+                $defaultVariant = $product->variant;
+                
+                $price = $product->selling_price;
+                $productImageUrl = $product->base_image->url;
+                
+                if (!$productImageUrl && $defaultVariant) {
+                    $productImageUrl = $defaultVariant->base_image->url;
+                }
+
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'sku' => $product->sku ?: ($defaultVariant->sku ?? null),
+                    'price' => (float) $price->amount(),
+                    'formatted_price' => $price->convertToCurrentCurrency()->format(),
+                    'is_in_stock' => $product->isInStock(),
+                    'category_name' => strval($product->categories->first()?->name ?? ""),
+                    'has_variants' => (bool) ($product->variants_count > 0 || $product->variants?->count() > 0),
+                    'base_image' => [
+                        'path' => $productImageUrl,
+                    ],
+                ];
+            });
         }
 
         $brands = Brand::list();
         $categories = Category::treeList();
+        $taxClasses = \Modules\Tax\Entities\TaxClass::list();
+        $units = \Modules\Unit\Entities\Unit::pluck('name', 'id');
+        $tags = \Modules\Tag\Entities\Tag::list();
+        $attributeSets = \Modules\Attribute\Entities\AttributeSet::with('attributes.values')->get()->sortBy('name');
+        $globalVariations = \Modules\Variation\Entities\Variation::where('is_global', 1)->get();
+        $globalOptions = \Modules\Option\Entities\Option::where('is_global', 1)->get();
 
-        return view("{$this->viewPath}.index", compact('brands', 'categories'));
+        $stats = $this->getStats($request);
+
+        return view("{$this->viewPath}.index", compact('brands', 'categories', 'stats', 'taxClasses', 'units', 'tags', 'attributeSets', 'globalVariations', 'globalOptions'));
+    }
+
+    public function stats(Request $request): JsonResponse
+    {
+        if (!$request->wantsJson()) {
+            return response()->json(['message' => 'Not Acceptable'], 406);
+        }
+
+        return response()->json([
+            'stats' => $this->getStats($request),
+        ]);
     }
 
     /**
@@ -160,8 +358,9 @@ class ProductController
 
         if ($shouldCreateRedirect && $newSlug && $oldSlug && $newSlug !== $oldSlug && (!$requestOldSlug || $requestOldSlug === $oldSlug)) {
             try {
-                $sourcePath = '/products/' . ltrim($oldSlug, '/');
-                $targetUrl = '/products/' . ltrim($newSlug, '/');
+                $baseSlug = setting('products_page_slug', 'products');
+                $sourcePath = '/' . $baseSlug . '/' . ltrim($oldSlug, '/');
+                $targetUrl = '/' . $baseSlug . '/' . ltrim($newSlug, '/');
 
                 \Modules\Product\Entities\UrlRedirect::updateOrCreate(
                     ['source_path' => $sourcePath],
@@ -321,6 +520,12 @@ class ProductController
 
         $payload = request()->all();
 
+        $entity->setRelation('variants', $entity->variants()->withoutGlobalScope('active')->get());
+        $wasInStock = (bool) $entity->isInStock();
+
+        $currentPrice = $entity->price ? (float) $entity->price->amount() : null;
+        $currentSpecial = $entity->hasSpecialPrice() ? (float) $entity->getSpecialPrice()->amount() : null;
+
         $productUpdate = [];
         if (array_key_exists('price', $payload) && is_numeric($payload['price'])) {
             $productUpdate['price'] = (float) $payload['price'];
@@ -329,14 +534,28 @@ class ProductController
             $sp = $payload['special_price'];
             $productUpdate['special_price'] = is_numeric($sp) ? (float) $sp : null;
         }
+
+        $nextPrice = array_key_exists('price', $productUpdate) ? (float) $productUpdate['price'] : $currentPrice;
+        $nextSpecial = array_key_exists('special_price', $productUpdate) ? $productUpdate['special_price'] : $currentSpecial;
+        if ($nextSpecial !== null && $nextPrice !== null && (float) $nextSpecial > (float) $nextPrice) {
+            return response()->json([
+                'success' => false,
+                'message' => 'İndirimli fiyat satış fiyatından yüksek olamaz.',
+            ], 422);
+        }
         if (!empty($productUpdate)) {
             $entity->update($productUpdate);
         }
+
+        $wasLowStock = (bool) ($entity->qty < 3);
 
         if (array_key_exists('variants', $payload) && is_array($payload['variants'])) {
             foreach ($payload['variants'] as $vid => $attrs) {
                 $variant = $entity->variants()->withoutGlobalScope('active')->where('id', $vid)->first();
                 if ($variant) {
+                    $vCurrentPrice = $variant->price ? (float) $variant->price->amount() : null;
+                    $vCurrentSpecial = $variant->hasSpecialPrice() ? (float) $variant->getSpecialPrice()->amount() : null;
+
                     $update = [];
                     if (isset($attrs['price']) && is_numeric($attrs['price'])) {
                         $update['price'] = (float) $attrs['price'];
@@ -344,6 +563,15 @@ class ProductController
                     if (isset($attrs['special_price'])) {
                         $sp = $attrs['special_price'];
                         $update['special_price'] = ($sp === '' || $sp === null) ? null : (float) $sp;
+                    }
+
+                    $vNextPrice = array_key_exists('price', $update) ? (float) $update['price'] : $vCurrentPrice;
+                    $vNextSpecial = array_key_exists('special_price', $update) ? $update['special_price'] : $vCurrentSpecial;
+                    if ($vNextSpecial !== null && $vNextPrice !== null && (float) $vNextSpecial > (float) $vNextPrice) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'İndirimli fiyat satış fiyatından yüksek olamaz.',
+                        ], 422);
                     }
 
                     if (!empty($update)) {
@@ -358,10 +586,23 @@ class ProductController
         $entity->setRelation('variants', $entity->variants()->withoutGlobalScope('active')->get());
 
         $isInStockNow = (bool) $entity->isInStock();
+        $isLowStockNow = (bool) ($entity->qty < 3);
 
         if (! $wasInStock && $isInStockNow) {
             try {
                 app(SendBackInStockNotifications::class)->handle($entity);
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+
+        if (! $wasLowStock && $isLowStockNow) {
+            try {
+                $img = null;
+                if ($entity->base_image && (int) ($entity->base_image->id ?? 0) > 0) {
+                    $img = $entity->base_image->thumb_webp_url ?: ($entity->base_image->thumb_jpeg_url ?: $entity->base_image->url);
+                }
+                Mail::to(setting('store_email'))->send(new AdminStockAlertMail($entity, $entity->qty, null, $img, $entity->sku, []));
             } catch (\Throwable $e) {
                 report($e);
             }
@@ -466,23 +707,34 @@ class ProductController
         $entity->setRelation('variants', $entity->variants()->withoutGlobalScope('active')->get());
 
         $wasInStock = (bool) $entity->isInStock();
+        $wasLowStock = (bool) ($entity->qty < 3);
 
         $payload = request()->all();
         $allowDecimal = ($entity->saleUnit && (bool) $entity->saleUnit->is_decimal_stock);
 
-        if (array_key_exists('qty', $payload)) {
-            $qty = $payload['qty'];
-            if (!$allowDecimal) {
-                $qty = is_numeric($qty) ? (int) floor((float) $qty) : 0;
-            }
-            $entity->withoutEvents(function () use ($entity, $qty) {
-                $update = ['qty' => $qty];
-
-                if (is_numeric($qty) && (float) $qty > 0) {
-                    $update['in_stock'] = 1;
+        if (array_key_exists('qty', $payload) || array_key_exists('manage_stock', $payload) || array_key_exists('in_stock', $payload)) {
+            $entity->withoutEvents(function () use ($entity, $payload, $allowDecimal) {
+                $update = [];
+                if (array_key_exists('qty', $payload)) {
+                    $qty = $payload['qty'];
+                    if (!$allowDecimal) {
+                        $qty = is_numeric($qty) ? (int) floor((float) $qty) : 0;
+                    }
+                    $update['qty'] = $qty;
+                    if (is_numeric($qty) && (float) $qty > 0 && !array_key_exists('in_stock', $payload)) {
+                        $update['in_stock'] = 1;
+                    }
                 }
-
-                $entity->update($update);
+                if (array_key_exists('manage_stock', $payload)) {
+                    $update['manage_stock'] = (bool) $payload['manage_stock'];
+                }
+                if (array_key_exists('in_stock', $payload)) {
+                    $update['in_stock'] = (bool) $payload['in_stock'];
+                }
+                
+                if (!empty($update)) {
+                    $entity->update($update);
+                }
             });
         }
 
@@ -490,6 +742,9 @@ class ProductController
             foreach ($payload['variants'] as $vid => $attrs) {
                 $variant = $entity->variants()->withoutGlobalScope('active')->where('id', $vid)->first();
                 if ($variant) {
+                    $vWasInStock = (bool) $variant->isInStock();
+                    $vWasLowStock = (bool) ($variant->qty < 3);
+
                     $update = [];
                     if (isset($attrs['qty'])) {
                         $vQty = $allowDecimal ? $attrs['qty'] : (is_numeric($attrs['qty']) ? (int) floor((float) $attrs['qty']) : 0);
@@ -504,6 +759,22 @@ class ProductController
 
                     if (!empty($update)) {
                         $variant->update($update);
+                        
+                        $variant->refresh();
+                        if ($variant->manage_stock && ! $vWasLowStock && $variant->qty < 3) {
+                            try {
+                                $img = null;
+                                if ($variant->base_image && (int) ($variant->base_image->id ?? 0) > 0) {
+                                    $img = $variant->base_image->thumb_webp_url ?: ($variant->base_image->thumb_jpeg_url ?: $variant->base_image->url);
+                                }
+                                if (!$img && $entity->base_image && (int) ($entity->base_image->id ?? 0) > 0) {
+                                    $img = $entity->base_image->thumb_webp_url ?: ($entity->base_image->thumb_jpeg_url ?: $entity->base_image->url);
+                                }
+                                Mail::to(setting('store_email'))->send(new AdminStockAlertMail($entity, $variant->qty, $variant->name, $img, $variant->sku ?: $entity->sku, $variant->getVariationLabels()->toArray()));
+                            } catch (\Throwable $e) {
+                                report($e);
+                            }
+                        }
                     }
                 }
             }
@@ -516,10 +787,23 @@ class ProductController
         $entity->setRelation('variants', $entity->variants()->withoutGlobalScope('active')->get());
 
         $isInStockNow = (bool) $entity->isInStock();
+        $isLowStockNow = (bool) ($entity->qty < 3);
 
         if (! $wasInStock && $isInStockNow) {
             try {
                 app(SendBackInStockNotifications::class)->handle($entity);
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+
+        if ($entity->manage_stock && ! $wasLowStock && $isLowStockNow) {
+            try {
+                $img = null;
+                if ($entity->base_image && (int) ($entity->base_image->id ?? 0) > 0) {
+                    $img = $entity->base_image->thumb_webp_url ?: ($entity->base_image->thumb_jpeg_url ?: $entity->base_image->url);
+                }
+                Mail::to(setting('store_email'))->send(new AdminStockAlertMail($entity, $entity->qty, null, $img, $entity->sku, []));
             } catch (\Throwable $e) {
                 report($e);
             }
@@ -561,453 +845,561 @@ class ProductController
     }
 
 
-    public function bulkEditor(): Factory|View|Application
+
+    public function productsForSorting($categoryId)
     {
-        $brands = Brand::list();
-        $categories = Category::treeList();
+        $category = \Modules\Category\Entities\Category::withoutGlobalScope('active')->findOrFail($categoryId);
 
-        // Use the same treeList output as a flat id => name array for selects
-        $flatCategories = $categories;
-
-        $categoryTree = Category::query()
-            ->orderBy('position')
-            ->get()
-            ->map(function ($cat) {
+        $products = $category->products()
+            ->withoutGlobalScope('active')
+            ->with(['files' => function($q) {
+                $q->wherePivot('zone', 'base_image');
+            }])
+            ->orderByRaw('product_categories.position IS NULL, product_categories.position ASC')
+            ->limit(400)
+            ->get(['products.id', 'products.slug'])
+            ->map(function($product) {
                 return [
-                    'id' => (string) $cat->id,
-                    'parent' => $cat->parent_id ? (string) $cat->parent_id : '#',
-                    'text' => $cat->name,
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'sku' => $product->sku,
+                    'image' => optional($product->base_image)->path,
+                    'position' => $product->pivot->position,
                 ];
             });
 
-        return view('product::admin.products.bulk_editor', compact('brands', 'categories', 'flatCategories', 'categoryTree'));
+        return response()->json([
+            'products' => $products,
+            'category' => [
+                'id' => $category->id,
+                'name' => $category->name,
+            ],
+        ]);
     }
 
+    public function saveProductOrder($categoryId)
+    {
+        $orderedIds = request('ordered_product_ids', []);
+
+        if (empty($orderedIds) || !is_array($orderedIds)) {
+            return response()->json(['message' => 'Invalid product order'], 400);
+        }
+
+        // Check if this is main page sorting (categoryId = 0 or null)
+        $isMainPage = !$categoryId || $categoryId === '0' || $categoryId === 0;
+
+        if ($isMainPage) {
+            // Main page sorting: Update main_page_position column directly
+            \DB::transaction(function() use ($orderedIds) {
+                foreach ($orderedIds as $index => $productId) {
+                    Product::withoutGlobalScope('active')
+                        ->where('id', (int) $productId)
+                        ->update(['main_page_position' => $index + 1]);
+                }
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Ana sayfa sıralaması kaydedildi.'
+            ]);
+        }
+
+        // Specific category sorting
+        $category = \Modules\Category\Entities\Category::withoutGlobalScope('active')->findOrFail($categoryId);
+
+        \DB::transaction(function() use ($category, $orderedIds) {
+            foreach ($orderedIds as $index => $productId) {
+                \DB::table('product_categories')
+                    ->where('category_id', $category->id)
+                    ->where('product_id', (int) $productId)
+                    ->update(['position' => $index + 1]);
+            }
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Sıralama kaydedildi'
+        ]);
+    }
+
+    public function resetProductOrder($categoryId)
+    {
+        $category = \Modules\Category\Entities\Category::withoutGlobalScope('active')->findOrFail($categoryId);
+
+        \DB::table('product_categories')
+            ->where('category_id', $category->id)
+            ->update(['position' => null]);
+
+        return response()->json(['message' => 'Sıralama sıfırlandı']);
+    }
+
+    public function bulkStatus(Request $request)
+    {
+        $request->validate([
+            'product_ids' => 'required|array',
+            'product_ids.*' => 'integer|exists:products,id',
+            'is_active' => 'required|boolean',
+        ]);
+
+        $productIds = $request->input('product_ids');
+        $isActive = $request->input('is_active');
+
+        Product::withoutGlobalScope('active')
+            ->whereIn('id', $productIds)
+            ->update(['is_active' => $isActive]);
+
+        $status = $isActive ? 'aktif' : 'pasif';
+        $message = count($productIds) . " ürün {$status} yapıldı";
+
+        return response()->json(['message' => $message]);
+    }
+
+    public function bulkUpdatePrice(Request $request)
+    {
+        $request->validate([
+            'product_ids' => 'required|array',
+            'product_ids.*' => 'integer|exists:products,id',
+            'price' => 'required|numeric|min:0',
+        ]);
+
+        $productIds = $request->input('product_ids');
+        $price = $request->input('price');
+
+        $invalidIds = Product::withoutGlobalScope('active')
+            ->whereIn('id', $productIds)
+            ->whereNotNull('special_price')
+            ->where(function ($q) use ($price) {
+                $q->whereNull('special_price_type')->orWhere('special_price_type', '!=', 'percent');
+            })
+            ->where('special_price', '>', (float) $price)
+            ->pluck('id')
+            ->all();
+
+        if (!empty($invalidIds)) {
+            $sample = array_slice($invalidIds, 0, 10);
+            $more = count($invalidIds) > count($sample) ? '…' : '';
+
+            return response()->json([
+                'message' => 'Satış fiyatı, mevcut indirimli fiyattan düşük olamaz. Önce indirimli fiyatı düşürün/kaldırın. Hatalı ürünler: ' . implode(', ', $sample) . $more,
+                'invalid_ids' => $invalidIds,
+            ], 422);
+        }
+
+        Product::withoutGlobalScope('active')
+            ->whereIn('id', $productIds)
+            ->update(['price' => $price]);
+
+        $message = count($productIds) . " ürünün satış fiyatı güncellendi";
+
+        return response()->json(['message' => $message]);
+    }
+
+    public function bulkUpdateSpecialPrice(Request $request)
+    {
+        $request->validate([
+            'product_ids' => 'required|array',
+            'product_ids.*' => 'integer|exists:products,id',
+            'special_price' => 'nullable|numeric|min:0',
+        ]);
+
+        $productIds = $request->input('product_ids');
+        $specialPrice = $request->input('special_price');
+
+        if ($specialPrice !== null && $specialPrice !== '') {
+            $specialPrice = (float) $specialPrice;
+
+            $invalidIds = Product::withoutGlobalScope('active')
+                ->whereIn('id', $productIds)
+                ->whereNotNull('price')
+                ->where('price', '<', $specialPrice)
+                ->pluck('id')
+                ->all();
+
+            if (!empty($invalidIds)) {
+                $sample = array_slice($invalidIds, 0, 10);
+                $more = count($invalidIds) > count($sample) ? '…' : '';
+
+                return response()->json([
+                    'message' => 'İndirimli fiyat satış fiyatından yüksek olamaz. Hatalı ürünler: ' . implode(', ', $sample) . $more,
+                    'invalid_ids' => $invalidIds,
+                ], 422);
+            }
+        }
+
+        Product::withoutGlobalScope('active')
+            ->whereIn('id', $productIds)
+            ->update(['special_price' => $specialPrice]);
+
+        if ($specialPrice === null) {
+            $message = count($productIds) . " ürünün indirimli fiyatı kaldırıldı";
+        } else {
+            $message = count($productIds) . " ürünün indirimli fiyatı güncellendi";
+        }
+
+        return response()->json(['message' => $message]);
+    }
+
+    public function bulkUpdateStock(Request $request)
+    {
+        $request->validate([
+            'product_ids' => 'required|array',
+            'product_ids.*' => 'integer|exists:products,id',
+            'stock' => 'required|integer|min:0',
+        ]);
+
+        $productIds = $request->input('product_ids');
+        $stock = $request->input('stock');
+
+        Product::withoutGlobalScope('active')
+            ->whereIn('id', $productIds)
+            ->update(['qty' => $stock]);
+
+        $message = count($productIds) . " ürünün stok miktarı güncellendi";
+
+        return response()->json(['message' => $message]);
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $request->validate([
+            'product_ids' => 'required|array',
+            'product_ids.*' => 'integer|exists:products,id',
+        ]);
+
+        $productIds = $request->input('product_ids');
+
+        DB::transaction(function () use ($productIds) {
+            Product::withoutGlobalScope('active')
+                ->whereIn('id', $productIds)
+                ->delete();
+        });
+
+        $message = count($productIds) . " ürün silindi";
+
+        return response()->json(['message' => $message]);
+    }
 
     public function bulkPreview(Request $request): JsonResponse
     {
         $filters = $request->input('filters', []);
+        $productIds = $request->input('product_ids', []);
+        $actions = $request->input('actions', []);
         $combine = strtolower($request->input('combine', 'and')) === 'or' ? 'or' : 'and';
 
         $query = Product::query()
             ->withoutGlobalScope('active')
-            ->with(['primaryCategory', 'brand', 'variants' => function ($q) {
-                $q->withoutGlobalScope('active')->withBaseImage();
-            }])
+            ->withName()
+            ->with(['primaryCategory', 'brand', 'variants', 'translations', 'categories', 'tags'])
             ->withBaseImage();
+
+        if (!empty($productIds) && is_array($productIds)) {
+            $query->whereIn('products.id', array_map('intval', $productIds));
+        }
 
         $this->applyBulkFilters($query, $filters, $combine);
 
         $total = (clone $query)->count();
 
+        $invalidSpecialPrice = [];
+
         $items = $query
-            ->limit(50)
+            ->limit(20)
             ->get()
-            ->map(function (Product $product) {
-                // Get active price and special price using model logic (handles dates, percentage, etc.)
-                $hasSpecial = $product->hasSpecialPrice();
-                $priceObj = $product->price;
-                $specialObj = $hasSpecial ? $product->getSpecialPrice() : null;
+            ->map(function (Product $product) use ($actions, &$invalidSpecialPrice) {
+                $simulatedValues = []; 
+                $changes = [];
 
-                // Fallback to default variant if main product has no price
-                if ($product->variants->isNotEmpty() && (!$priceObj || $priceObj->isZero())) {
-                    $defaultVariant = $product->variants->where('is_default', 1)->first() ?? $product->variants->first();
-                    if ($defaultVariant) {
-                        $hasSpecial = $defaultVariant->hasSpecialPrice();
-                        $priceObj = $defaultVariant->price;
-                        $specialObj = $hasSpecial ? $defaultVariant->getSpecialPrice() : null;
-                    }
-                }
+                foreach ($actions as $action) {
+                    $attr = $action['attribute'] ?? null;
+                    $mode = $action['mode'] ?? 'set';
+                    $val = $action['value'] ?? null;
 
-                $price = $priceObj ? $priceObj->amount() : null;
-                $priceFormatted = $priceObj ? $priceObj->convertToCurrentCurrency()->format() : null;
-                
-                $special = $specialObj ? $specialObj->amount() : null;
-                $specialFormatted = $specialObj ? $specialObj->convertToCurrentCurrency()->format() : null;
+                    if (!$attr) continue;
 
-                $category = $product->primaryCategory;
-                $categoryName = '';
-                if ($category) {
-                    $categoryName = $category->name;
+                    $label = $this->getAttributeLabel($attr);
+                    $original = null;
+                    $new = null;
 
-                    if ($categoryName === null || $categoryName === '') {
-                        try {
-                            $translation = $category->translations()
-                                ->withoutGlobalScope('locale')
-                                ->first();
-                            if ($translation && isset($translation->name)) {
-                                $categoryName = $translation->name;
-                            }
-                        } catch (\Throwable $e) {
-                            // ignore
-                        }
-                    }
-                }
+                    if ($attr === 'price' || $attr === 'special_price') {
+                        $rawOrig = ($attr === 'price' ? $product->price : ($product->hasSpecialPrice() ? $product->getSpecialPrice() : null));
+                        $current = $simulatedValues[$attr] ?? ($rawOrig ? (float)$rawOrig->amount() : null);
+                        $original = $original ?? ($current !== null ? number_format($current, 2, '.', '') : '-');
+                        
+                        if ($mode === 'set') $new = $val;
+                        elseif ($mode === 'increase_percent') $new = $current + ($current * ($val / 100));
+                        elseif ($mode === 'decrease_percent') $new = $current - ($current * ($val / 100));
+                        elseif ($mode === 'increase_fixed') $new = $current + $val;
+                        elseif ($mode === 'decrease_fixed') $new = $current - $val;
+                        elseif ($mode === 'clear') $new = null;
 
-                // Resolve a simple image URL from base_image accessor (if available)
-                $imageUrl = null;
-                $baseImage = $product->base_image ?? null;
-
-                // Fallback to default variant image if product base image is empty
-                if ((!$baseImage || !$baseImage->exists) && $product->variants->isNotEmpty()) {
-                    $defaultVariant = $product->variants->where('is_default', 1)->first() ?? $product->variants->first();
-                    if ($defaultVariant) {
-                        $baseImage = $defaultVariant->base_image;
-                    }
-                }
-
-                if ($baseImage && $baseImage->exists) {
-                    $path = null;
-
-                    if (is_array($baseImage)) {
-                        $path = $baseImage['path'] ?? null;
-                    } elseif (is_object($baseImage)) {
-                        // Typical ProductMedia model instance
-                        $path = $baseImage->path ?? null;
-                    }
-
-                    if (is_string($path) && $path !== '') {
-                        if (preg_match('#^https?://#', $path)) {
-                            $imageUrl = $path;
+                        if ($new !== null) {
+                            $new = number_format((float)$new, 2, '.', '');
+                            $simulatedValues[$attr] = (float)$new;
                         } else {
-                            if (str_starts_with($path, '/')) {
-                                $imageUrl = url($path);
-                            } elseif (str_starts_with($path, 'storage/')) {
-                                $imageUrl = url('/' . $path);
-                            } else {
-                                $imageUrl = url('/storage/' . $path);
-                            }
+                            $simulatedValues[$attr] = null;
+                            $new = 'Kaldırıldı';
                         }
+                    } elseif ($attr === 'qty') {
+                        $current = $simulatedValues[$attr] ?? (float)$product->qty;
+                        $allowDecimal = (bool) $product->unit_decimal;
+                        
+                        $formatStock = function($q) use ($allowDecimal) {
+                             if (!$allowDecimal) return (string) (int) $q;
+                             return fmod($q, 1) === 0.0 ? (string)(int)$q : rtrim(rtrim(number_format($q, 2, '.', ''), '0'), '.');
+                        };
+
+                        $original = $original ?? $formatStock($current);
+
+                        if ($mode === 'set') $new = (float)$val;
+                        elseif ($mode === 'increase') $new = (float)$current + (float)$val;
+                        elseif ($mode === 'decrease') $new = (float)$current - (float)$val;
+
+                        if (!$allowDecimal) {
+                            $new = floor($new);
+                        }
+
+                        $simulatedValues[$attr] = max(0, $new);
+                        $new = $formatStock($simulatedValues[$attr]);
+                    } elseif ($attr === 'manage_stock') {
+                        $original = $product->manage_stock ? 'Takip Yapılıyor' : 'Takip Yok';
+                        $new = (int)$val === 1 ? 'Takip Yapılıyor' : 'Takip Yok';
+                        $simulatedValues[$attr] = (int)$val;
+                    } elseif ($attr === 'in_stock') {
+                        $original = $product->in_stock ? 'Stokta' : 'Stokta Yok';
+                        $new = (int)$val === 1 ? 'Stokta' : 'Stokta Yok';
+                        $simulatedValues[$attr] = (int)$val;
+                    } elseif ($attr === 'is_active') {
+                        $original = $product->is_active ? 'Yayında' : 'Yayında Değil';
+                        $new = (int)$val === 1 ? 'Yayında' : 'Yayında Değil';
+                        $simulatedValues[$attr] = (int)$val;
+                    } elseif ($attr === 'brand_id') {
+                        $original = optional($product->brand)->name ?? 'Yok';
+                        $brand = \Modules\Brand\Entities\Brand::find((int)$val);
+                        $new = $brand ? $brand->name : ($val === null ? 'Yok' : '#' . $val);
+                    } elseif ($attr === 'tax_class_id') {
+                        $original = optional($product->taxClass)->label ?? 'Yok';
+                        $tax = \Modules\Tax\Entities\TaxClass::find((int)$val);
+                        $new = $tax ? $tax->label : ($val === null ? 'Yok' : '#' . $val);
+                    } elseif ($attr === 'primary_category') {
+                        $original = optional($product->primaryCategory)->name ?? 'Yok';
+                        $cat = \Modules\Category\Entities\Category::find((int)$val);
+                        $new = $cat ? $cat->name : ($val === null ? 'Yok' : '#' . $val);
+                    } elseif ($attr === 'name' || $attr === 'sku') {
+                        $current = $simulatedValues[$attr] ?? $product->{$attr};
+                        $original = $original ?? $current;
+                        if ($mode === 'set') $new = $val;
+                        elseif ($mode === 'prefix') $new = $val . $current;
+                        elseif ($mode === 'suffix') $new = $current . $val;
+                        elseif ($mode === 'search_replace' && is_array($val)) {
+                            $new = str_replace($val['search'], $val['replace'], $current);
+                        }
+                        $simulatedValues[$attr] = $new;
+                    }
+
+                    if ($new !== null && $original != $new) {
+                        $changes[] = [
+                            'label' => $label,
+                            'original' => (string)$original,
+                            'new' => (string)$new
+                        ];
                     }
                 }
 
-                $vCount = $product->variants->count();
-                $displayName = $product->name;
-                if ($vCount > 0) {
-                    $displayName .= " ({$vCount} Varyant)";
+                $warnings = [];
+                $finalPrice = $simulatedValues['price'] ?? ($product->price ? (float)$product->price->amount() : 0);
+                $finalSpecial = $simulatedValues['special_price'] ?? ($product->hasSpecialPrice() ? (float)$product->getSpecialPrice()->amount() : null);
+
+                if ($finalSpecial !== null && $finalSpecial > $finalPrice) {
+                    $warnings[] = "İndirimli fiyat ({$finalSpecial}), normal fiyattan ({$finalPrice}) büyük olamaz!";
                 }
 
                 return [
                     'id' => $product->id,
-                    'name' => $displayName,
-                    'brand' => optional($product->brand)->name,
-                    'category' => $categoryName,
-                    'price' => $price,
-                    'price_formatted' => $priceFormatted,
-                    'special_price' => $special,
-                    'special_price_formatted' => $specialFormatted,
-                    'has_special_price' => $hasSpecial,
-                    'image' => $imageUrl,
+                    'name' => $product->name,
+                    'sku' => $product->sku,
+                    'thumbnail' => $product->base_image->path ?? null,
+                    'changes' => $changes,
+                    'warnings' => $warnings
                 ];
             });
 
         return response()->json([
-            'success' => true,
             'total' => $total,
             'items' => $items,
-        ], 200);
+            'invalid_special_price' => $invalidSpecialPrice
+        ]);
     }
-
 
     public function bulkUpdate(Request $request): JsonResponse
     {
         $filters = $request->input('filters', []);
-        $combine = strtolower($request->input('combine', 'and')) === 'or' ? 'or' : 'and';
+        $productIds = $request->input('product_ids', []);
         $actions = $request->input('actions', []);
-
-        if (empty($actions) || !is_array($actions)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No update actions provided.',
-            ], 422);
-        }
+        $combine = strtolower($request->input('combine', 'and')) === 'or' ? 'or' : 'and';
+        $applyToVariants = (bool)$request->input('apply_to_variants', true);
 
         $query = Product::query()
             ->withoutGlobalScope('active')
-            ->with(['variants' => function ($q) {
-                $q->withoutGlobalScope('active');
-            }]);
+            ->with(['saleUnit', 'variants', 'categories', 'tags']);
+
+        if (!empty($productIds) && is_array($productIds)) {
+            $query->whereIn('id', array_map('intval', $productIds));
+        }
 
         $this->applyBulkFilters($query, $filters, $combine);
 
-        $products = $query->get();
+        $count = 0;
+        $query->chunk(100, function ($products) use ($actions, &$count, $applyToVariants) {
+            foreach ($products as $product) {
+                foreach ($actions as $action) {
+                    $attr = $action['attribute'] ?? null;
+                    $mode = $action['mode'] ?? 'set';
+                    $val = $action['value'] ?? null;
+                    if (!$attr) continue;
 
-        if ($products->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No products matched the given filters.',
-            ], 422);
-        }
+                    try {
+                        if ($attr === 'price' || $attr === 'special_price' || $attr === 'qty') {
+                            $current = 0;
+                            if ($attr === 'qty') {
+                                $current = (float)$product->qty;
+                            } elseif ($attr === 'price') {
+                                $current = $product->price ? $product->price->amount() : 0;
+                            } elseif ($attr === 'special_price') {
+                                $current = $product->hasSpecialPrice() ? $product->getSpecialPrice()->amount() : 0;
+                            }
+                            
+                            $new = (float)$current;
+                            if ($mode === 'set') $new = (float)$val;
+                            elseif ($mode === 'increase_percent') $new = $current + ($current * ((float)$val / 100));
+                            elseif ($mode === 'decrease_percent') $new = $current - ($current * ((float)$val / 100));
+                            elseif ($mode === 'increase_fixed' || $mode === 'increase') $new = $current + (float)$val;
+                            elseif ($mode === 'decrease_fixed' || $mode === 'decrease') $new = $current - (float)$val;
+                            elseif ($mode === 'clear') $new = null;
 
-        foreach ($products as $product) {
-            $baseUpdates = [];
+                            if ($attr === 'qty') {
+                                if ($product->saleUnit && !$product->saleUnit->isDecimalStock()) {
+                                    $new = floor($new);
+                                }
+                                $updateData = ['qty' => max(0, (float)$new)];
+                                $product->update($updateData);
+                                if ($applyToVariants) $product->variants()->update($updateData);
+                            } else {
+                                $updateData = [$attr => $new];
+                                $product->update($updateData);
+                                
+                                // Validation for price vs special_price
+                                $pObj = $product->fresh();
+                                $regPrice = $pObj->price ? $pObj->price->amount() : 0;
+                                $specPrice = ($pObj->special_price !== null) ? (float)$pObj->special_price : null;
 
-            foreach ($actions as $action) {
-                $attribute = $action['attribute'] ?? null;
-                $mode = $action['mode'] ?? null;
-                $value = $action['value'] ?? null;
+                                if ($specPrice !== null && $specPrice > $regPrice) {
+                                    $pObj->update(['special_price' => $regPrice]);
+                                }
 
-                if ($attribute === 'price') {
-                    $rawCurrent = $product->getAttribute('price');
+                                if ($applyToVariants) {
+                                    foreach ($pObj->variants as $variant) {
+                                        $variant->update($updateData);
+                                        $vReg = $variant->price ? $variant->price->amount() : 0;
+                                        $vSpec = ($variant->special_price !== null) ? (float)$variant->special_price : null;
+                                        if ($vSpec !== null && $vSpec > $vReg) {
+                                            $variant->update(['special_price' => $vReg]);
+                                        }
+                                    }
+                                }
+                            }
+                        } elseif (in_array($attr, ['is_active', 'manage_stock', 'in_stock', 'brand_id', 'tax_class_id', 'primary_category'])) {
+                            $column = ($attr === 'primary_category') ? 'primary_category_id' : $attr;
+                            $updateData = [$column => $val];
+                            $product->update($updateData);
 
-                    if ($rawCurrent instanceof \Modules\Support\Money) {
-                        $current = $rawCurrent->amount();
-                    } elseif (is_numeric($rawCurrent)) {
-                        $current = (float) $rawCurrent;
-                    } else {
-                        $current = 0.0;
-                    }
+                            // For primary category, also ensure it's in the pivot table
+                            if ($attr === 'primary_category' && !empty($val)) {
+                                $product->categories()->syncWithoutDetaching([$val]);
+                            }
 
-                    if ($mode === 'set' && is_numeric($value)) {
-                        $newPrice = (float) $value;
-                    } elseif (($mode === 'increase_percent' || $mode === 'decrease_percent') && is_numeric($value)) {
-                        $percent = (float) $value;
-                        $delta = $current * ($percent / 100);
-                        $newPrice = $mode === 'increase_percent' ? $current + $delta : $current - $delta;
-                    } else {
+                            // Sync only applicable fields to variants
+                            if ($applyToVariants && in_array($attr, ['is_active', 'manage_stock', 'in_stock'])) {
+                                $product->variants()->update($updateData);
+                            }
+                        } elseif ($attr === 'category_action') {
+                            if ($mode === 'add') $product->categories()->syncWithoutDetaching((array)$val);
+                            elseif ($mode === 'remove') $product->categories()->detach((array)$val);
+                        } elseif (in_array($attr, ['name', 'sku', 'short_description', 'description'])) {
+                            $current = (string)$product->{$attr};
+                            $new = $current;
+                            if ($mode === 'set') $new = $val;
+                            elseif ($mode === 'prefix') $new = (string)$val . $current;
+                            elseif ($mode === 'suffix') $new = $current . (string)$val;
+                            elseif ($mode === 'search_replace' && is_array($val)) {
+                                $new = str_replace($val['search'] ?? '', $val['replace'] ?? '', $current);
+                            }
+                            $product->update([$attr => $new]);
+                            // Translatable fields don't usually sync to variants automatically in FleetCart
+                        }
+                    } catch (\Exception $e) {
+                        \Log::error("Bulk Update Error [Product ID: {$product->id}]: " . $e->getMessage());
                         continue;
                     }
 
-                    if ($newPrice < 0) {
-                        $newPrice = 0;
-                    }
-
-                    $baseUpdates['price'] = $newPrice;
-
-                    foreach ($product->variants as $variant) {
-                        $rawVariantPrice = $variant->getAttribute('price');
-                        if ($rawVariantPrice instanceof \Modules\Support\Money) {
-                            $variantCurrent = $rawVariantPrice->amount();
-                        } elseif (is_numeric($rawVariantPrice)) {
-                            $variantCurrent = (float) $rawVariantPrice;
-                        } else {
-                            $variantCurrent = 0.0;
-                        }
-
-                        $variantNew = $variantCurrent;
-
-                        if ($mode === 'set' && is_numeric($value)) {
-                            $variantNew = (float) $value;
-                        } elseif (($mode === 'increase_percent' || $mode === 'decrease_percent') && is_numeric($value)) {
-                            $deltaV = $variantCurrent * ((float) $value / 100);
-                            $variantNew = $mode === 'increase_percent' ? $variantCurrent + $deltaV : $variantCurrent - $deltaV;
-                        }
-
-                        if ($variantNew < 0) {
-                            $variantNew = 0;
-                        }
-
-                        $variant->update(['price' => $variantNew]);
-                    }
                 }
-
-                if ($attribute === 'special_price') {
-                    if ($mode === 'set' && is_numeric($value)) {
-                        $sp = (float) $value;
-                        $baseUpdates['special_price'] = $sp;
-
-                        foreach ($product->variants as $variant) {
-                            $variant->update(['special_price' => $sp]);
-                        }
-                    } elseif ($mode === 'clear') {
-                        $baseUpdates['special_price'] = null;
-
-                        foreach ($product->variants as $variant) {
-                            $variant->update(['special_price' => null]);
-                        }
-                    }
-                }
-
-                if ($attribute === 'primary_category') {
-                    if ($mode === 'set' && $value) {
-                        $newCategoryId = (int) $value;
-                        if ($newCategoryId > 0) {
-                            $baseUpdates['primary_category_id'] = $newCategoryId;
-
-                            // Ensure pivot relation exists so SEO/category helpers behave correctly
-                            try {
-                                $product->categories()->syncWithoutDetaching([$newCategoryId]);
-                            } catch (\Throwable $e) {
-                                // ignore pivot sync errors in bulk context
-                            }
-                        }
-                    }
-                }
-
-                if ($attribute === 'name' || $attribute === 'short_description' || $attribute === 'description') {
-                    if ($mode === 'set' && is_string($value) && $value !== '') {
-                        foreach ($product->translations as $translation) {
-                            $translation->{$attribute} = $value;
-                            $translation->save();
-                        }
-                    } elseif ($mode === 'search_replace' && is_array($value)) {
-                        $search = $value['search'] ?? '';
-                        $replace = $value['replace'] ?? '';
-                        if ($search !== '') {
-                            foreach ($product->translations as $translation) {
-                                $currentText = $translation->{$attribute} ?? '';
-                                $translation->{$attribute} = str_replace($search, $replace, $currentText);
-                                $translation->save();
-                            }
-                        }
-                    }
-                }
-
-                if ($attribute === 'sku') {
-                    $currentSku = $product->sku ?? '';
-                    if ($mode === 'set') {
-                        $baseUpdates['sku'] = $value;
-                    } elseif ($mode === 'prefix' && is_string($value) && $value !== '') {
-                        $baseUpdates['sku'] = $value . $currentSku;
-                    } elseif ($mode === 'suffix' && is_string($value) && $value !== '') {
-                        $baseUpdates['sku'] = $currentSku . $value;
-                    }
-                }
-
-                if ($attribute === 'brand') {
-                    if ($mode === 'set' && $value) {
-                        $baseUpdates['brand_id'] = (int) $value;
-                    } elseif ($mode === 'clear') {
-                        $baseUpdates['brand_id'] = null;
-                    }
-                }
-
-                if ($attribute === 'status') {
-                    if ($mode === 'set') {
-                        $baseUpdates['is_active'] = (int) $value === 1 ? 1 : 0;
-                    }
-                }
-
-                if ($attribute === 'manage_stock') {
-                    if ($mode === 'set') {
-                        $baseUpdates['manage_stock'] = (int) $value === 1 ? 1 : 0;
-                    }
-                }
-
-                if ($attribute === 'qty') {
-                    $rawCurrent = (float) ($product->qty ?? 0);
-                    $newQty = $rawCurrent;
-                    if ($mode === 'set' && is_numeric($value)) {
-                        $newQty = (float) $value;
-                    } elseif (($mode === 'increase' || $mode === 'decrease') && is_numeric($value)) {
-                        $delta = (float) $value;
-                        $newQty = $mode === 'increase' ? $rawCurrent + $delta : $rawCurrent - $delta;
-                    }
-                    $baseUpdates['qty'] = max(0, $newQty);
-                    if ($baseUpdates['qty'] > 0) {
-                        $baseUpdates['in_stock'] = 1;
-                    }
-                }
+                $count++;
             }
-
-            if (!empty($baseUpdates)) {
-                $product->update($baseUpdates);
-            }
-        }
+        });
 
         return response()->json([
             'success' => true,
-            'updated' => $products->count(),
-        ], 200);
+            'message' => "{$count} ürün başarıyla güncellendi."
+        ]);
     }
 
-
-    protected function applyBulkFilters($query, array $filters, string $combine): void
+    private function getAttributeLabel($attr): string
     {
-        if (empty($filters)) {
-            return;
-        }
+        $labels = [
+            'name' => 'Ürün Adı',
+            'sku' => 'SKU',
+            'price' => 'Satış Fiyatı',
+            'special_price' => 'İndirimli Fiyat',
+            'qty' => 'Stok Miktarı',
+            'is_active' => 'Yayın Durumu',
+            'manage_stock' => 'Stok Takibi',
+            'in_stock' => 'Stok Durumu',
+            'brand_id' => 'Marka',
+            'primary_category' => 'Ana Kategori',
+            'category_action' => 'Kategori',
+            'tax_class_id' => 'Vergi Sınıfı',
+            'description' => 'Açıklama',
+            'short_description' => 'Kısa Açıklama'
+        ];
+        return $labels[$attr] ?? $attr;
+    }
 
-        $boolean = $combine === 'or' ? 'or' : 'and';
+    private function applyBulkFilters($query, $filters, $combine = 'and')
+    {
+        if (empty($filters)) return;
 
-        $query->where(function ($outer) use ($filters, $boolean) {
+        $query->where(function ($q) use ($filters, $combine) {
             foreach ($filters as $index => $filter) {
-                $attribute = $filter['attribute'] ?? null;
-                $operator = $filter['operator'] ?? null;
+                $attr = $filter['attribute'] ?? null;
+                $operator = $filter['operator'] ?? '=';
                 $value = $filter['value'] ?? null;
 
-                if (!$attribute || $operator === null) {
-                    continue;
-                }
+                if (!$attr) continue;
 
-                $method = $index === 0 ? 'where' : ($boolean === 'or' ? 'orWhere' : 'where');
+                $whereFunc = ($combine === 'or' && $index > 0) ? 'orWhere' : 'where';
 
-                if ($attribute === 'name') {
-                    if (!is_string($value) || trim($value) === '') {
-                        continue;
-                    }
-                    $outer->{$method}(function ($q) use ($operator, $value) {
-                        if ($operator === 'contains') {
-                            $q->whereHas('translations', function ($t) use ($value) {
-                                $t->where('name', 'like', '%' . $value . '%');
-                            });
-                        }
+                if ($attr === 'category_id') {
+                    $q->{$whereFunc . 'Has'}('categories', function ($catQ) use ($value) {
+                        $catQ->whereIn('categories.id', (array)$value);
                     });
-                } elseif ($attribute === 'brand') {
-                    if ($value === null || $value === '') {
-                        continue;
-                    }
-                    $outer->{$method}(function ($q) use ($operator, $value) {
-                        if ($operator === '=') {
-                            $q->where('brand_id', (int) $value);
-                        }
-                    });
-                } elseif ($attribute === 'category') {
-                    $ids = is_array($value) ? $value : [$value];
-                    $ids = array_filter(array_map('intval', $ids));
-
-                    if (empty($ids)) {
-                        continue;
-                    }
-
-                    $outer->{$method}(function ($q) use ($ids) {
-                        $q->where(function ($sub) use ($ids) {
-                            $sub->whereIn('primary_category_id', $ids)
-                                ->orWhereHas('categories', function ($cat) use ($ids) {
-                                    $cat->whereIn('categories.id', $ids);
-                                });
-                        });
-                    });
-                } elseif ($attribute === 'price' || $attribute === 'qty') {
-                    if (!is_numeric($value)) {
-                        continue;
-                    }
-                    $v = (float) $value;
-                    $dbField = $attribute === 'price' ? 'price' : 'qty';
-
-                    $outer->{$method}(function ($q) use ($operator, $v, $dbField) {
-                        if ($operator === '>=') {
-                            $q->where($dbField, '>=', $v);
-                        } elseif ($operator === '<=') {
-                            $q->where($dbField, '<=', $v);
-                        } elseif ($operator === '>') {
-                            $q->where($dbField, '>', $v);
-                        } elseif ($operator === '<') {
-                            $q->where($dbField, '<', $v);
-                        } elseif ($operator === '=') {
-                            $q->where($dbField, '=', $v);
-                        }
-                    });
-                } elseif ($attribute === 'sku') {
-                    if (!is_string($value) || trim($value) === '') {
-                        continue;
-                    }
-                    $outer->{$method}(function ($q) use ($operator, $value) {
-                        if ($operator === 'contains') {
-                            $q->where('sku', 'like', '%' . $value . '%');
-                        } elseif ($operator === '=') {
-                            $q->where('sku', $value);
-                        }
-                    });
-                } elseif ($attribute === 'status') {
-                    if ($value === null || $value === '') {
-                        continue;
-                    }
-                    $outer->{$method}(function ($q) use ($value) {
-                        $q->where('is_active', (int) $value);
-                    });
+                } elseif ($attr === 'price' || $attr === 'qty') {
+                    $q->{$whereFunc}($attr, $operator, $value);
+                } elseif ($attr === 'is_active' || $attr === 'brand_id') {
+                    $q->{$whereFunc}($attr, '=', $value);
+                } else {
+                    $q->{$whereFunc}($attr, 'like', "%{$value}%");
                 }
             }
         });
     }
+
 }

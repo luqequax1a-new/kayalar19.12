@@ -19,7 +19,7 @@ return new class extends Migration
     {
         Schema::table('size_charts', function (Blueprint $table) {
             if (!Schema::hasColumn('size_charts', 'note')) {
-                $table->text('note')->nullable()->after('content_html');
+                $table->text('note')->nullable();
             }
         });
     }

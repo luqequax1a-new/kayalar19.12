@@ -27,6 +27,7 @@ video.product-main-media--video::-webkit-media-controls-fullscreen-button {
             opacity: 0;
             visibility: hidden;
         }
+
         .variation-image {
             position: absolute;
             left: 0;
@@ -100,6 +101,7 @@ video.product-main-media--video::-webkit-media-controls-fullscreen-button {
     transition: var(--transition-150);
 
     &.is-pagination-hidden {
+
         .swiper-pagination,
         .swiper-pagination.swiper-pagination-bullets {
             display: none !important;
@@ -209,7 +211,7 @@ video.product-main-media--video::-webkit-media-controls-fullscreen-button {
             }
         }
 
-        > img {
+        >img {
             position: absolute;
             left: 0;
             top: 0;
@@ -224,34 +226,75 @@ video.product-main-media--video::-webkit-media-controls-fullscreen-button {
     }
 
     .gallery-view-icon {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        height: 34px;
-        width: 34px;
-        display: none;
-        justify-content: center;
-        align-items: center;
-        color: var(--color-primary);
-        background: rgba(255, 255, 255, 0.82);
-        border: 1px solid rgba(0, 0, 0, 0.08);
-        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
-        backdrop-filter: blur(10px);
-        border-radius: var(--radius-full);
-        z-index: 1;
-        transform: none;
-        transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
-        cursor: pointer;
+        display: none !important;
+    }
 
-        &:active {
-            transform: scale(0.96);
-            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.16);
+    // Video thumbnail with center play overlay
+    .gallery-preview-item--video {
+        position: relative;
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
-        > i {
-            font-size: 16px;
-            transition: none;
+        // Play button circle (shows when paused)
+        &::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80px;
+            height: 80px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 50%;
+            z-index: 2;
+            transition: all 0.3s ease;
+            pointer-events: none;
+            opacity: 1;
         }
+
+        // Play triangle
+        &::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-35%, -50%);
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 15px 0 15px 25px;
+            border-color: transparent transparent transparent white;
+            z-index: 3;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            opacity: 1;
+        }
+
+        &:hover::before {
+            background: rgba(0, 0, 0, 0.85);
+            transform: translate(-50%, -50%) scale(1.08);
+        }
+
+        // Hide play button when video is playing
+        &[data-playing="true"]::before,
+        &[data-playing="true"]::after {
+            opacity: 0;
+        }
+
+        // Show play button when paused
+        &[data-playing="false"]::before,
+        &[data-playing="false"]::after {
+            opacity: 1;
+        }
+    }
+
+    // Hide old play icon
+    .fc-video-play-icon {
+        display: none !important;
     }
 }
 
@@ -288,12 +331,6 @@ video.product-main-media--video::-webkit-media-controls-fullscreen-button {
         position: unset !important;
         z-index: unset;
     }
-
-    .product-gallery-preview {
-        .gallery-view-icon {
-            display: none;
-        }
-    }
 }
 
 @media screen and (max-width: 600px) {
@@ -318,19 +355,6 @@ video.product-main-media--video::-webkit-media-controls-fullscreen-button {
 
     .product-gallery-preview-wrap {
         border: unset;
-    }
-
-    .product-gallery-preview {
-        .gallery-view-icon {
-            top: 10px;
-            right: 10px;
-            height: 42px;
-            width: 42px;
-
-            > i {
-                font-size: 18px;
-            }
-        }
     }
 }
 

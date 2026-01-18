@@ -10,7 +10,7 @@
     visibility: hidden;
     transform: translateY(100px);
     transition: var(--transition-200);
-    z-index: 181;
+    z-index: $z-index-sidebar;
 
     &.active {
         opacity: 1;
@@ -63,37 +63,106 @@
         }
     }
 
-    .localization-form {
+    .localization-content {
         padding: 24px;
 
-        .form-group {
-            select {
-                -webkit-appearance: none;
-                -moz-appearance: none;
-                appearance: none;
-                background-image: url("../../images/arrow-black.png");
-                background-repeat: no-repeat;
-                background-size: 10px;
-                background-position: right 15px center;
+        .support-options {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .support-item {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            background: #f8fafc;
+            border-radius: 12px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border: 1px solid #eef2f6;
+
+            &:hover {
+                background: #f1f5f9;
+                transform: translateX(4px);
             }
 
-            .input-group {
-                position: relative;
+            .icon-box {
+                width: 48px;
+                height: 48px;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin-right: 16px;
+                flex-shrink: 0;
 
-                .form-control {
-                    padding-left: 48px;
-                    border-radius: var(--radius-default) !important;
+                svg {
+                    width: 24px;
+                    height: 24px;
+                }
+            }
+
+            .text-box {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+
+                .title {
+                    font-size: 16px;
+                    font-weight: 600;
+                    color: #1e293b;
+                    margin-bottom: 2px;
                 }
 
-                .input-icon {
-                    width: 20px;
-                    height: 20px;
-                    position: absolute;
-                    top: 50%;
-                    transform: translateY(-50%);
-                    left: 16px;
-                    z-index: 3;
+                .subtitle {
+                    font-size: 13px;
+                    color: #64748b;
                 }
+            }
+
+            .arrow-box {
+                color: #94a3b8;
+                margin-left: 8px;
+            }
+
+            // Colors
+            &.whatsapp {
+                .icon-box {
+                    background: rgba(37, 211, 102, 0.1);
+                    color: #25d366;
+                }
+            }
+
+            &.call {
+                .icon-box {
+                    background: rgba(59, 130, 246, 0.1);
+                    color: #3b82f6;
+                }
+            }
+
+            &.tracking {
+                .icon-box {
+                    background: rgba(249, 115, 22, 0.1);
+                    color: #f97316;
+                }
+            }
+        }
+
+        .localization-tabs-trigger {
+            margin-top: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            color: #94a3b8;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 10px;
+            border-top: 1px solid #f1f5f9;
+
+            &:hover {
+                color: var(--color-primary);
             }
         }
     }

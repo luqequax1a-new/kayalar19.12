@@ -16,100 +16,122 @@
     .my-orders-cards {
         display: none;
         flex-direction: column;
-        gap: 14px;
+        gap: 20px;
+        padding: 10px 0;
     }
 
     .my-order-card {
-        border: 1px solid var(--border-color);
-        border-radius: 14px;
+        border: 1px solid #f1f1f1;
+        border-radius: 18px;
         overflow: hidden;
         background: var(--color-white);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s ease;
+
+        &:active {
+            transform: scale(0.98);
+        }
     }
 
     .my-order-card-header {
-        padding: 14px 14px 10px;
-        display: grid;
-        gap: 10px;
-        background: var(--color-white-lite);
+        padding: 18px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #fcfcfc;
+        border-bottom: 1px solid #f1f1f1;
     }
 
     .my-order-card-title,
     .my-order-card-status {
         display: flex;
         flex-direction: column;
-        gap: 6px;
-        align-items: center;
-        text-align: center;
+        gap: 4px;
+        align-items: flex-start;
+        text-align: left;
+    }
+
+    .my-order-card-status {
+        align-items: flex-end;
+        text-align: right;
     }
 
     .my-order-card-label {
-        font-size: 13px;
+        font-size: 12px;
         line-height: 1.2;
-        color: var(--color-gray);
-        font-weight: var(--font-medium);
+        color: var(--color-dark-3);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
     }
 
     .my-order-card-value {
-        font-size: 16px;
+        font-size: 15px;
         line-height: 1.2;
-        color: var(--color-black);
+        color: var(--color-dark);
         font-weight: 700;
     }
 
     .my-order-card-body {
-        padding: 10px 14px 6px;
+        padding: 12px 20px;
     }
 
     .my-order-card-row {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 10px 0;
+        padding: 12px 0;
 
-        & + .my-order-card-row {
-            border-top: 1px dashed var(--border-color);
+        &+.my-order-card-row {
+            border-top: 1px solid #f8f8f8;
         }
     }
 
     .my-order-card-row-label {
         font-size: 14px;
-        color: var(--color-gray);
+        color: var(--color-dark-2);
     }
 
     .my-order-card-row-value {
         font-size: 14px;
-        color: var(--color-black);
-        font-weight: var(--font-medium);
+        color: var(--color-dark);
+        font-weight: 600;
         text-align: right;
         max-width: 60%;
     }
 
     .my-order-card-row-value--strong {
         font-weight: 800;
+        color: var(--primary-color);
+        font-size: 16px;
     }
 
     .my-order-card-footer {
-        padding: 12px 14px 14px;
+        padding: 10px 20px 20px;
     }
 
     .my-order-card-btn {
         width: 100%;
-        height: 44px;
-        border-radius: 12px;
-        background: #0e1627;
+        height: 48px;
+        border-radius: 14px;
+        background: var(--color-dark);
         color: #ffffff;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         font-weight: 700;
-        font-size: 14px;
+        font-size: 15px;
         line-height: 1;
         padding: 0 16px;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 
         &:hover,
         &:focus {
-            background: #0b1220;
+            background: #000;
             color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
         }
     }
 }
@@ -135,48 +157,48 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            height: 30px;
-            width: 30px;
-            border: 1px solid var(--color-gray-lite);
-            background: var(--color-white-lite);
+            height: 34px;
+            width: 34px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background: #fff;
             padding: 0;
+            transition: all 0.2s ease;
+            color: #64748b;
 
             &:hover,
             &:focus {
-                border: 1px solid var(--color-primary-alpha-15);
-                background: var(--color-primary-alpha-10) !important;
+                border-color: var(--primary-color) !important;
+                background: var(--primary-color) !important;
+                color: #fff !important;
 
-                > i {
-                    color: var(--color-primary);
+                >i {
+                    color: #fff;
                 }
 
                 svg {
                     path {
-                        stroke: var(--color-primary);
+                        stroke: #fff;
                     }
                 }
             }
 
             &.btn-loading {
                 &:after {
-                    background-image: conic-gradient(
-                        transparent 5deg,
-                        var(--color-primary) 360deg
-                    );
-                    mask: radial-gradient(
-                        farthest-side,
-                        transparent calc(100% - 1.3px),
-                        var(--color-primary) 0
-                    );
+                    background-image: conic-gradient(transparent 5deg,
+                            var(--color-primary) 360deg);
+                    mask: radial-gradient(farthest-side,
+                            transparent calc(100% - 1.3px),
+                            var(--color-primary) 0);
                 }
 
-                > i,
+                >i,
                 svg {
                     opacity: 0;
                 }
             }
 
-            > i {
+            >i {
                 color: var(--color-black-20);
                 transition: var(--transition-150);
             }
@@ -244,7 +266,7 @@
                 color: var(--color-primary);
             }
 
-            > i {
+            >i {
                 font-size: 24px;
                 margin-right: 15px;
                 color: var(--color-gray);
@@ -258,7 +280,7 @@
         padding: 64px 15px 63px;
         text-align: center;
 
-        > h3 {
+        >h3 {
             font-weight: var(--font-normal);
         }
     }

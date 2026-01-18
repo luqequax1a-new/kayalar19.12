@@ -2,9 +2,10 @@
 
 namespace Modules\ProductFeeds\Http\Controllers\Public;
 
-use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Modules\ProductFeeds\Services\FeedCacheService;
 use Modules\ProductFeeds\Services\ProductFeedBuilder;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TikTokFeedController
 {
@@ -15,7 +16,7 @@ class TikTokFeedController
     {
     }
 
-    public function index(): JsonResponse
+    public function index(): Response
     {
         if (! setting('product_feeds.global.enabled', true) || ! setting('product_feeds.tiktok.enabled', true)) {
             abort(404);
@@ -27,65 +28,130 @@ class TikTokFeedController
             $cached = $this->cache->readCache($channel);
 
             if ($cached !== null) {
-                return new JsonResponse(json_decode($cached, true), 200);
+                return new Response($cached, 200, ['Content-Type' => 'application/json; charset=UTF-8']);
             }
         }
-
-        $response = $this->generate();
 
         if ($this->cache->isEnabled()) {
-            $this->cache->writeCache($channel, (string) $response->getContent());
+            $this->regenerateCache();
+            $cached = $this->cache->readCache($channel);
+
+            return new Response((string) $cached, 200, ['Content-Type' => 'application/json; charset=UTF-8']);
         }
 
-        return $response;
+        return $this->generate();
     }
 
-    public function generate(): JsonResponse
+    public function generate(): Response
     {
-        $rows = $this->feeds->normalizedItemsForFeed('tiktok');
+        $inStockOnly = (bool) setting('product_feeds.tiktok.in_stock_only', true);
+        $shippingProfile = (string) setting('product_feeds.tiktok.shipping_profile', '');
 
-        if (setting('product_feeds.tiktok.in_stock_only', true)) {
-            $rows = $rows->filter(function (array $row) {
-                return $row['availability'] === 'in stock';
-            })->values();
-        }
+        return new StreamedResponse(function () use ($inStockOnly, $shippingProfile) {
+            echo '{ "items": [' . "\n";
+            $first = true;
 
-        $shippingProfile = setting('product_feeds.tiktok.shipping_profile');
+            $this->feeds->streamNormalizedItemsForFeed('tiktok', function (array $row) use (&$first, $inStockOnly, $shippingProfile) {
+                if ($inStockOnly && $row['availability'] !== 'in stock') {
+                    return;
+                }
 
-        $items = [];
+                if (! $first) {
+                    echo ',' . "\n";
+                }
+                $first = false;
 
-        foreach ($rows as $row) {
-            $images = [];
+                $images = [];
+                if (! empty($row['main_image'])) {
+                    $images[] = $row['main_image'];
+                }
+                if (! empty($row['additional_images'])) {
+                    $images = array_merge($images, $row['additional_images']);
+                }
 
-            if (! empty($row['main_image'])) {
-                $images[] = $row['main_image'];
-            }
-
-            if (! empty($row['additional_images'])) {
-                $images = array_merge($images, $row['additional_images']);
-            }
-
-            $items[] = [
-                'id' => (string) $row['id'],
-                'title' => $row['title'],
-                'description' => $row['description'],
-                'price' => (float) ($row['sale_price'] ?? $row['price']),
-                'currency' => $row['currency'],
-                'stock' => $row['stock'] ?? 0,
-                'brand' => $row['brand'],
-                'sku' => $row['sku'],
-                'url' => $row['url'],
-                'images' => $images,
-                'category' => $row['category_path'],
-                'weight' => $row['weight'],
-                'shipping' => [
-                    'price' => null,
+                $item = [
+                    'id' => (string) $row['id'],
+                    'title' => $row['title'],
+                    'description' => $row['description'],
+                    'price' => (float) ($row['sale_price'] ?? $row['price']),
                     'currency' => $row['currency'],
-                    'profile' => $shippingProfile ?: null,
-                ],
-            ];
-        }
+                    'stock' => (int) ($row['stock'] ?? 0),
+                    'brand' => $row['brand'],
+                    'sku' => (string) ($row['sku'] ?: $row['id']),
+                    'url' => $row['url'],
+                    'images' => $images,
+                    'category' => $row['category_path'],
+                    'weight' => (float) ($row['weight'] ?? 0),
+                    'shipping' => [
+                        'price' => null,
+                        'currency' => $row['currency'],
+                        'profile' => $shippingProfile ?: null,
+                    ],
+                ];
 
-        return response()->json(['items' => $items]);
+                echo json_encode($item, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+            });
+
+            echo "\n" . '] }';
+        }, 200, ['Content-Type' => 'application/json; charset=UTF-8']);
+    }
+
+    public function regenerateCache(): void
+    {
+        $channel = 'tiktok';
+        $inStockOnly = (bool) setting('product_feeds.tiktok.in_stock_only', true);
+        $shippingProfile = (string) setting('product_feeds.tiktok.shipping_profile', '');
+
+        $meta = ['items_count' => 0];
+
+        $this->cache->writeCacheAtomic($channel, function ($handle) use (&$meta, $inStockOnly, $shippingProfile) {
+            fwrite($handle, '{ "items": [' . "\n");
+            $first = true;
+
+            $this->feeds->streamNormalizedItemsForFeed('tiktok', function (array $row) use ($handle, &$meta, &$first, $inStockOnly, $shippingProfile) {
+                if ($inStockOnly && $row['availability'] !== 'in stock') {
+                    return;
+                }
+
+                $meta['items_count']++;
+
+                if (! $first) {
+                    fwrite($handle, ',' . "\n");
+                }
+                $first = false;
+
+                $images = [];
+                if (! empty($row['main_image'])) {
+                    $images[] = $row['main_image'];
+                }
+                if (! empty($row['additional_images'])) {
+                    $images = array_merge($images, $row['additional_images']);
+                }
+
+                $item = [
+                    'id' => (string) $row['id'],
+                    'title' => $row['title'],
+                    'description' => $row['description'],
+                    'price' => (float) ($row['sale_price'] ?? $row['price']),
+                    'currency' => $row['currency'],
+                    'stock' => (int) ($row['stock'] ?? 0),
+                    'brand' => $row['brand'],
+                    'sku' => (string) ($row['sku'] ?: $row['id']),
+                    'url' => $row['url'],
+                    'images' => $images,
+                    'category' => $row['category_path'],
+                    'weight' => (float) ($row['weight'] ?? 0),
+                    'shipping' => [
+                        'price' => null,
+                        'currency' => $row['currency'],
+                        'profile' => $shippingProfile ?: null,
+                    ],
+                ];
+
+                fwrite($handle, json_encode($item, JSON_UNESCAPED_UNICODE));
+            });
+
+            fwrite($handle, "\n" . '] }');
+        }, $meta);
     }
 }

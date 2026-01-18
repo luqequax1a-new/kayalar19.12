@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'special_offers'   => 'Özel Teklifler!',
     'remaining_time'   => 'Kalan Süre: :time',
     'discount_badge'   => '%10 İndirim',
     'discount'         => 'İndirim',

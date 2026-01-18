@@ -1,5 +1,7 @@
 @extends('admin::layout')
 
+@section('title', trans('admin::resource.create', ['resource' => trans('cart::upsell.admin_title')]))
+
 @component('admin::components.page.header')
     @slot('title', trans('admin::resource.create', ['resource' => trans('cart::upsell.admin_title')]))
 
@@ -8,7 +10,7 @@
 @endcomponent
 
 @section('content')
-    <form method="POST" action="{{ route('admin.cart_upsell_rules.store') }}" class="form-horizontal" novalidate>
+    <form method="POST" action="{{ route('admin.cart_upsell_rules.store') }}" class="form-horizontal" id="upsell-rule-create-form" novalidate>
         {{ csrf_field() }}
 
         @include('cart::admin.upsell_rules.form')

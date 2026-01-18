@@ -8,8 +8,8 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('dynamic_category_rules', function (Blueprint $table) {
-            $table->unsignedInteger('position')->default(0)->after('group_no');
-            $table->string('label')->nullable()->after('boolean');
+            $table->unsignedInteger('position')->default(0);
+            $table->string('label')->nullable();
         });
     }
 

@@ -4,6 +4,7 @@ namespace Modules\Admin\Http\Controllers\Admin;
 
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Modules\User\Entities\User;
 use Modules\Order\Entities\Order;
 use Modules\Review\Entities\Review;
@@ -11,6 +12,7 @@ use Modules\Product\Entities\Product;
 use Modules\Product\Entities\ProductVariant;
 use Modules\Product\Entities\SearchTerm;
 use Illuminate\Database\Eloquent\Collection;
+use Modules\Ticket\Entities\Ticket;
 
 class DashboardController
 {
@@ -21,20 +23,67 @@ class DashboardController
      */
     public function index()
     {
+        $currentPeriodStats = $this->getCurrentPeriodStats();
+        $previousPeriodStats = $this->getPreviousPeriodStats();
+        
         return view('admin::dashboard.index', [
             'totalSales' => Order::totalSales(),
             'totalOrders' => Order::withoutCanceledOrders()->count(),
             'totalProducts' => Product::withoutGlobalScope('active')->count(),
             'totalCustomers' => User::totalCustomers(),
+            'currentPeriodStats' => $currentPeriodStats,
+            'previousPeriodStats' => $previousPeriodStats,
             'latestSearchTerms' => $this->getLatestSearchTerms(),
             'latestOrders' => $this->getLatestOrders(),
             'latestReviews' => $this->getLatestReviews(),
             'topCustomers' => $this->getTopCustomers(),
             'lowStockProducts' => $this->getLowStockProducts(),
             'latestCustomers' => $this->getLatestCustomers(),
+            'abandonedCartStats' => $this->getAbandonedCartStats(),
+            'ticketStats' => $this->getTicketStats(),
         ]);
     }
 
+
+    private function getCurrentPeriodStats()
+    {
+        $today = now()->startOfDay();
+        $endOfToday = now()->endOfDay();
+        
+        return [
+            'sales' => Order::withoutCanceledOrders()
+                ->whereBetween('created_at', [$today, $endOfToday])
+                ->sum('total'),
+            'orders' => Order::withoutCanceledOrders()
+                ->whereBetween('created_at', [$today, $endOfToday])
+                ->count(),
+            'customers' => Order::withoutCanceledOrders()
+                ->whereBetween('created_at', [$today, $endOfToday])
+                ->whereNotNull('customer_id')
+                ->distinct('customer_id')
+                ->count('customer_id'),
+        ];
+    }
+
+    private function getPreviousPeriodStats()
+    {
+        $yesterday = now()->subDay()->startOfDay();
+        $endOfYesterday = now()->subDay()->endOfDay();
+        
+        return [
+            'sales' => Order::withoutCanceledOrders()
+                ->whereBetween('created_at', [$yesterday, $endOfYesterday])
+                ->sum('total'),
+            'orders' => Order::withoutCanceledOrders()
+                ->whereBetween('created_at', [$yesterday, $endOfYesterday])
+                ->count(),
+            'customers' => Order::withoutCanceledOrders()
+                ->whereBetween('created_at', [$yesterday, $endOfYesterday])
+                ->whereNotNull('customer_id')
+                ->distinct('customer_id')
+                ->count('customer_id'),
+        ];
+    }
 
     private function getLatestSearchTerms()
     {
@@ -246,8 +295,78 @@ class DashboardController
     }
 
 
+    private function getAbandonedCartStats()
+    {
+        // Only count _cart_items to avoid double counting (Ikas logic)
+        $days = 7; // Last 7 days for dashboard widget
+        
+        $totalAbandoned = \Modules\Cart\Entities\Cart::where('is_recovered', false)
+            ->where('id', 'like', '%_cart_items')
+            ->where('updated_at', '>=', now()->subDays($days))
+            ->count();
+
+        $totalRecovered = \Modules\Cart\Entities\Cart::where('is_recovered', true)
+            ->where('id', 'like', '%_cart_items')
+            ->whereNotNull('order_id')
+            ->where('recovered_at', '>=', now()->subDays($days))
+            ->count();
+
+        $recoveredRevenue = \Modules\Cart\Entities\Cart::where('is_recovered', true)
+            ->where('id', 'like', '%_cart_items')
+            ->whereNotNull('order_id')
+            ->where('recovered_at', '>=', now()->subDays($days))
+            ->with('order')
+            ->get()
+            ->sum(function ($cart) {
+                return optional($cart->order)->total->amount() ?? 0;
+            });
+
+        $recoveryRate = $totalAbandoned > 0 
+            ? round(($totalRecovered / $totalAbandoned) * 100, 1) 
+            : 0;
+
+        return [
+            'total_abandoned' => $totalAbandoned,
+            'total_recovered' => $totalRecovered,
+            'recovered_revenue' => $recoveredRevenue,
+            'recovery_rate' => $recoveryRate,
+            'days' => $days,
+        ];
+    }
+
+
     private function getLatestCustomers()
     {
         return User::latest()->take(10)->get();
+    }
+
+    private function getTicketStats()
+    {
+        $total = Ticket::count();
+        $open = Ticket::where('status', '!=', 'closed')->count();
+        $closed = Ticket::where('status', 'closed')->count();
+        $waiting = Ticket::where('status', 'waiting_admin')->count();
+
+        // Category breakdown
+        $categories = Ticket::select('category', DB::raw('count(*) as count'))
+            ->groupBy('category')
+            ->orderByDesc('count')
+            ->limit(5)
+            ->get()
+            ->map(function ($item) {
+                return [
+                    'name' => $item->category ?: 'Genel',
+                    'count' => $item->count,
+                    'percentage' => Ticket::count() > 0 ? round(($item->count / Ticket::count()) * 100) : 0
+                ];
+            });
+
+        return [
+            'total' => $total,
+            'open' => $open,
+            'closed' => $closed,
+            'waiting' => $waiting,
+            'categories' => $categories,
+        ];
     }
 }

@@ -144,12 +144,12 @@
 
     $trackingUrl = null;
     $ref = data_get($order, 'tracking_reference');
+    $trkUrlField = data_get($order, 'shipping_tracking_url');
+    
     if (is_string($ref) && filter_var($ref, FILTER_VALIDATE_URL)) {
         $trackingUrl = $ref;
-    }
-    $trkUrl = data_get($order, 'shipping_tracking_url');
-    if (!$trackingUrl && is_string($trkUrl) && filter_var($trkUrl, FILTER_VALIDATE_URL)) {
-        $trackingUrl = $trkUrl;
+    } elseif (is_string($trkUrlField) && filter_var($trkUrlField, FILTER_VALIDATE_URL)) {
+        $trackingUrl = $trkUrlField;
     }
 
     if (!isset($homeUrl)) {
@@ -166,8 +166,10 @@
         $orderDetailsUrl = route('account.orders.index');
     }
 
-    $primaryCtaUrl = $trackingUrl ?: $orderDetailsUrl;
-    $primaryCtaText = $trackingUrl ? 'Kargo Takibi' : 'Sipariş Detayına Git';
+    $isCompleted = ($statusKey === \Modules\Order\Entities\Order::COMPLETED);
+    
+    $primaryCtaUrl = ($trackingUrl && !$isCompleted) ? $trackingUrl : $orderDetailsUrl;
+    $primaryCtaText = ($trackingUrl && !$isCompleted) ? 'Kargo Takibi' : 'Sipariş Detayına Git';
 
     $secondaryCtaUrl = $orderDetailsUrl ?: $accountUrl;
     $secondaryCtaText = 'Sipariş Detayına Git';
@@ -361,38 +363,40 @@
                   <div style="height:16px; line-height:16px; font-size:16px;">&nbsp;</div>
 
                   <!-- KARGO BİLGİLERİ -->
-                  <div style="height:14px;line-height:14px;font-size:14px;">&nbsp;</div>
-                  <div style="font-family:'Poppins',Arial,Helvetica,sans-serif;font-size:16px;font-weight:600;color:#111827;letter-spacing:.1px;text-align:center;">Kargo Bilgileri</div>
-                  <div style="height:10px;line-height:10px;font-size:10px;">&nbsp;</div>
-                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#ffffff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 6px 16px rgba(17,24,39,.05);">
-                    <tr>
-                      <td style="padding:14px 14px;">
-                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-                          <tr>
-                            <td valign="top" style="padding-right:10px;">
-                              <div style="font-family:'Poppins',Arial,Helvetica,sans-serif;font-size:12px;font-weight:600;color:#6b7280;line-height:1.4;">Kargo Firması</div>
-                              <div style="margin-top:4px;font-family:'Poppins',Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;color:#111827;line-height:1.45;"><?php echo $esc($carrierName !== '' ? $carrierName : '—'); ?></div>
+                  <?php if ($statusKey !== \Modules\Order\Entities\Order::COMPLETED): ?>
+                    <div style="height:14px;line-height:14px;font-size:14px;">&nbsp;</div>
+                    <div style="font-family:'Poppins',Arial,Helvetica,sans-serif;font-size:16px;font-weight:600;color:#111827;letter-spacing:.1px;text-align:center;">Kargo Bilgileri</div>
+                    <div style="height:10px;line-height:10px;font-size:10px;">&nbsp;</div>
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#ffffff;border:1px solid #e5e7eb;border-radius:14px;box-shadow:0 6px 16px rgba(17,24,39,.05);">
+                      <tr>
+                        <td style="padding:14px 14px;">
+                          <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                            <tr>
+                              <td valign="top" style="padding-right:10px;">
+                                <div style="font-family:'Poppins',Arial,Helvetica,sans-serif;font-size:12px;font-weight:600;color:#6b7280;line-height:1.4;">Kargo Firması</div>
+                                <div style="margin-top:4px;font-family:'Poppins',Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;color:#111827;line-height:1.45;"><?php echo $esc($carrierName !== '' ? $carrierName : '—'); ?></div>
 
-                              <div style="height:10px;line-height:10px;font-size:10px;">&nbsp;</div>
+                                <div style="height:10px;line-height:10px;font-size:10px;">&nbsp;</div>
 
-                              <div style="font-family:'Poppins',Arial,Helvetica,sans-serif;font-size:12px;font-weight:600;color:#6b7280;line-height:1.4;">Takip Numarası</div>
-                              <div style="margin-top:4px;font-family:'Poppins',Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;color:#111827;line-height:1.45;"><?php echo $esc($trackingNo !== '' ? $trackingNo : '—'); ?></div>
-                            </td>
+                                <div style="font-family:'Poppins',Arial,Helvetica,sans-serif;font-size:12px;font-weight:600;color:#6b7280;line-height:1.4;">Takip Numarası</div>
+                                <div style="margin-top:4px;font-family:'Poppins',Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;color:#111827;line-height:1.45;"><?php echo $esc($trackingNo !== '' ? $trackingNo : '—'); ?></div>
+                              </td>
 
-                            <td align="right" valign="top" style="white-space:nowrap;">
-                              <?php if ($trackingUrl): ?>
-                                <a href="<?php echo $esc($trackingUrl); ?>" style="display:inline-block;background:#111827;color:#ffffff;text-decoration:none;font-family:'Poppins',Arial,Helvetica,sans-serif;font-size:12px;font-weight:600;padding:10px 12px;border-radius:12px;">Kargo Takibi</a>
-                              <?php endif; ?>
-                            </td>
-                          </tr>
-                        </table>
+                              <td align="right" valign="top" style="white-space:nowrap;">
+                                <?php if ($trackingUrl): ?>
+                                  <a href="<?php echo $esc($trackingUrl); ?>" style="display:inline-block;background:#111827;color:#ffffff;text-decoration:none;font-family:'Poppins',Arial,Helvetica,sans-serif;font-size:12px;font-weight:600;padding:10px 12px;border-radius:12px;">Kargo Takibi</a>
+                                <?php endif; ?>
+                              </td>
+                            </tr>
+                          </table>
 
-                        <?php if (!$trackingUrl && $trackingNo !== ''): ?>
-                          <div style="margin-top:10px;font-family:'Poppins',Arial,Helvetica,sans-serif;font-size:12px;color:#6b7280;line-height:1.6;">Takip linki henüz oluşturulmadı. Kargo firması sisteminde takip numarasıyla sorgulayabilirsiniz.</div>
-                        <?php endif; ?>
-                      </td>
-                    </tr>
-                  </table>
+                          <?php if (!$trackingUrl && $trackingNo !== ''): ?>
+                            <div style="margin-top:10px;font-family:'Poppins',Arial,Helvetica,sans-serif;font-size:12px;color:#6b7280;line-height:1.6;">Takip linki henüz oluşturulmadı. Kargo firması sisteminde takip numarasıyla sorgulayabilirsiniz.</div>
+                          <?php endif; ?>
+                        </td>
+                      </tr>
+                    </table>
+                  <?php endif; ?>
 
                   <div style="height:16px; line-height:16px; font-size:16px;">&nbsp;</div>
 
@@ -557,7 +561,13 @@
 
                                     <td valign="top" style="padding-right:10px;">
                                       <div style="font-family:'Poppins',Arial,Helvetica,sans-serif;font-size:13px;font-weight:600;color:#111827;line-height:1.35;">
-
+                                        <?php if (data_get($product, 'is_upsell')): ?>
+                                          <div style="margin-bottom: 4px;">
+                                            <span style="background-color: #fef3c7; color: #92400e; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                              <?php echo $esc(trans('storefront::upsell.offer_badge')); ?>
+                                            </span>
+                                          </div>
+                                        <?php endif; ?>
                                         <?php echo $esc($pName); ?>
                                       </div>
 
@@ -577,7 +587,11 @@
 
                                     <td align="right" valign="top" style="white-space:nowrap;">
                                       <div style="font-family:'Poppins',Arial,Helvetica,sans-serif;font-size:14px;font-weight:700;color:#16a34a;line-height:1.2;">
-
+                                        <?php if (data_get($product, 'is_upsell') && ($orig = data_get($product, 'original_price'))): ?>
+                                          <div style="color: #94a3b8; font-size: 11px; text-decoration: line-through; margin-bottom: 2px;">
+                                            <?php echo $esc($fmtMoney($orig->multiply(data_get($product, 'qty')))); ?>
+                                          </div>
+                                        <?php endif; ?>
                                         <?php echo $esc($line); ?>
                                       </div>
                                     </td>

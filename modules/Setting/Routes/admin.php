@@ -37,3 +37,10 @@ Route::get('settings/customizations', [
         return view('setting::admin.customizations.index');
     },
 ]);
+Route::get('settings/abandoned-cart', [
+    'as' => 'admin.settings.abandoned_cart',
+    'middleware' => 'can:admin.settings.edit',
+    'uses' => function () {
+        return view('setting::admin.abandoned_cart.index');
+    },
+]);

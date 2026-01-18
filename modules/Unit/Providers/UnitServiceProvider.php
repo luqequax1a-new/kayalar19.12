@@ -13,7 +13,6 @@ class UnitServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->loadRoutesFrom(__DIR__ . '/../Routes/admin.php');
         $this->loadTranslationsFrom(__DIR__ . '/../Resources/lang', 'unit');
 
         $this->loadViewsFrom(__DIR__ . '/../Resources/views', 'unit');

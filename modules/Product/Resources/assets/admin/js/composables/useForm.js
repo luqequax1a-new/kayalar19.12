@@ -9,8 +9,8 @@ let form = reactive(initialFormData());
 const errors = reactive(new Errors());
 const { variantPosition } = useVariants();
 
-    function initialFormData() {
-        return {
+function initialFormData() {
+    return {
         name: null,
         description: null,
         brand_id: "",
@@ -40,17 +40,20 @@ const { variantPosition } = useVariants();
         slug: null,
         original_slug: null,
         redirect_on_slug_change: true,
+        redirect_type: '404',
+        redirect_target_id: null,
+        redirect_target: null,
         meta: {},
-            short_description: null,
-            google_product_category_id: null,
-            google_product_category_path: null,
-            new_from: null,
-            new_to: null,
-            up_sells: [],
-            cross_sells: [],
-            related_products: [],
-        };
-    }
+        short_description: null,
+        google_product_category_id: null,
+        google_product_category_path: null,
+        new_from: null,
+        new_to: null,
+        up_sells: [],
+        cross_sells: [],
+        related_products: [],
+    };
+}
 
 export function useForm() {
     function prepareFormData(data) {
@@ -66,7 +69,7 @@ export function useForm() {
                     .map((pm) => ({ id: pm.id || null, path: pm.path, poster: pm.poster || '' }));
                 data.media = Array.isArray(data.media) ? [...data.media, ...videosAsMedia] : videosAsMedia;
             }
-        } catch (_) {}
+        } catch (_) { }
 
         return data;
     }

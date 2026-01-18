@@ -2,12 +2,12 @@
 
 return [
     'addresses' => [
-        'first_name' => 'This is the first name',
-        'last_name' => 'Last Name',
-        'address_1' => 'Address Line 1',
-        'city' => 'City',
-        'zip' => 'Postcode / ZIP',
-        'country' => 'Country',
-        'state' => 'State / Province',
+        'first_name' => 'Ad',
+        'last_name' => 'Soyad',
+        'address_1' => 'Adres Satırı 1',
+        'city' => 'İlçe',
+        'zip' => 'Posta Kodu',
+        'country' => 'Ülke',
+        'state' => 'Şehir',
     ],
 ];

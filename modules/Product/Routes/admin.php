@@ -8,9 +8,52 @@ Route::get('products', [
     'middleware' => 'can:admin.products.index',
 ]);
 
+Route::get('products/stats', [
+    'as' => 'admin.products.stats',
+    'uses' => 'ProductController@stats',
+    'middleware' => 'can:admin.products.index',
+]);
+
+// Enhanced Product Listing Routes
+Route::get('products/enhanced', [
+    'as' => 'admin.products.enhanced.index',
+    'uses' => 'EnhancedProductController@index',
+    'middleware' => 'can:admin.products.index',
+]);
+
+Route::get('products/enhanced/table', [
+    'as' => 'admin.products.enhanced.table',
+    'uses' => 'EnhancedProductController@table',
+    'middleware' => 'can:admin.products.index',
+]);
+
+Route::post('products/enhanced/bulk-action', [
+    'as' => 'admin.products.enhanced.bulk_action',
+    'uses' => 'EnhancedProductController@bulkAction',
+    'middleware' => 'can:admin.products.edit',
+]);
+
 Route::get('products/csv/export', [
     'as' => 'admin.products.csv.export',
     'uses' => 'ProductCsvController@export',
+    'middleware' => 'can:admin.products.index',
+]);
+
+Route::get('products/excel/export', [
+    'as' => 'admin.products.excel.export',
+    'uses' => 'ProductExcelController@export',
+    'middleware' => 'can:admin.products.index',
+]);
+
+Route::get('products/excel/export/trendyol', [
+    'as' => 'admin.products.excel.export.trendyol',
+    'uses' => 'ProductExcelController@exportTrendyol',
+    'middleware' => 'can:admin.products.index',
+]);
+
+Route::get('products/excel/export/hepsiburada', [
+    'as' => 'admin.products.excel.export.hepsiburada',
+    'uses' => 'ProductExcelController@exportHepsiburada',
     'middleware' => 'can:admin.products.index',
 ]);
 
@@ -41,6 +84,12 @@ Route::get('products/csv/simple-import', [
 Route::post('products/csv/simple-import', [
     'as' => 'admin.products.csv.simple_import',
     'uses' => 'ProductCsvController@simpleImport',
+    'middleware' => 'can:admin.products.edit',
+]);
+
+Route::post('products/excel/import', [
+    'as' => 'admin.products.excel.import',
+    'uses' => 'ProductExcelController@import',
     'middleware' => 'can:admin.products.edit',
 ]);
 
@@ -125,13 +174,37 @@ Route::get('products/index/table', [
     'middleware' => 'can:admin.products.index',
 ]);
 
-Route::get('products/bulk-editor', [
-    'as' => 'admin.products.bulk_editor',
-    'uses' => 'ProductController@bulkEditor',
+Route::post('products/bulk-status', [
+    'as' => 'admin.products.bulk_status',
+    'uses' => 'ProductController@bulkStatus',
     'middleware' => 'can:admin.products.edit',
 ]);
 
-Route::get('products/bulk-preview', [
+Route::post('products/bulk-update-price', [
+    'as' => 'admin.products.bulk_update_price',
+    'uses' => 'ProductController@bulkUpdatePrice',
+    'middleware' => 'can:admin.products.edit',
+]);
+
+Route::post('products/bulk-update-special-price', [
+    'as' => 'admin.products.bulk_update_special_price',
+    'uses' => 'ProductController@bulkUpdateSpecialPrice',
+    'middleware' => 'can:admin.products.edit',
+]);
+
+Route::post('products/bulk-update-stock', [
+    'as' => 'admin.products.bulk_update_stock',
+    'uses' => 'ProductController@bulkUpdateStock',
+    'middleware' => 'can:admin.products.edit',
+]);
+
+Route::post('products/bulk-delete', [
+    'as' => 'admin.products.bulk_delete',
+    'uses' => 'ProductController@bulkDelete',
+    'middleware' => 'can:admin.products.destroy',
+]);
+
+Route::post('products/bulk-preview', [
     'as' => 'admin.products.bulk_preview',
     'uses' => 'ProductController@bulkPreview',
     'middleware' => 'can:admin.products.edit',
@@ -217,5 +290,23 @@ Route::delete('redirects/{ids}', [
 Route::patch('redirects/{id}/status', [
     'as' => 'admin.redirects.status',
     'uses' => 'RedirectController@status',
+    'middleware' => 'can:admin.products.edit',
+]);
+
+Route::get('categories/{category}/products-for-sorting', [
+    'as' => 'admin.categories.products.sorting',
+    'uses' => 'ProductController@productsForSorting',
+    'middleware' => 'can:admin.products.edit',
+]);
+
+Route::post('categories/{category}/product-order', [
+    'as' => 'admin.categories.products.order',
+    'uses' => 'ProductController@saveProductOrder',
+    'middleware' => 'can:admin.products.edit',
+]);
+
+Route::delete('categories/{category}/product-order', [
+    'as' => 'admin.categories.products.order.reset',
+    'uses' => 'ProductController@resetProductOrder',
     'middleware' => 'can:admin.products.edit',
 ]);

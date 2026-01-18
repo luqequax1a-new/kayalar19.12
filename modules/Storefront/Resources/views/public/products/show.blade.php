@@ -3,33 +3,22 @@
 @section('title', $product->meta->meta_title ?: $product->name)
 
 @php
-    $canonical = $product->variant?->url() ?? $product->url();
+    // Clean canonical URL without query parameters
+    $canonical = $product->url();
     $canonical = \Illuminate\Support\Str::before($canonical, '?');
     
     $lcpImage = optional($product->variant)->base_image ?: $product->base_image;
     $lcpSizes = '(max-width: 576px) 92vw, (max-width: 992px) 50vw, 720px';
+
+    $questionsCount = $product->questions()->where('is_approved', true)->count();
 @endphp
 
 @push('lcp_preload')
-    @if ($lcpImage)
-        @php
-            $lcpAvifSrcset = $lcpImage->ikas_avif_srcset ?: ($lcpImage->grid_avif_url ?? $lcpImage->detail_avif_url);
-            $lcpWebpSrcset = $lcpImage->ikas_webp_srcset ?: ($lcpImage->grid_webp_url ?? $lcpImage->detail_webp_url);
-            $lcpFallback = $lcpImage->grid_jpeg_url ?? $lcpImage->detail_jpeg_url ?? $lcpImage->path;
-        @endphp
-        
-        @if ($lcpAvifSrcset)
-            <link rel="preload" as="image" href="{{ $lcpFallback }}" imagesrcset="{{ $lcpAvifSrcset }}" imagesizes="{{ $lcpSizes }}" type="image/avif" fetchpriority="high">
-        @elseif ($lcpWebpSrcset)
-            <link rel="preload" as="image" href="{{ $lcpFallback }}" imagesrcset="{{ $lcpWebpSrcset }}" imagesizes="{{ $lcpSizes }}" type="image/webp" fetchpriority="high">
-        @else
-            <link rel="preload" as="image" href="{{ $lcpFallback }}" fetchpriority="high">
-        @endif
-    @endif
+    {{-- LCP preload removed to avoid console warnings --}}
 @endpush
 
 @push('meta')
-    <meta name="title" content="{{ $product->meta->meta_title ?: $product->name }}">
+    <link rel="canonical" href="{{ $canonical }}">
     <meta name="description" content="{{ $product->seo_meta_description }}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ $product->meta->meta_title ?: $product->name }}">
@@ -48,34 +37,43 @@
     <meta property="og:locale" content="{{ locale() }}">
 
     @foreach (supported_locale_keys() as $code)
-        <meta property="og:locale:alternate" content="{{ $code }}">
+        @if($code !== locale())
+            <meta property="og:locale:alternate" content="{{ $code }}">
+        @endif
     @endforeach
 
     <meta property="product:price:amount" content="{{ $product->variant?->selling_price->convertToCurrentCurrency()->amount() ?? $product->selling_price->convertToCurrentCurrency()->amount() }}">
     <meta property="product:price:currency" content="{{ currency() }}">
     <meta name="twitter:image" content="{{ $productOgImage }}">
-    {{-- OG video meta removed; keeping only JSON-LD per request --}}
-    @if (!empty($hasVideo) && $hasVideo && !empty($videoUrl))
-        <script type="application/ld+json">
-        {
-          "@context": "https://schema.org",
-          "@type": "VideoObject",
-          "name": "{{ addslashes($product->name) }}",
-          "description": "{{ addslashes(\Illuminate\Support\Str::limit(strip_tags($product->description), 200)) }}",
-          "thumbnailUrl": "{{ $videoThumbnailUrl ?? ($product->base_image?->path ?? asset('build/assets/image-placeholder.png')) }}",
-          "uploadDate": "{{ optional($product->created_at)->toIso8601String() }}",
-          "contentUrl": "{{ $videoUrl }}",
-          "embedUrl": "{{ $videoUrl }}",
-          "publisher": {
-            "@type": "Organization",
-            "name": "{{ config('app.name') }}",
-            "logo": {
-              "@type": "ImageObject",
-              "url": "{{ asset('images/logo.png') }}"
-            }
-          }
-        }
-        </script>
+
+    {{-- Professional Schema.org Implementation (Product + Breadcrumbs) --}}
+    {!! $productSchemaMarkupScript !!}
+    {!! $breadcrumbSchemaMarkupScript !!}
+    @if (!empty($gallery))
+        @foreach ($gallery as $galleryItem)
+            @if (($galleryItem['type'] ?? '') === 'video' && !empty($galleryItem['src']))
+                <script type="application/ld+json">
+                {
+                  "@context": "https://schema.org",
+                  "@type": "VideoObject",
+                  "name": "{{ addslashes($product->name) }}",
+                  "description": "{{ addslashes(\Illuminate\Support\Str::limit(strip_tags($product->description), 200)) }}",
+                  "thumbnailUrl": "{{ $galleryItem['thumb'] ?? ($product->base_image?->path ?? asset('build/assets/image-placeholder.png')) }}",
+                  "uploadDate": "{{ optional($product->created_at)->toIso8601String() }}",
+                  "contentUrl": "{{ $galleryItem['src'] }}",
+                  "embedUrl": "{{ $galleryItem['src'] }}",
+                  "publisher": {
+                    "@type": "Organization",
+                    "name": "{{ config('app.name') }}",
+                    "logo": {
+                      "@type": "ImageObject",
+                      "url": "{{ asset('images/logo.png') }}"
+                    }
+                  }
+                }
+                </script>
+            @endif
+        @endforeach
     @endif
 @endpush
 
@@ -183,12 +181,21 @@
                                             href="#reviews"
                                             data-bs-toggle="tab"
                                             class="nav-link"
-                                            x-text="trans('storefront::product.reviews', { count: totalReviews })"
+                                            x-text="totalReviews > 0 ? trans('storefront::product.reviews', { count: totalReviews }) : 'Değerlendirme'"
                                         >
-                                            {{ trans('storefront::product.reviews', ['count' => $review->count ?? ($product->reviews_count ?? 0) ]) }}
+                                            @php
+                                                $reviewCount = $review->count ?? ($product->reviews_count ?? 0);
+                                            @endphp
+                                            {{ $reviewCount > 0 ? trans('storefront::product.reviews', ['count' => $reviewCount]) : 'Değerlendirme' }}
                                         </a>
                                     </li>
                                 @endif
+
+                                <li class="nav-item" role="presentation">
+                                    <a href="#questions" data-bs-toggle="tab" class="nav-link">
+                                        {{ trans('question::questions.storefront.questions', ['count' => $questionsCount]) }}
+                                    </a>
+                                </li>
 
                                 @if (setting('storefront_product_page_custom_tab_enabled') && setting('storefront_product_page_custom_tab_content'))
                                     <li class="nav-item" role="presentation">
@@ -214,6 +221,7 @@
                             @include('storefront::public.products.show.tab_description')
                             @include('storefront::public.products.show.tab_specification')
                             @include('storefront::public.products.show.tab_reviews')
+                            @include('question::public.questions.tab_questions')
 
                             @if (setting('storefront_product_page_custom_tab_enabled') && setting('storefront_product_page_custom_tab_content'))
                                 @include('storefront::public.products.show.tab_custom_tab')
@@ -235,22 +243,29 @@
 @endsection
 
 @push('globals')
-    @if (!empty($productSchemaMarkupScript))
-        {!! $productSchemaMarkupScript !!}
-    @elseif (!empty($productSchemaMarkup) && method_exists($productSchemaMarkup, 'toScript'))
-        {!! $productSchemaMarkup->toScript() !!}
-    @endif
-
-    @if (!empty($breadcrumbSchemaMarkupScript))
-        {!! $breadcrumbSchemaMarkupScript !!}
-    @elseif (!empty($breadcrumbSchemaMarkup) && method_exists($breadcrumbSchemaMarkup, 'toScript'))
-        {!! $breadcrumbSchemaMarkup->toScript() !!}
-    @endif
-
     <script>
         FleetCart.langs['storefront::product.left_in_stock'] = '{{ trans('storefront::product.left_in_stock') }}';
         FleetCart.langs['storefront::product.reviews'] = '{{ trans("storefront::product.reviews") }}';
         FleetCart.langs['storefront::product.review_submitted'] = '{{ trans("storefront::product.review_submitted") }}';
+        FleetCart.langs['question::questions.storefront.questions'] = '{{ trans("question::questions.storefront.questions") }}';
+        FleetCart.langs['question::questions.storefront.ask_a_question'] = '{{ trans("question::questions.storefront.ask_a_question") }}';
+        FleetCart.langs['question::questions.storefront.write_your_question'] = '{{ trans("question::questions.storefront.write_your_question") }}';
+        FleetCart.langs['question::questions.storefront.answered_at'] = '{{ trans("question::questions.storefront.answered_at") }}';
+        FleetCart.langs['question::questions.storefront.be_the_first'] = '{{ trans("question::questions.storefront.be_the_first") }}';
+        FleetCart.langs['question::questions.storefront.no_questions'] = '{{ trans("question::questions.storefront.no_questions") }}';
+        FleetCart.langs['question::questions.storefront.submit'] = '{{ trans("question::questions.storefront.submit") }}';
+
+        // Track Product View
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof window.FleetCartAnalytics !== 'undefined') {
+                var productData = {
+                    id: '{{ $product->id }}',
+                    name: '{{ addslashes($product->name) }}',
+                    price: {{ $product->variant ? $product->variant->selling_price->convertToCurrentCurrency()->amount() : $product->selling_price->convertToCurrentCurrency()->amount() }}
+                };
+                window.FleetCartAnalytics.trackProductView(productData);
+            }
+        });
     </script>
 
     <template data-related-product-card-template>
@@ -266,4 +281,6 @@
         'modules/Storefront/Resources/assets/public/js/pages/products/show/main.js',
         'modules/Storefront/Resources/assets/public/js/vendors/flatpickr.js'
     ])
+
+    @include('question::public.questions.script')
 @endpush

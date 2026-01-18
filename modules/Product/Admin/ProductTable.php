@@ -13,8 +13,51 @@ class ProductTable extends AdminTable
      *
      * @var array
      */
-    protected array $rawColumns = ['price', 'in_stock', 'status', 'actions', 'name', 'brand'];
+    protected array $rawColumns = ['sort_handle', 'price', 'in_stock', 'status', 'actions', 'name', 'brand', 'created_at'];
 
+    /**
+     * Create a new table instance.
+     *
+     * @param mixed $source
+     * @return void
+     */
+    public function __construct($source = null)
+    {
+        $categoryId = request('category_id');
+        $isSortMode = request('sort_mode') === '1';
+
+        // Check if we have a valid category
+        $hasValidCategory = $categoryId && $categoryId !== '0' && $categoryId !== 0;
+        
+        if ($hasValidCategory) {
+            // Specific category sorting
+            $joinCategoryId = (int) $categoryId;
+
+            $source = $source->leftJoin('product_categories as pc_admin_sort', function($join) use ($joinCategoryId) {
+                $join->on('products.id', '=', 'pc_admin_sort.product_id')
+                     ->where('pc_admin_sort.category_id', '=', $joinCategoryId);
+            })
+            ->select('products.*')
+            ->orderByRaw('pc_admin_sort.position IS NULL')
+            ->orderBy('pc_admin_sort.position', 'asc');
+
+            $source->resetOrders();
+            $source->orderByRaw('pc_admin_sort.position IS NULL')
+                   ->orderBy('pc_admin_sort.position', 'asc');
+        } elseif ($isSortMode) {
+            // Main page sorting (no category selected, but sort mode is active)
+            // Use main_page_position column directly
+            $source = $source->select('products.*')
+                ->orderByRaw('main_page_position IS NULL')
+                ->orderBy('main_page_position', 'asc');
+
+            $source->resetOrders();
+            $source->orderByRaw('main_page_position IS NULL')
+                   ->orderBy('main_page_position', 'asc');
+        }
+        
+        parent::__construct($source);
+    }
 
     /**
      * Make table response for the resource.
@@ -23,7 +66,16 @@ class ProductTable extends AdminTable
      */
     public function make()
     {
-        return $this->newTable()
+        $table = $this->newTable();
+
+        $table->orderColumn('in_stock', function ($query, $order) {
+            $query->orderBy('stock_sort', $order)->orderBy('stock_qty_sort', $order);
+        });
+
+        return $table
+            ->addColumn('sort_handle', function ($product) {
+                return "<div class='sort-handle' style='cursor:move; text-align:center; padding:4px;'><i class='fa fa-bars' style='font-size:14px; color:#999;'></i></div>";
+            })
             ->editColumn('thumbnail', function ($product) {
                 $image = view('admin::partials.table.image', [
                     'file' => ($product->base_image && $product->base_image->id)
@@ -69,6 +121,18 @@ class ProductTable extends AdminTable
 
                 return $priceHtml;
             })
+            ->addColumn('created_at', function (Product $product) {
+                $createdAt = $product->created_at;
+
+                if (!$createdAt) {
+                    return '&mdash;';
+                }
+
+                $date = e($createdAt->translatedFormat('d F Y'));
+                $time = e($createdAt->format('H:i'));
+
+                return "<div class='created-at-cell'><div class='created-at-date'>{$date}</div><div class='created-at-time'>{$time}</div></div>";
+            })
             ->addColumn('brand', function (Product $product) {
                 $rawName = optional($product->brand)->name;
                 $name = $rawName !== null && $rawName !== '' ? e($rawName) : '&mdash;';
@@ -104,7 +168,6 @@ class ProductTable extends AdminTable
                 return e($name ?: '');
             })
             ->editColumn('in_stock', function (Product $product) {
-                $clickable = (bool) $product->manage_stock || ($product->variants && $product->variants->where('manage_stock', true)->count() > 0);
                 $isInStock = $product->isInStock();
                 $badgeClass = $isInStock ? 'stock-badge' : 'stock-badge out-of-stock';
 
@@ -115,11 +178,9 @@ class ProductTable extends AdminTable
 
                     if ($noManage) {
                         $inner = "<div class='stock-total'>" . e('Stokta') . "</div>"
-                            . "<div class='stock-count' style='font-size:10px; opacity:0.7; margin-left:5px;'>(" . e("{$count} v") . ")</div>";
+                            . "<div class='stock-count stock-variants'>" . e("{$count} varyant") . "</div>";
                         
-                        return $clickable 
-                            ? "<a href='#' class='inventory-click {$badgeClass}' data-id='{$product->id}'>{$inner}</a>"
-                            : "<div class='{$badgeClass}'>{$inner}</div>";
+                        return "<a href='#' class='inventory-click {$badgeClass}' data-id='{$product->id}'>{$inner}</a>";
                     }
 
                     $sumQty = (float) $activeVariants->sum(function ($v) { return (float) $v->qty; });
@@ -127,24 +188,35 @@ class ProductTable extends AdminTable
                     $value = fmod($sumQty, 1) === 0.0
                         ? (string) (int) $sumQty
                         : rtrim(rtrim(number_format($sumQty, 2, '.', ''), '0'), '.');
-                    $stockText = $suffix !== '' ? "$value $suffix" : $value;
+                    $stockText = $suffix !== '' ? "$value $suffix" : "$value adet";
 
                     $inner = "<div class='stock-total'>" . e($stockText) . "</div>"
-                        . "<div class='stock-count' style='font-size:10px; opacity:0.7; margin-left:5px;'>(" . e("{$count} v") . ")</div>";
+                        . "<div class='stock-count stock-variants'>" . e("{$count} varyant") . "</div>";
 
-                    return $clickable 
-                        ? "<a href='#' class='inventory-click {$badgeClass}' data-id='{$product->id}'>{$inner}</a>"
-                        : "<div class='{$badgeClass}'>{$inner}</div>";
+                    return "<a href='#' class='inventory-click {$badgeClass}' data-id='{$product->id}'>{$inner}</a>";
                 }
 
-                $text = !$product->manage_stock ? e('Stokta') : e($product->getFormattedStock());
-                return $clickable 
-                    ? "<a href='#' class='inventory-click {$badgeClass}' data-id='{$product->id}'>{$text}</a>"
-                    : "<div class='{$badgeClass}'>{$text}</div>";
+                if (!$product->manage_stock) {
+                    $inner = "<div class='stock-total'>" . e('Stokta') . "</div>";
+                    return "<a href='#' class='inventory-click {$badgeClass}' data-id='{$product->id}'>{$inner}</a>";
+                }
+
+                $formatted = (string) $product->getFormattedStock();
+                $trimmed = trim($formatted);
+
+                if (preg_match('/^\d+(?:\.\d+)?$/', $trimmed)) {
+                    $trimmed = $trimmed . ' adet';
+                }
+
+                $inner = "<div class='stock-total'>" . e($trimmed) . "</div>";
+                return "<a href='#' class='inventory-click {$badgeClass}' data-id='{$product->id}'>{$inner}</a>";
             })
             ->editColumn('name', function (Product $product) {
                 $url = route('admin.products.edit', $product->id);
-                return "<a href='{$url}' class='product-name-link' title='Düzenle'>" . e($product->name) . "</a>";
+                $id = (int) $product->id;
+                $name = e($product->name);
+
+                return "<div class='product-name-cell'><a href='{$url}' class='product-name-link' title='Düzenle'>{$name}</a><div class='product-id-under-name'>#{$id}</div></div>";
             })
             ->editColumn('status', function (Product $product) {
                 $checked = $product->is_active ? 'checked' : '';

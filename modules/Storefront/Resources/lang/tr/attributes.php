@@ -11,6 +11,7 @@ return [
     'storefront_terms_page' => 'Terms & Conditions Page',
     'storefront_privacy_page' => 'Privacy Policy Page',
     'storefront_address' => 'Address',
+    'storefront_brands_page' => 'Markalar Sayfası (SEO & İçerik)',
     'storefront_most_searched_keywords' => 'Most Searched Keywords',
     'storefront_navbar_text' => 'Navbar Text',
     'storefront_primary_menu' => 'Primary Menu',

@@ -2,6 +2,8 @@
 @import "../../../utils/common/_order-summary";
 @import "layouts/_checkout-left";
 @import "layouts/_checkout-right";
+@import "_coupon-list";
+
 
 .checkout-wrap {
     margin-top: 50px;
@@ -75,6 +77,7 @@
         border-top: 1px solid var(--color-gray-lite);
 
         &.order-summary-total-skeleton {
+
             label,
             span {
                 height: 24px;
@@ -149,7 +152,7 @@
         border-radius: 999px;
         font-size: 12px;
         line-height: 1.2;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
     }
 }
 

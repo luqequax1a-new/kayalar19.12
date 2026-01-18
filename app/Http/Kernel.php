@@ -2,7 +2,6 @@
 
 namespace FleetCart\Http;
 
-use FleetCart\Http\Middleware\RunUpdater;
 use FleetCart\Http\Middleware\TrimStrings;
 use FleetCart\Http\Middleware\TrustProxies;
 use FleetCart\Http\Middleware\EncryptCookies;
@@ -46,7 +45,6 @@ class Kernel extends HttpKernel
         ConvertEmptyStringsToNull::class,
         TrustProxies::class,
         RedirectToInstallerIfNotInstalled::class,
-        RunUpdater::class,
         \FleetCart\Http\Middleware\UrlRedirectMiddleware::class,
     ];
 

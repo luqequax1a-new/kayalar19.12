@@ -34,6 +34,8 @@ class SaveCouponRequest extends Request
             'maximum_spend' => 'nullable|numeric|min:0|max:99999999999999',
             'usage_limit_per_coupon' => 'nullable|numeric|min:0|max:4294967295',
             'usage_limit_per_customer' => 'nullable|numeric|min:0|max:4294967295',
+            'customer_id' => 'nullable|exists:users,id',
+            'exclude_sale_items' => 'required|boolean',
         ];
     }
 }

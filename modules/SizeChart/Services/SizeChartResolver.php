@@ -21,93 +21,110 @@ class SizeChartResolver
      */
     public function resolveAllForProduct(Product $product): Collection
     {
-        return Cache::tags(['size_charts', 'products'])->remember(
-            $this->cacheKey($product->id) . '.all',
-            now()->addMinutes(10),
+        return Cache::tags(['size_charts', 'products', 'categories'])->remember(
+            $this->cacheKey($product->id),
+            now()->addHours(1),
             function () use ($product) {
-                return $this->resolveAllForProductUncached($product);
+                return $this->resolveForProductUncached($product);
             }
         );
     }
 
     private function cacheKey(int $productId): string
     {
-        return "size_charts.product.{$productId}";
+        return "size_charts.product.v3.{$productId}";
     }
 
     /**
      * @return Collection<int, SizeChart>
      */
-    private function resolveAllForProductUncached(Product $product): Collection
+    private function resolveForProductUncached(Product $product): Collection
     {
-        $product->loadMissing(['tags']);
-
-        $productOverrides = SizeChart::query()
-            ->withoutGlobalScope('active')
-            ->where('is_active', true)
-            ->whereHas('assignments', function ($q) use ($product) {
-                $q->where('assignable_type', Product::class)
-                    ->where('assignable_id', $product->id);
-            })
-            ->with(['assignments' => function ($q) use ($product) {
-                $q->where('assignable_type', Product::class)
-                    ->where('assignable_id', $product->id)
-                    ->orderByDesc('priority')
-                    ->orderByDesc('id');
-            }])
-            ->get()
-            ->sortByDesc(function (SizeChart $chart) {
-                return optional($chart->assignments->first())->priority ?? 0;
-            })
-            ->values();
-
-        if ($productOverrides->isNotEmpty()) {
-            return $productOverrides;
+        // 1. Check for Product Specific Chart (Highest Priority)
+        $productChart = $this->findForEntity(Product::class, $product->id);
+        if ($productChart->isNotEmpty()) {
+            return $productChart;
         }
 
-        if (! is_null($product->primary_category_id)) {
-            $categoryMatches = SizeChart::query()
-                ->withoutGlobalScope('active')
-                ->where('is_active', true)
-                ->whereHas('assignments', function ($q) use ($product) {
-                    $q->where('assignable_type', Category::class)
-                        ->where('assignable_id', $product->primary_category_id);
-                })
-                ->with(['assignments' => function ($q) use ($product) {
-                    $q->where('assignable_type', Category::class)
-                        ->where('assignable_id', $product->primary_category_id)
-                        ->orderByDesc('priority')
-                        ->orderByDesc('id');
-                }])
-                ->get()
-                ->sortByDesc(function (SizeChart $chart) {
-                    return optional($chart->assignments->first())->priority ?? 0;
-                })
-                ->values();
-
-            if ($categoryMatches->isNotEmpty()) {
-                return $categoryMatches;
+        // 2. Check for Category Specific Chart (Recursive Parent Check)
+        if ($product->primary_category_id) {
+            $categoryChart = $this->findForCategoryRecursively($product->primary_category_id);
+            if ($categoryChart->isNotEmpty()) {
+                return $categoryChart;
             }
         }
 
+        // 3. Check for Tag Specific Charts
+        $product->loadMissing(['tags']);
         $tagIds = $product->tags->pluck('id')->all();
 
-        if (empty($tagIds)) {
+        if (! empty($tagIds)) {
+            $tagCharts = $this->findForEntity(Tag::class, $tagIds);
+            if ($tagCharts->isNotEmpty()) {
+                return $tagCharts;
+            }
+        }
+
+        return collect();
+    }
+
+    private function findForCategoryRecursively(int $categoryId): Collection
+    {
+        $currentId = $categoryId;
+
+        // Traverse up the category tree
+        // Limit iterations to prevent infinite loops in case of circular references (max 10 levels)
+        for ($i = 0; $i < 10; $i++) {
+            if (! $currentId) {
+                break;
+            }
+
+            $charts = $this->findForEntity(Category::class, $currentId);
+
+            if ($charts->isNotEmpty()) {
+                return $charts;
+            }
+
+            // Find parent ID
+            // Ideally this should be cached or eager loaded, but for now we query simple
+            $parent = Category::select('parent_id')->where('id', $currentId)->first();
+            
+            if (! $parent || ! $parent->parent_id) {
+                break;
+            }
+
+            $currentId = $parent->parent_id;
+        }
+
+        return collect();
+    }
+
+    /**
+     * Generic finder for size charts assigned to an entity type and id(s).
+     * @param string $type
+     * @param int|array $ids
+     * @return Collection
+     */
+    private function findForEntity(string $type, $ids): Collection
+    {
+        $ids = (array) $ids;
+
+        if (empty($ids)) {
             return collect();
         }
 
         return SizeChart::query()
             ->withoutGlobalScope('active')
             ->where('is_active', true)
-            ->whereHas('assignments', function ($q) use ($tagIds) {
-                $q->where('assignable_type', Tag::class)
-                    ->whereIn('assignable_id', $tagIds);
+            ->whereHas('assignments', function ($q) use ($type, $ids) {
+                $q->where('assignable_type', $type)
+                  ->whereIn('assignable_id', $ids);
             })
-            ->with(['assignments' => function ($q) use ($tagIds) {
-                $q->where('assignable_type', Tag::class)
-                    ->whereIn('assignable_id', $tagIds)
-                    ->orderByDesc('priority')
-                    ->orderByDesc('id');
+            ->with(['assignments' => function ($q) use ($type, $ids) {
+                $q->where('assignable_type', $type)
+                  ->whereIn('assignable_id', $ids)
+                  ->orderByDesc('priority')
+                  ->orderByDesc('id');
             }])
             ->get()
             ->sortByDesc(function (SizeChart $chart) {

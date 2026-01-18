@@ -1,0 +1,170 @@
+ .ikas-bulk-modal {
+     font-family: Inter, sans-serif;
+ }
+
+ .modal-content.ikas-bulk-modal .modal-header {
+     border-bottom: 1px solid #eef2f7;
+ }
+
+ .modal-content.ikas-bulk-modal .modal-title {
+     font-weight: 600;
+     color: #111827;
+     margin: 0;
+ }
+
+ .ikas-bulk-header-flex {
+     display: flex;
+     align-items: center;
+     justify-content: space-between;
+     gap: 12px;
+ }
+
+ .ikas-bulk-modal-subtitle {
+     color: #6b7280;
+     margin-bottom: 12px;
+     font-size: 13px;
+ }
+
+ .ikas-bulk-scope {
+     display: flex;
+     flex-direction: column;
+     gap: 8px;
+ }
+
+ .ikas-radio {
+     display: flex;
+     align-items: center;
+     gap: 10px;
+     font-weight: 500;
+     color: #111827;
+ }
+
+ .ikas-bulk-divider {
+     height: 1px;
+     background: #eef2f7;
+     margin: 16px 0;
+ }
+
+ .ikas-bulk-actions-head {
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+     gap: 12px;
+     margin-bottom: 10px;
+ }
+
+ .ikas-bulk-actions-title {
+     font-weight: 600;
+     color: #111827;
+ }
+
+ .ikas-checkbox {
+     display: flex;
+     align-items: center;
+     gap: 10px;
+     color: #374151;
+     font-weight: 500;
+ }
+
+ .ikas-bulk-action-adder {
+     margin-bottom: 12px;
+ }
+
+ .ikas-bulk-action-list {
+     display: flex;
+     flex-direction: column;
+     gap: 10px;
+ }
+
+ .ikas-bulk-action-row {
+     display: flex;
+     justify-content: space-between;
+     align-items: flex-start;
+     gap: 12px;
+     padding: 12px;
+     border: 1px solid #e5e7eb;
+     border-radius: 8px;
+     background: #ffffff;
+ }
+
+ .ikas-bulk-action-left {
+     display: grid;
+     grid-template-columns: 160px 200px 1fr;
+     gap: 10px;
+     width: 100%;
+ }
+
+ .ikas-bulk-attr {
+     display: inline-flex;
+     align-items: center;
+     padding: 8px 10px;
+     border-radius: 6px;
+     background: #f3f4f6;
+     color: #111827;
+     font-weight: 600;
+     height: 34px;
+ }
+
+ .ikas-bulk-mode,
+ .ikas-bulk-value-host .form-control {
+     height: 34px;
+ }
+
+ .ikas-bulk-value-host {
+     display: grid;
+     grid-template-columns: 1fr;
+     gap: 8px;
+ }
+
+ .ikas-bulk-value-host textarea.form-control {
+     height: auto;
+ }
+
+ .ikas-icon-btn {
+     border: 1px solid #e5e7eb;
+     background: #ffffff;
+     color: #dc2626;
+     width: 34px;
+     height: 34px;
+     border-radius: 8px;
+     display: inline-flex;
+     align-items: center;
+     justify-content: center;
+ }
+
+ .ikas-bulk-modal-footer {
+     border-top: 1px solid #eef2f7;
+ }
+
+ .ikas-bulk-preview {
+    margin-top: 16px;
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+}
+
+.ikas-bulk-preview-name {
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #111827;
+}
+
+.modal-content.ikas-filter-modal .modal-footer {
+    padding: 14px 20px;
+}
+
+@media (max-width: 480px) {
+    .index-table-actions-row {
+        padding: 0 !important;
+    }
+}
+
+// Remove box styles for products page
+#products-table {
+    .box-body {
+        padding: 0;
+        border: none;
+    }
+}
+
+// Import IKAS Layout
+@import "ikas-layout";

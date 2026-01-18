@@ -3,6 +3,7 @@
 return [
     'category' => 'Kategori',
     'categories' => 'Kategoriler',
+    'main_category' => 'Ana Kategori (Tüm Ürünler)',
     'tree' => [
         'add_root_category' => 'Ana Kategori Ekle',
         'add_sub_category' => 'Alt Kategori Ekle',

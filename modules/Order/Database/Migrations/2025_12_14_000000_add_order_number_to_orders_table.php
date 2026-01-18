@@ -11,7 +11,7 @@ return new class extends Migration
     {
         Schema::table('orders', function (Blueprint $table) {
             if (!Schema::hasColumn('orders', 'order_number')) {
-                $table->string('order_number')->nullable()->unique()->after('id');
+                $table->string('order_number')->nullable()->unique();
             }
         });
 

@@ -10,7 +10,7 @@ return new class extends Migration {
         if (Schema::hasTable('entity_files')) {
             Schema::table('entity_files', function (Blueprint $table) {
                 if (!Schema::hasColumn('entity_files','alt_text')) {
-                    $table->string('alt_text')->nullable()->after('zone');
+                    $table->string('alt_text')->nullable();
                 }
             });
         }

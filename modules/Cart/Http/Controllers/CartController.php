@@ -14,37 +14,34 @@ class CartController
      */
     public function index(CartUpsellService $upsellService)
     {
-        try {
-            \Log::info('[CART] index', [
-                'session_id' => session()->getId(),
-                'is_empty' => Cart::isEmpty(),
-                'count' => Cart::instance()->count(),
-            ]);
-        } catch (\Throwable $e) {
-        }
-
         $cart = Cart::instance();
-        $upsellOffer = $upsellService->resolveBestRule($cart);
+        $upsellData = $upsellService->resolveBestRule($cart, 'cart');
 
         return view('storefront::public.cart.index')->with([
             'isCartEmpty' => Cart::isEmpty(),
             'crossSellProducts' => Cart::crossSellProducts(),
-            'upsellOffer' => $upsellOffer,
+            'upsellData' => $upsellData,
         ]);
     }
 
 
-    public function cart()
+    public function cart(CartUpsellService $upsellService)
     {
+        $cart = Cart::instance();
+        
+        // Calculate upsell offers for cart items
         try {
-            \Log::info('[CART] get', [
-                'session_id' => session()->getId(),
-                'count' => Cart::instance()->count(),
-            ]);
+            $upsellData = $upsellService->resolveBestRule($cart, 'cart');
+            
+            // Attach upsell info to cart response
+            if ($upsellData && isset($upsellData['offers'])) {
+                $cart->upsellData = $upsellData;
+            }
         } catch (\Throwable $e) {
+            \Log::warning('[CART] Failed to calculate upsell offers: ' . $e->getMessage());
         }
 
-        return Cart::instance();
+        return $cart;
     }
 
 

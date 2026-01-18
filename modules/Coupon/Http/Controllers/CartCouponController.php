@@ -25,6 +25,7 @@ class CartCouponController
         AlreadyApplied::class,
         \Modules\Coupon\Checkers\ReviewCouponNotRedeemed::class,
         ValidCoupon::class,
+        \Modules\Coupon\Checkers\ExcludeSaleItems::class,
         MinimumSpend::class,
         MaximumSpend::class,
         ApplicableProducts::class,

@@ -7,6 +7,7 @@ return [
         'name' => 'Name',
         'code' => 'Code',
         'discount' => 'Discount',
+        'customer' => 'Customer',
     ],
     'tabs' => [
         'group' => [
@@ -23,5 +24,6 @@ return [
         ],
         'allow_free_shipping' => 'Allow free shipping',
         'enable_the_coupon' => 'Enable the coupon',
+        'exclude_sale_items' => 'Exclude sale items',
     ],
 ];

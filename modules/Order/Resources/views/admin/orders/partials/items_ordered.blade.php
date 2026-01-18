@@ -48,6 +48,13 @@
 
                                     <td class="name-col" data-label="{{ trans('order::orders.product') }}">
                                         <div class="product-info">
+                                            @if ($product->is_upsell)
+                                                <div style="margin-bottom: 2px;">
+                                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold" style="display: inline-block; background-color:#fef3c7;color:#92400e; font-size: 10px; border-radius: 4px; padding: 2px 6px;">
+                                                        {{ trans('storefront::upsell.offer_badge') }}
+                                                    </span>
+                                                </div>
+                                            @endif
                                             <div>
                                                 @if ($product->trashed())
                                                     {{ $product->name }}
@@ -106,6 +113,9 @@
                                     </td>
 
                                     <td class="price-col" data-label="{{ trans('order::orders.unit_price') }}">
+                                        @if ($product->is_upsell && $product->original_price)
+                                            <span style="color: #94a3b8; font-size: 12px; text-decoration: line-through; margin-right: 6px;">{{ $product->original_price->format() }}</span>
+                                        @endif
                                         {{ $product->unit_price->format() }}
                                     </td>
 
@@ -114,6 +124,9 @@
                                     </td>
 
                                     <td class="total-col" data-label="{{ trans('order::orders.line_total') }}">
+                                        @if ($product->is_upsell && $product->original_price)
+                                            <span style="color: #94a3b8; font-size: 11px; text-decoration: line-through; margin-right: 4px;">{{ $product->original_price->multiply($product->qty)->format() }}</span>
+                                        @endif
                                         {{ $product->line_total->format() }}
                                     </td>
                                 </tr>
@@ -150,6 +163,13 @@
                                 </div>
 
                                 <div class="flex-grow-1">
+                                    @if ($product->is_upsell)
+                                        <div style="margin-bottom: 2px;">
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold" style="display: inline-block; background-color:#fef3c7;color:#92400e; font-size: 10px; border-radius: 4px; padding: 2px 6px;">
+                                                {{ trans('storefront::upsell.offer_badge') }}
+                                            </span>
+                                        </div>
+                                    @endif
                                     <div class="fw-semibold product-name">{{ $product->name }}</div>
 
                                     @if ($product->hasAnyVariation() || $product->hasAnyOption())
@@ -176,7 +196,12 @@
                                     <div class="mt-2 mobile-pricing">
                                         <div class="mobile-meta-row d-flex justify-content-between py-2">
                                             <span class="meta-label text-muted">Birim Fiyat</span>
-                                            <span class="meta-value fw-semibold">{{ $product->unit_price->format() }} /{{ $product->product->unit_suffix ?? '' }}</span>
+                                            <span class="meta-value fw-semibold">
+                                                @if ($product->is_upsell && $product->original_price)
+                                                    <span style="color: #94a3b8; font-size: 11px; text-decoration: line-through; margin-right: 4px;">{{ $product->original_price->format() }}</span>
+                                                @endif
+                                                {{ $product->unit_price->format() }} /{{ $product->product->unit_suffix ?? '' }}
+                                            </span>
                                         </div>
                                         <div class="mobile-meta-row d-flex justify-content-between py-2">
                                             <span class="meta-label text-muted">Miktar</span>
@@ -184,7 +209,12 @@
                                         </div>
                                         <div class="mobile-meta-row d-flex justify-content-between py-2">
                                             <span class="meta-label text-muted">Toplam</span>
-                                            <span class="meta-value fw-bold" style="color: #e53935;">{{ $product->line_total->format() }}</span>
+                                            <span class="meta-value fw-bold" style="color: #e53935;">
+                                                @if ($product->is_upsell && $product->original_price)
+                                                    <span style="color: #94a3b8; font-size: 11px; text-decoration: line-through; margin-right: 4px;">{{ $product->original_price->multiply($product->qty)->format() }}</span>
+                                                @endif
+                                                {{ $product->line_total->format() }}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>

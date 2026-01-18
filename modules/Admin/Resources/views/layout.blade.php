@@ -18,6 +18,7 @@
         <script src="{{ v(asset('build/assets/jquery.min.js')) }}"></script>
         <script src="{{ v(asset('build/assets/bootstrap.min.js')) }}"></script>
         <script src="{{ v(asset('build/assets/selectize.min.js')) }}"></script>
+        <script src="{{ v(asset('build/assets/tinymce/tinymce.min.js')) }}"></script>
 
         @vite([
             'modules/Admin/Resources/assets/sass/main.scss',
@@ -30,7 +31,7 @@
         @include('admin::partials.globals')
     </head>
 
-    <body class="skin-blue sidebar-mini offcanvas clearfix {{ is_rtl() ? 'rtl' : 'ltr' }}" dir>
+    <body class="skin-blue sidebar-mini offcanvas clearfix {{ is_rtl() ? 'rtl' : 'ltr' }} @stack('body_class')" dir>
         <div class="left-side"></div>
 
         @include('admin::partials.sidebar')

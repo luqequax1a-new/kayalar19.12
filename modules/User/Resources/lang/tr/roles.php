@@ -1,22 +1,23 @@
 <?php
 
 return [
-    'role' => 'Role',
-    'roles' => 'Roles',
+    'role' => 'Rol',
+    'roles' => 'Roller',
     'table' => [
-        'name' => 'Name',
+        'name' => 'Ad',
     ],
     'tabs' => [
-        'role_information' => 'Role Information',
-        'general' => 'General',
-        'permissions' => 'Permissions',
+        'role_information' => 'Rol Bilgileri',
+        'general' => 'Genel',
+        'permissions' => 'İzinler',
     ],
     'permissions' => [
-        'allow_all' => 'Allow all',
-        'deny_all' => 'Deny all',
-        'inherit_all' => 'Inherit all',
-        'allow' => 'Allow',
-        'deny' => 'Deny',
-        'inherit' => 'Inherit',
+        'allow_all' => 'Hepsine İzin Ver',
+        'deny_all' => 'Hepsini Reddet',
+        'inherit_all' => 'Hepsini Devral',
+        'allow' => 'İzin Ver',
+        'deny' => 'Reddet',
+        'inherit' => 'Devral',
     ],
 ];
+

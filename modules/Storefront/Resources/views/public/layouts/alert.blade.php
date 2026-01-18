@@ -1,9 +1,8 @@
 @if(session()->has('success'))
     <div class="alert alert-success alert-dismissible fade show">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <rect width="24" height="24" rx="6" fill="#E69B00"/>
-            <path d="M12 9V14" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-            <circle cx="12" cy="17" r="1" fill="white"/>
+            <rect width="24" height="24" rx="6" fill="#10b981"/>
+            <path d="M17 9L11 15L8 12" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
 
         {{ session('success') }}
@@ -19,9 +18,8 @@
 @if(session()->has('error'))
     <div class="alert alert-danger alert-dismissible fade show">
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-            <rect width="24" height="24" rx="6" fill="#E69B00"/>
-            <path d="M12 9V14" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-            <circle cx="12" cy="17" r="1" fill="white"/>
+            <rect width="24" height="24" rx="6" fill="#ef4444"/>
+            <path d="M15 9L9 15M9 9L15 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
 
         {{ session('error') }}

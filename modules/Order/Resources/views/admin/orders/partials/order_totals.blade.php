@@ -1,12 +1,12 @@
 @php
-    $isCodOrder = $order->isCodPayment();
+    $codFee = $order->cod_fee;
     $codFeeForOrder = null;
 
-    if ($isCodOrder) {
-        $codFee = \Modules\Shipping\SmartShippingCod::codFeeForSubtotal($order->sub_total);
-
-        if (!$codFee->isZero()) {
+    if ($codFee && !$codFee->isZero()) {
+        if ($order->currency !== setting('default_currency')) {
             $codFeeForOrder = $codFee->convert($order->currency, $order->currency_rate);
+        } else {
+            $codFeeForOrder = $codFee;
         }
     }
 @endphp

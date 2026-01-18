@@ -35,7 +35,7 @@ class TicketController
             'images.*' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
-        $ticket = Ticket::findOrFail($id);
+        $ticket = Ticket::with(['user', 'order'])->findOrFail($id);
 
         $message = TicketMessage::create([
             'ticket_id' => $ticket->id,
@@ -60,6 +60,18 @@ class TicketController
             'last_message_at' => now(),
         ]);
 
+        // Send notification to customer
+        try {
+            $customerEmail = $ticket->user?->email ?? $ticket->guest_email;
+
+            if ($customerEmail) {
+                \Illuminate\Support\Facades\Mail::to($customerEmail)
+                    ->send(new \Modules\Ticket\Mail\TicketReplyCustomerMail($ticket, $message));
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
         return back();
     }
 
@@ -73,7 +85,7 @@ class TicketController
     public function table(Request $request)
     {
         $query = Ticket::query()
-            ->with('user')
+            ->with(['user', 'order'])
             ->orderByDesc('last_message_at');
 
         return new TicketTable($query);

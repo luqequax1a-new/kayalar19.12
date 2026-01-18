@@ -1,5 +1,5 @@
 <?php
 
 return [
-    'index' => 'Index Reports',
+    'index' => 'Raporları Görüntüle',
 ];

@@ -33,5 +33,24 @@ Route::group(['middleware' => 'can:admin.coupons.index'], function () {
         'uses' => 'CartUpsellRuleController@destroy',
     ]);
 
+    Route::get('abandoned-carts', [
+        'as' => 'admin.abandoned_carts.index',
+        'uses' => 'AbandonedCartController@index',
+    ]);
+
+    Route::get('abandoned-carts/{id}', [
+        'as' => 'admin.abandoned_carts.show',
+        'uses' => 'AbandonedCartController@show',
+    ]);
+
+    Route::post('abandoned-carts/{id}/send-reminder', [
+        'as' => 'admin.abandoned_carts.send_reminder',
+        'uses' => 'AbandonedCartController@sendReminder',
+    ]);
+
+    Route::post('abandoned-carts/clear', [
+        'as' => 'admin.abandoned_carts.clear',
+        'uses' => 'AbandonedCartController@clear',
+    ]);
 
 });

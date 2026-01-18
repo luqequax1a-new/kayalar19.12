@@ -61,6 +61,7 @@ class Order extends Model
         'start_date' => 'datetime',
         'end_date' => 'datetime',
         'deleted_at' => 'datetime',
+        'cod_fee' => 'decimal:4',
     ];
 
 
@@ -217,6 +218,12 @@ class Order extends Model
     public function getTotalAttribute($total)
     {
         return Money::inDefaultCurrency($total);
+    }
+
+
+    public function getCodFeeAttribute($codFee)
+    {
+        return Money::inDefaultCurrency($codFee);
     }
 
 
@@ -412,6 +419,8 @@ class Order extends Model
             'product_slug' => $cartItem->product->slug,
             'product_sku' => $cartItem->variant?->sku ?? $cartItem->product->sku,
             'product_image_path' => $imagePath,
+            'is_upsell' => $cartItem->upsell['is_upsell'] ?? false,
+            'upsell_data' => $cartItem->upsell ?? null,
         ]);
 
         $orderProduct->storeVariations($cartItem->variations);
@@ -479,8 +488,14 @@ class Order extends Model
             'customer_first_name',
             'customer_last_name',
             'customer_email',
+            'sub_total',
+            'shipping_method',
+            'shipping_cost',
+            'coupon_code',
+            'discount',
             'payment_method',
             'currency',
+            'currency_rate',
             'total',
             'status',
             'created_at',
@@ -502,7 +517,7 @@ class Order extends Model
             }
         }
 
-        return new OrderTable($query->with(['products', 'billingSnapshot', 'shippingSnapshot', 'billingAddress', 'shippingAddress']));
+        return new OrderTable($query->with(['products', 'taxes', 'billingSnapshot', 'shippingSnapshot', 'billingAddress', 'shippingAddress']));
     }
 
 

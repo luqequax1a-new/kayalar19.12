@@ -12,6 +12,7 @@ return [
         'save_and_exit' => 'Kaydet ve Çık',
         'delete' => 'Sil',
         'cancel' => 'İptal',
+        'close' => 'Kapat',
     ],
     'table' => [
         'id' => 'ID',

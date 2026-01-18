@@ -8,6 +8,7 @@
     <ol class="breadcrumb">
         <li><a href="{{ route('admin.dashboard.index') }}">{{ trans('admin::dashboard.dashboard') }}</a></li>
         <li>{{ trans('admin::sidebar.automations') }}</li>
+        <li>{{ trans('admin::sidebar.email_automations') }}</li>
         <li class="active">{{ trans('admin::sidebar.review_campaigns') }}</li>
     </ol>
 @endsection

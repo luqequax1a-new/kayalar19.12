@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::table('units', function (Blueprint $table) {
             if (!Schema::hasColumn('units', 'default_qty')) {
-                $table->decimal('default_qty', 8, 2)->nullable()->after('min');
+                $table->decimal('default_qty', 8, 2)->nullable();
             }
         });
     }

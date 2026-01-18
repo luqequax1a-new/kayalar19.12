@@ -15,22 +15,37 @@ class SuggestionsResponse implements Responsable
     private Collection $products;
     private Collection $categories;
     private int $totalResults;
+    private Collection $popularSearches;
+    private Collection $popularCategories;
+    private Collection $brands;
+    private Collection $bestSellers;
+    private Collection $bestSellingCategories;
+    private Collection $bestSellingBrands;
 
 
     /**
      * Create a new instance.
      *
      * @param string $query
-     * @param int $totalResults
      * @param Collection $products
      * @param Collection $categories
+     * @param int $totalResults
+     * @param Collection|null $popularSearches
+     * @param Collection|null $popularCategories
+     * @param Collection|null $brands
      */
-    public function __construct(string $query, Collection $products, Collection $categories, int $totalResults)
+    public function __construct(string $query, Collection $products, Collection $categories, int $totalResults, Collection $popularSearches = null, Collection $popularCategories = null, Collection $brands = null, Collection $bestSellers = null, Collection $bestSellingCategories = null, Collection $bestSellingBrands = null)
     {
         $this->query = $query;
         $this->products = $products;
         $this->categories = $categories;
         $this->totalResults = $totalResults;
+        $this->popularSearches = $popularSearches ?? collect();
+        $this->popularCategories = $popularCategories ?? collect();
+        $this->brands = $brands ?? collect();
+        $this->bestSellers = $bestSellers ?? collect();
+        $this->bestSellingCategories = $bestSellingCategories ?? collect();
+        $this->bestSellingBrands = $bestSellingBrands ?? collect();
     }
 
 
@@ -44,25 +59,51 @@ class SuggestionsResponse implements Responsable
     public function toResponse($request): JsonResponse
     {
         return response()->json([
-            'categories' => $this->transformCategories(),
+            'categories' => $this->transformCategories($this->categories),
+            'brands' => $this->transformBrands($this->brands),
             'products' => $this->transformProducts(),
             'remaining' => $this->getRemainingCount(),
+            'popular_searches' => $this->popularSearches,
+            'popular_categories' => $this->transformCategories($this->popularCategories),
+            'best_sellers' => $this->transformProducts($this->bestSellers),
+            'best_selling_categories' => $this->transformCategories($this->bestSellingCategories),
+            'best_selling_brands' => $this->transformBrands($this->bestSellingBrands),
         ]);
+    }
+
+
+    /**
+     * Transform the brands.
+     *
+     * @param Collection $brandsCollection
+     * @return Collection
+     */
+    private function transformBrands(Collection $brandsCollection): Collection
+    {
+        return $brandsCollection->map(function ($brand) {
+            return [
+                'name' => $this->highlight($brand->name),
+                'url' => $brand->url(),
+                'slug' => $brand->slug,
+            ];
+        });
     }
 
 
     /**
      * Transform the categories.
      *
+     * @param Collection $categories
      * @return Collection
      */
-    private function transformCategories(): Collection
+    private function transformCategories(Collection $categories): Collection
     {
-        return $this->categories->map(function (Category $category) {
+        return $categories->map(function (Category $category) {
             return [
                 'slug' => $category->slug,
                 'name' => $category->name,
                 'url' => $category->url(),
+                'logo' => $category->logo->exists ? $category->logo->path : null,
             ];
         })->unique('slug')->values();
     }
@@ -71,23 +112,34 @@ class SuggestionsResponse implements Responsable
     /**
      * Transform the products.
      *
+     * @param Collection|null $productsCollection
      * @return Collection
      */
-    private function transformProducts(): Collection
+    private function transformProducts(?Collection $productsCollection = null): Collection
     {
-        return $this->products
+        $productsToTransform = $productsCollection ?? $this->products;
+        
+        return $productsToTransform
             ->flatMap(function (Product $product) {
                 $baseName = $this->highlight($product->name);
 
-                if ((bool) ($product->list_variants_separately ?? false)) {
-                    $variants = $product->relationLoaded('variants') ? $product->variants : collect();
+                if ($product->list_variants_separately) {
+                    $variants = $product->relationLoaded('variants') 
+                        ? $product->variants 
+                        : $product->variants()->where('is_active', true)->get();
+                    
                     $actives = $variants->filter(function ($v) {
                         return (bool) ($v->is_active ?? false);
                     });
 
                     if ($actives->isNotEmpty()) {
                         return $actives->map(function ($variant) use ($product, $baseName) {
-                            $variantLabel = trim((string) ($variant->name ?? ''));
+                            $variantName = trim((string) ($variant->name ?? ''));
+                            
+                            $displayName = $baseName;
+                            if ($variantName !== '') {
+                                $displayName = $baseName . ' - ' . e($variantName);
+                            }
 
                             $baseImage = ($variant->base_image && $variant->base_image->id)
                                 ? $variant->base_image
@@ -106,10 +158,8 @@ class SuggestionsResponse implements Responsable
                             }
 
                             return [
-                                // Use a unique identifier for keyboard navigation in HeaderSearch.
-                                // (It doesn't have to match the actual product slug.)
                                 'slug' => $product->slug . '-v' . (string) ($variant->uid ?? $variant->id),
-                                'name' => $variantLabel !== '' ? ($baseName . ' - ' . e($variantLabel)) : $baseName,
+                                'name' => $displayName,
                                 'formatted_price' => $variant->formatted_price ?? $product->formatted_price,
                                 'base_image' => $baseImage,
                                 'thumb_src' => $thumbSrc,
@@ -121,10 +171,13 @@ class SuggestionsResponse implements Responsable
                     }
                 }
 
+                // Get default variant for fallback (using the variant accessor which handles loaded relations/queries)
+                $defaultVariant = $product->variant;
+
                 $baseImage = ($product->base_image && $product->base_image->id)
                     ? $product->base_image
-                    : (($product->variant && $product->variant->base_image && $product->variant->base_image->id)
-                        ? $product->variant->base_image
+                    : (($defaultVariant && $defaultVariant->base_image && $defaultVariant->base_image->id)
+                        ? $defaultVariant->base_image
                         : $product->base_image);
 
                 $thumbWidth = (int) config('image_optimization.variants.widths.thumb', 80);
@@ -143,12 +196,12 @@ class SuggestionsResponse implements Responsable
                     [
                         'slug' => $product->slug,
                         'name' => $baseName,
-                        'formatted_price' => $product->variant?->formatted_price ?? $product->formatted_price,
+                        'formatted_price' => $defaultVariant?->formatted_price ?? $product->formatted_price,
                         'base_image' => $baseImage,
                         'thumb_src' => $thumbSrc,
                         'thumb_srcset' => $thumbSrcset,
-                        'is_out_of_stock' => $product->variant?->isOutOfStock() ?? $product->isOutOfStock(),
-                        'url' => $product->variant?->url() ?? $product->url(),
+                        'is_out_of_stock' => $defaultVariant?->isOutOfStock() ?? $product->isOutOfStock(),
+                        'url' => $defaultVariant?->url() ?? $product->url(),
                     ],
                 ]);
             })
@@ -160,15 +213,21 @@ class SuggestionsResponse implements Responsable
     /**
      * Highlight the given text.
      *
-     * @param string $text
+     * @param mixed $text
      *
      * @return string
      */
     private function highlight($text): string
     {
+        $text = (string) ($text ?? '');
+
+        if ($this->query === '' || is_null($this->query)) {
+            return e($text);
+        }
+
         $query = str_replace(' ', '|', preg_quote($this->query));
 
-        return preg_replace("/($query)/i", '<em>$1</em>', $text);
+        return (string) preg_replace("/($query)/i", '<em>$1</em>', $text);
     }
 
 

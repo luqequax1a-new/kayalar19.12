@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Cache;
 use Modules\Category\Entities\Category;
 use Modules\Product\Entities\SearchTerm;
 use Modules\Address\StoreAddress;
+use Modules\Brand\Entities\Brand;
 
 class LayoutComposer
 {
@@ -24,6 +25,10 @@ class LayoutComposer
      */
     private $compare;
 
+    /**
+     * @var \Illuminate\Database\Eloquent\Collection
+     */
+    private $brands;
 
     /**
      * Create a new view composer instance.
@@ -64,6 +69,7 @@ class LayoutComposer
             'copyrightText' => $this->getCopyrightText(),
             'acceptedPaymentMethodsImage' => $this->getAcceptedPaymentMethodsImage(),
             'schemaMarkup' => $this->getSchemaMarkup(),
+            'brands' => $this->getBrands(),
         ]);
     }
 
@@ -332,5 +338,15 @@ class LayoutComposer
         return Schema::searchAction()
             ->target(route('products.index') . '?query={search_term_string}')
             ->setProperty('query-input', 'required name=search_term_string');
+    }
+
+    private function getBrands()
+    {
+        return Cache::rememberForever('storefront_brands', function () {
+            return Brand::withCount('products')
+                ->whereHas('products') // Only brands with products
+                ->having('products_count', '>', 0)
+                ->get();
+        });
     }
 }

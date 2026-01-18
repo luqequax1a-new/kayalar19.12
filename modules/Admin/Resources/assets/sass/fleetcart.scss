@@ -490,22 +490,117 @@ strong {
 
 .ltr.sidebar-collapse {
     .sidebar-menu {
-        > li.active {
-            > a {
-                border: unset;
-                position: relative;
+        > li.sidebar-menu {
+            list-style: none;
+            margin: 0;
+            padding: 0;
 
-                &::after {
-                    content: "";
+            > li {
+                position: relative;
+                margin: 0;
+                padding: 0;
+
+                > a {
+                    padding: 12px 5px 12px 15px;
                     display: block;
-                    position: absolute;
-                    left: 0px;
-                    top: 50%;
-                    transform: translateY(-50%);
-                    width: 4px;
-                    height: 20px;
-                    background: #475aff;
-                    border-radius: 3px;
+                    border-left: 3px solid transparent;
+                    white-space: normal;
+                    word-wrap: break-word;
+                    line-height: 1.4;
+
+                    > .fa,
+                    > .glyphicon,
+                    > .ion {
+                        width: 20px;
+                    }
+                }
+
+                &.header {
+                    font-size: 13px;
+                    color: #7c97a4;
+                    padding: 22px 25px 8px 15px;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: clip;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    font-weight: bold;
+                }
+
+                > a {
+                    position: relative;
+                    font-size: 13px;
+                    display: block;
+                    padding: 14px 15px;
+                    background: #222530;
+                    text-decoration: none;
+                    outline: 0;
+                    transition: 150ms ease-in-out;
+                    font-weight: 500;
+
+                    span {
+                        .fa {
+                            font-size: 16px;
+                            font-weight: 500;
+                        }
+                    }
+
+                    > {
+                        .pull-right-container {
+                            position: absolute;
+                            right: 2px;
+                            left: 95px !important;
+                            margin-top: -9px;
+                            padding: 14px 15px 14px !important;
+                        }
+
+                        .fa-angle-left,
+                        .pull-right-container > .fa-angle-left {
+                            width: auto;
+                            height: auto;
+                            padding: 0;
+                            margin-right: 10px;
+                            margin-top: -2px;
+                            transition: 150ms ease-in-out;
+                            transform: rotate(-180deg) #{"/*rtl:rotate(0deg)*/"};
+                        }
+
+                        .fa-angle-left {
+                            position: absolute;
+                            top: 50%;
+                            right: 10px;
+                            margin-top: -8px;
+                        }
+
+                        .fa {
+                            line-height: 19px;
+                            width: 20px;
+                        }
+                    }
+                }
+
+                &.active {
+                    > a {
+                        color: lighten(#8aa4af, 15%);
+                        background: lighten(#222530, 4%);
+                        border-left-color: transparent;
+                        font-weight: 600;
+                    }
+
+                    > .treeview-menu {
+                        display: block;
+                    }
+                }
+
+                &.selected > a,
+                > a:hover {
+                    background: lighten(#222530, 4%);
+                }
+
+                > .treeview-menu {
+                    margin: 0 1px;
+                    padding-left: 0;
+                    background: transparent;
                 }
             }
         }
@@ -551,6 +646,9 @@ strong {
             outline: 0;
             transition: 150ms ease-in-out;
             font-weight: 500;
+            white-space: normal;
+            word-wrap: break-word;
+            line-height: 1.4;
 
             span {
                 .fa {
@@ -777,6 +875,7 @@ strong {
     display: none;
     margin: 0;
     padding: 0;
+    background: lighten(#222530, 4%);
 
     a span i {
         transition: 150ms;
@@ -785,16 +884,20 @@ strong {
 
     > li {
         margin: 0;
+        padding: 0;
 
         > a {
             font-size: 13px;
             display: block;
             color: #8aa4af;
             background: darken(#222530, 4%);
-            padding: 12px 15px 12px 40px;
+            padding: 10px 5px 10px 15px;
             text-decoration: none;
             transition: 150ms ease-in-out;
             position: relative;
+            white-space: normal;
+            word-wrap: break-word;
+            line-height: 1.4;
 
             &::after {
                 content: "";
@@ -2588,6 +2691,10 @@ select {
 }
 
 @media screen and (max-width: 991px) {
+    .content-header {
+        padding: 20px 15px 0;
+    }
+
     .page-form-footer {
         position: relative;
         bottom: auto;

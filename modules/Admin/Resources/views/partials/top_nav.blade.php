@@ -1,99 +1,789 @@
-<nav class="navbar navbar-static-top clearfix">
-    <ul class="nav navbar-nav clearfix">
-        <li class="visit-store hidden-sm hidden-xs">
-            <a href="{{ route('home') }}" target="_blank">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-shop-window" viewBox="0 0 16 16">
-                    <path d="M2.97 1.35A1 1 0 0 1 3.73 1h8.54a1 1 0 0 1 .76.35l2.609 3.044A1.5 1.5 0 0 1 16 5.37v.255a2.375 2.375 0 0 1-4.25 1.458A2.37 2.37 0 0 1 9.875 8 2.37 2.37 0 0 1 8 7.083 2.37 2.37 0 0 1 6.125 8a2.37 2.37 0 0 1-1.875-.917A2.375 2.375 0 0 1 0 5.625V5.37a1.5 1.5 0 0 1 .361-.976zm1.78 4.275a1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0 1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0 1.375 1.375 0 1 0 2.75 0V5.37a.5.5 0 0 0-.12-.325L12.27 2H3.73L1.12 5.045A.5.5 0 0 0 1 5.37v.255a1.375 1.375 0 0 0 2.75 0 .5.5 0 0 1 1 0M1.5 8.5A.5.5 0 0 1 2 9v6h12V9a.5.5 0 0 1 1 0v6h.5a.5.5 0 0 1 0 1H.5a.5.5 0 0 1 0-1H1V9a.5.5 0 0 1 .5-.5m2 .5a.5.5 0 0 1 .5.5V13h8V9.5a.5.5 0 0 1 1 0V13a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5a.5.5 0 0 1 .5-.5"/>
+<nav class="modern-top-nav">
+    <div class="nav-container">
+        {{-- Left Section --}}
+        <div class="nav-left">
+            <button class="nav-mobile-hamburger" id="mobile-sidebar-toggle">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
                 </svg>
-
-                {{ trans('admin::admin.storefront') }}
+            </button>
+            <a href="{{ route('home') }}" target="_blank" class="store-link">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                    <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                </svg>
+                <span class="nav-text">{{ trans('admin::admin.storefront') }}</span>
             </a>
-        </li>
+        </div>
 
-        <li class="user dropdown top-nav-menu pull-right">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                <span>{{ substr($currentUser->first_name, 0, 1) }}</span>
-
-                <div class="dropdown-arrow-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="9" viewBox="0 0 18 9" fill="none">
-                        <path d="M16.9201 0.949951L10.4001 7.46995C9.63008 8.23995 8.37008 8.23995 7.60008 7.46995L1.08008 0.949951" stroke="#292D32" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </div>
-            </a>
-
-            <ul class="dropdown-menu">
-                <li class="profile-details">
-                    <span class="profile-first-letter">{{ substr($currentUser->first_name, 0, 1) }}</span>
-
-                    <div class="profile-info">
-                        <h4>
-                            <span>{{ $currentUser->first_name }} {{ $currentUser->last_name }}</span>
-
-                            <span>{{ $currentUser->roles->first()->name }}</span>
-                        </h4>
-
-                        <span class="profile-email">{{ $currentUser->email }}</span>
-                    </div>
-                </li>
-
-                <li>
-                    <a href="{{ route('admin.profile.edit') }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" stroke="#292D32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M20.5899 22C20.5899 18.13 16.7399 15 11.9999 15C7.25991 15 3.40991 18.13 3.40991 22" stroke="#292D32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        {{-- Right Section --}}
+        <div class="nav-right">
+            @if (count(supported_locales()) > 1)
+                <div class="nav-item dropdown" id="languageDropdown">
+                    <button class="nav-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="2" y1="12" x2="22" y2="12"></line>
+                            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
                         </svg>
+                    </button>
+                    <div class="dropdown-menu">
+                        @foreach (supported_locales() as $locale => $language)
+                            <a href="{{ localized_url($locale) }}" class="dropdown-item {{ $locale === locale() ? 'active' : '' }}">
+                                {{ $language['name'] }}
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
 
+            {{-- Quick Actions Button --}}
+            <div class="nav-item">
+                <button class="quick-actions-btn" id="quickActionsBtn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="1"></circle>
+                        <circle cx="19" cy="12" r="1"></circle>
+                        <circle cx="5" cy="12" r="1"></circle>
+                        <circle cx="12" cy="5" r="1"></circle>
+                        <circle cx="12" cy="19" r="1"></circle>
+                        <circle cx="5" cy="5" r="1"></circle>
+                        <circle cx="19" cy="5" r="1"></circle>
+                        <circle cx="5" cy="19" r="1"></circle>
+                        <circle cx="19" cy="19" r="1"></circle>
+                    </svg>
+                    <span class="quick-actions-text">Hızlı İşlem</span>
+                </button>
+            </div>
+
+            {{-- Notification Widget --}}
+            <div class="nav-item">
+                @include('admin::partials.notification_widget')
+            </div>
+
+            <div class="nav-item nav-desktop-only">
+                <button class="nav-btn" id="fullscreenBtn">
+                    <svg class="fullscreen-enter" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+                    </svg>
+                    <svg class="fullscreen-exit" style="display: none;" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="nav-divider"></div>
+
+            <div class="nav-item dropdown" id="userDropdown">
+                <button class="user-btn">
+                    <div class="user-avatar">{{ substr($currentUser->first_name, 0, 1) }}</div>
+                </button>
+                <div class="dropdown-menu user-menu">
+                    <div class="user-info">
+                        <div class="user-avatar-large">{{ substr($currentUser->first_name, 0, 1) }}</div>
+                        <div class="user-details">
+                            <div class="user-name">{{ $currentUser->first_name }} {{ $currentUser->last_name }}</div>
+                            <div class="user-role">{{ $currentUser->roles->first()->name }}</div>
+                            <div class="user-email">{{ $currentUser->email }}</div>
+                        </div>
+                    </div>
+                    <div class="dropdown-divider"></div>
+                    <a href="{{ route('admin.profile.edit') }}" class="dropdown-item">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
                         {{ trans('user::users.profile') }}
                     </a>
-                </li>
-
-                <li>
-                    <a href="{{ route('admin.logout') }}">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M17.4399 14.62L19.9999 12.06L17.4399 9.5" stroke="#292D32" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M9.76001 12.0601H19.93" stroke="#292D32" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-                            <path d="M11.76 20C7.34001 20 3.76001 17 3.76001 12C3.76001 7 7.34001 4 11.76 4" stroke="#292D32" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+                    <a href="{{ route('admin.logout') }}" class="dropdown-item logout">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
                         </svg>
-
                         {{ trans('user::auth.logout') }}
                     </a>
-                </li>
-            </ul>
-        </li>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
 
-        @if (count(supported_locales()) > 1)
-            <li class="language dropdown top-nav-menu pull-right">
-                <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="#292D32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M7.99998 3H8.99998C7.04998 8.84 7.04998 15.16 8.99998 21H7.99998" stroke="#292D32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M15 3C16.95 8.84 16.95 15.16 15 21" stroke="#292D32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M3 16V15C8.84 16.95 15.16 16.95 21 15V16" stroke="#292D32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        <path d="M3 8.99998C8.84 7.04998 15.16 7.04998 21 8.99998" stroke="#292D32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+<style>
+/* Modern Top Navigation Styling */
+.modern-top-nav {
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    height: 70px; /* Matched to sidebar header */
+    position: sticky;
+    top: 0;
+    z-index: 99;
+    width: 100%;
+}
 
-                    <span>{{ strtoupper(locale()) }}</span>
+.nav-container {
+    height: 100%;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
 
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                        <path d="M19.9201 8.94995L13.4001 15.47C12.6301 16.24 11.3701 16.24 10.6001 15.47L4.08008 8.94995" stroke="#292D32" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+.nav-left, .nav-right {
+    display: flex;
+    align-items: center;
+}
+
+.nav-mobile-hamburger {
+    display: none;
+    background: transparent;
+    border: none;
+    color: #475569;
+    padding: 8px;
+    margin-right: 12px;
+    cursor: pointer;
+}
+
+.store-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    background: #f8fafc;
+    color: #475569;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.store-link:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+.nav-item {
+    position: relative;
+    margin-left: 8px;
+}
+
+.nav-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.nav-btn:hover {
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+.nav-divider {
+    width: 1px;
+    height: 24px;
+    background: #e2e8f0;
+    margin: 0 12px;
+}
+
+/* User Button */
+.user-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+.user-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: #4f46e5;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    transition: all 0.2s;
+}
+
+.user-btn:hover .user-avatar {
+    background: #4338ca;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+}
+
+/* Dropdown Redesign */
+.dropdown-menu {
+    position: absolute !important;
+    top: calc(100% + 12px) !important;
+    right: 0 !important;
+    left: auto !important;
+    min-width: 240px !important;
+    background: #fff !important;
+    border-radius: 14px !important;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12), 0 5px 15px rgba(0,0,0,0.05) !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    padding: 10px !important;
+    display: none;
+    z-index: 99999 !important;
+    transform: none !important;
+}
+
+.dropdown.show .dropdown-menu {
+    display: block;
+    animation: navFadeUp 0.2s ease-out;
+}
+
+@keyframes navFadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    color: #475569;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.dropdown-item:hover {
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+.dropdown-item.active {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.dropdown-item.logout {
+    color: #ef4444;
+    margin-top: 4px;
+}
+
+.dropdown-item.logout:hover {
+    background: #fef2f2;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: #f1f5f9;
+    margin: 8px 0;
+}
+
+/* User Menu Specifics */
+.user-menu {
+    min-width: 280px !important;
+}
+
+.user-info {
+    display: flex;
+    gap: 15px;
+    padding: 14px;
+}
+
+.user-avatar-large {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    background: #4f46e5;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.user-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 2px;
+}
+
+.user-role {
+    font-size: 12px;
+    color: #059669;
+    background: #d1fae5;
+    padding: 2px 10px;
+    border-radius: 6px;
+    display: inline-block;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.user-email {
+    font-size: 13px;
+    color: #64748b;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Quick Actions Button */
+.quick-actions-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    padding: 0 16px;
+    border-radius: 8px;
+    border: 1px solid #e3e8ef;
+    background: #ffffff;
+    color: #121926;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: "Twemoji Country Flags", Inter, sans-serif;
+}
+
+.quick-actions-btn:hover {
+    background: #f9fafb;
+    border-color: #d1d5db;
+}
+
+.quick-actions-btn svg {
+    color: #697586;
+}
+
+/* Quick Actions Modal - Full Screen */
+.quick-actions-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.2s ease;
+}
+
+.quick-actions-modal.active {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.quick-actions-content {
+    background: #ffffff;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 900px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.quick-actions-header {
+    padding: 24px 28px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+}
+
+.quick-actions-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+    font-family: "Twemoji Country Flags", Inter, sans-serif;
+}
+
+.quick-actions-close {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: #6b7280;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.quick-actions-close:hover {
+    background: #f3f4f6;
+    color: #111827;
+}
+
+.quick-actions-body {
+    padding: 28px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.quick-action-card {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #ffffff;
+    text-decoration: none;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.quick-action-card:hover {
+    border-color: #6366f1;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
+    transform: translateY(-2px);
+}
+
+.quick-action-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+    transition: all 0.2s;
+}
+
+.quick-action-card:hover .quick-action-icon {
+    transform: scale(1.05);
+}
+
+.quick-action-icon.blue {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.quick-action-icon.green {
+    background: #f0fdf4;
+    color: #16a34a;
+}
+
+.quick-action-icon.purple {
+    background: #faf5ff;
+    color: #9333ea;
+}
+
+.quick-action-icon.orange {
+    background: #fff7ed;
+    color: #ea580c;
+}
+
+.quick-action-icon.pink {
+    background: #fdf2f8;
+    color: #ec4899;
+}
+
+.quick-action-icon.indigo {
+    background: #eef2ff;
+    color: #6366f1;
+}
+
+.quick-action-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 6px;
+}
+
+.quick-action-desc {
+    font-size: 13px;
+    color: #6b7280;
+    line-height: 1.5;
+}
+
+/* Responsive Handling */
+@media (max-width: 991px) {
+    .nav-text, .nav-desktop-only, .nav-divider {
+        display: none !important;
+    }
+    .nav-container {
+        padding: 0 15px;
+    }
+    .nav-mobile-hamburger {
+        display: flex !important;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const langDropdown = document.getElementById('languageDropdown');
+    const userDropdown = document.getElementById('userDropdown');
+
+    if (langDropdown) {
+        langDropdown.querySelector('.nav-btn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            langDropdown.classList.toggle('show');
+            if (userDropdown) userDropdown.classList.remove('show');
+        });
+    }
+
+    if (userDropdown) {
+        userDropdown.querySelector('.user-btn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            userDropdown.classList.toggle('show');
+            if (langDropdown) langDropdown.classList.remove('show');
+        });
+    }
+
+    document.addEventListener('click', function() {
+        if (langDropdown) langDropdown.classList.remove('show');
+        if (userDropdown) userDropdown.classList.remove('show');
+    });
+
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    if (fullscreenBtn) {
+        fullscreenBtn.addEventListener('click', function() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+                this.classList.add('fullscreen');
+            } else {
+                document.exitFullscreen();
+                this.classList.remove('fullscreen');
+            }
+        });
+
+        document.addEventListener('fullscreenchange', function() {
+            if (!document.fullscreenElement) {
+                fullscreenBtn.classList.remove('fullscreen');
+            }
+        });
+    }
+
+    const mobileToggle = document.getElementById('mobile-sidebar-toggle');
+    if (mobileToggle) {
+        mobileToggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            document.body.classList.toggle('sidebar-open');
+        });
+    }
+
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', function(e) {
+        if (window.innerWidth <= 991 && document.body.classList.contains('sidebar-open')) {
+            const sidebar = document.querySelector('.main-sidebar');
+            if (sidebar && !sidebar.contains(e.target) && !mobileToggle.contains(e.target)) {
+                document.body.classList.remove('sidebar-open');
+            }
+        }
+    });
+
+    // Quick Actions Modal
+    const quickActionsBtn = document.getElementById('quickActionsBtn');
+    const quickActionsModal = document.getElementById('quickActionsModal');
+    const quickActionsClose = document.getElementById('quickActionsClose');
+
+    if (quickActionsBtn && quickActionsModal) {
+        quickActionsBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            quickActionsModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+
+        if (quickActionsClose) {
+            quickActionsClose.addEventListener('click', function() {
+                quickActionsModal.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        }
+
+        quickActionsModal.addEventListener('click', function(e) {
+            if (e.target === quickActionsModal) {
+                quickActionsModal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && quickActionsModal.classList.contains('active')) {
+                quickActionsModal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+    }
+});
+</script>
+
+{{-- Quick Actions Modal --}}
+<div class="quick-actions-modal" id="quickActionsModal">
+    <div class="quick-actions-content">
+        <div class="quick-actions-header">
+            <h2 class="quick-actions-title">Hızlı İşlemler</h2>
+            <button class="quick-actions-close" id="quickActionsClose">×</button>
+        </div>
+        <div class="quick-actions-body">
+            <div class="quick-actions-grid">
+                {{-- Product Actions --}}
+                <a href="{{ route('admin.products.create') }}" class="quick-action-card">
+                    <div class="quick-action-icon blue">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <path d="M16 10a4 4 0 0 1-8 0"></path>
+                        </svg>
+                    </div>
+                    <div class="quick-action-title">Yeni Ürün Ekle</div>
+                    <div class="quick-action-desc">Hızlıca yeni bir ürün oluşturun ve mağazanıza ekleyin</div>
                 </a>
 
-                <ul class="dropdown-menu">
-                    @foreach (supported_locales() as $locale => $language)
-                        <li class="{{ $locale === locale() ? 'active' : '' }}">
-                            <a href="{{ localized_url($locale) }}">{{ $language['name'] }}</a>
-                        </li>
-                    @endforeach
-                </ul>
-            </li>
-        @endif
+                {{-- Category Actions --}}
+                <a href="{{ route('admin.categories.index') }}" class="quick-action-card">
+                    <div class="quick-action-icon green">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                    </div>
+                    <div class="quick-action-title">Kategoriler</div>
+                    <div class="quick-action-desc">Ürün kategorilerini görüntüleyin ve yönetin</div>
+                </a>
 
-        <li class="fullscreen-mode">
-            <a class="fullscreen-mode-open" href="#">
-                <svg class="fullscreen-one exit-full-screen" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5,5H10V7H7V10H5V5M14,5H19V10H17V7H14V5M17,14H19V19H14V17H17V14M10,17V19H5V14H7V17H10Z"/></svg>
-                <svg class="fullscreen-two" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14,14H19V16H16V19H14V14M5,14H10V19H8V16H5V14M8,5H10V10H5V8H8V5M19,8V10H14V5H16V8H19Z"/></svg>
-            </a>
-        </li>
-    </ul>
-</nav>
+                {{-- Blog Post --}}
+                @if(\Illuminate\Support\Facades\Route::has('admin.blog_posts.create'))
+                <a href="{{ route('admin.blog_posts.create') }}" class="quick-action-card">
+                    <div class="quick-action-icon purple">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                    </div>
+                    <div class="quick-action-title">Blog Yazısı Ekle</div>
+                    <div class="quick-action-desc">Yeni bir blog yazısı oluşturun ve yayınlayın</div>
+                </a>
+                @endif
+
+                {{-- Orders --}}
+                <a href="{{ route('admin.orders.index') }}" class="quick-action-card">
+                    <div class="quick-action-icon orange">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="9" cy="21" r="1"></circle>
+                            <circle cx="20" cy="21" r="1"></circle>
+                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                        </svg>
+                    </div>
+                    <div class="quick-action-title">Siparişleri Görüntüle</div>
+                    <div class="quick-action-desc">Tüm siparişleri görüntüleyin ve yönetin</div>
+                </a>
+
+                {{-- Customers --}}
+                <a href="{{ route('admin.users.index') }}" class="quick-action-card">
+                    <div class="quick-action-icon pink">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="9" cy="7" r="4"></circle>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        </svg>
+                    </div>
+                    <div class="quick-action-title">Müşteriler</div>
+                    <div class="quick-action-desc">Müşteri listesini görüntüleyin ve yönetin</div>
+                </a>
+
+                {{-- Coupons --}}
+                <a href="{{ route('admin.coupons.create') }}" class="quick-action-card">
+                    <div class="quick-action-icon indigo">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                            <polyline points="7.5 4.21 12 6.81 16.5 4.21"></polyline>
+                            <polyline points="7.5 19.79 7.5 14.6 3 12"></polyline>
+                            <polyline points="21 12 16.5 14.6 16.5 19.79"></polyline>
+                            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                        </svg>
+                    </div>
+                    <div class="quick-action-title">Kupon Oluştur</div>
+                    <div class="quick-action-desc">Yeni indirim kuponu oluşturun</div>
+                </a>
+
+                {{-- Brand --}}
+                @if(\Illuminate\Support\Facades\Route::has('admin.brands.create'))
+                <a href="{{ route('admin.brands.create') }}" class="quick-action-card">
+                    <div class="quick-action-icon blue">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                    </div>
+                    <div class="quick-action-title">Marka Ekle</div>
+                    <div class="quick-action-desc">Yeni bir marka oluşturun ve ürünlere atayın</div>
+                </a>
+                @endif
+
+                {{-- Settings --}}
+                @if(\Illuminate\Support\Facades\Route::has('admin.settings.edit'))
+                <a href="{{ route('admin.settings.edit') }}" class="quick-action-card">
+                    <div class="quick-action-icon green">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M12 1v6m0 6v6m6-12h-6m-6 0H1m11 6H1m11 6H1"></path>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        </svg>
+                    </div>
+                    <div class="quick-action-title">Ayarlar</div>
+                    <div class="quick-action-desc">Mağaza ayarlarını düzenleyin ve yapılandırın</div>
+                </a>
+                @endif
+
+                {{-- Reports --}}
+                @if(\Illuminate\Support\Facades\Route::has('admin.reports.index'))
+                <a href="{{ route('admin.reports.index') }}" class="quick-action-card">
+                    <div class="quick-action-icon purple">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="20" x2="12" y2="10"></line>
+                            <line x1="18" y1="20" x2="18" y2="4"></line>
+                            <line x1="6" y1="20" x2="6" y2="16"></line>
+                        </svg>
+                    </div>
+                    <div class="quick-action-title">Raporlar</div>
+                    <div class="quick-action-desc">Satış ve performans raporlarını görüntüleyin</div>
+                </a>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>

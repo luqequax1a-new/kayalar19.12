@@ -34,42 +34,73 @@ class QueryStringFilter
         'qty',
         'new_from',
         'new_to',
+        'category_position',
     ];
 
 
     public function sort($query, $sortType)
     {
-        if ($this->sortTypeExists($sortType)) {
-            return $this->{$sortType}($query);
+        // Whitelist validation for security
+        if (!$this->sortTypeExists($sortType)) {
+            return;
         }
+
+        // Clear any existing category position ordering when user explicitly selects a sort
+        // This ensures user's choice takes precedence
+        $orders = $query->getQuery()->orders ?? [];
+        $query->getQuery()->orders = array_filter($orders, function($order) {
+            // Remove category_position orders to let user sort take over
+            if (is_array($order) && isset($order['column'])) {
+                return strpos($order['column'], 'category_position') === false;
+            }
+            if (is_string($order)) {
+                return strpos($order, 'category_position') === false;
+            }
+            return true;
+        });
+
+        return $this->{$sortType}($query);
     }
 
 
-    public function relevance()
+    public function relevance($query)
     {
-        // Products are searched by relevant order by default.
+        // For relevance, if category position exists, use it as default
+        // Otherwise products are searched by relevant order by default
+        $selectColumns = $query->getQuery()->columns ?? [];
+        $hasCategoryPosition = false;
+        
+        foreach ($selectColumns as $column) {
+            if (is_string($column) && strpos($column, 'category_position') !== false) {
+                $hasCategoryPosition = true;
+                break;
+            }
+        }
+
+        if ($hasCategoryPosition) {
+            // Category-specific position ordering
+            $query->orderByRaw('category_position IS NULL, category_position ASC');
+        } else {
+            // Main products page: use main_page_position column
+            // This is a dedicated column for /products page sorting
+            \Log::info('RELEVANCE: Using main_page_position ordering');
+            $query->orderByRaw('main_page_position IS NULL, main_page_position ASC');
+        }
     }
 
 
     public function alphabetic($query)
     {
-        $query->join('product_translations', function (JoinClause $join) {
-            $join->on('products.id', '=', 'product_translations.product_id');
-        })
-            ->groupBy(array_merge($this->groupColumns, ['product_translations.name']))
-            ->orderBy('product_translations.name');
+        $query->join('product_translations', 'products.id', '=', 'product_translations.product_id')
+            ->where('product_translations.locale', locale())
+            ->addSelect('product_translations.name')
+            ->orderBy('product_translations.name', 'asc');
     }
 
 
     public function topRated($query)
     {
-        $query->selectRaw('AVG(reviews.rating) as avg_rating')
-            ->leftJoin('reviews', function (JoinClause $join) {
-                $join->on('products.id', '=', 'reviews.product_id');
-                $join->on('reviews.is_approved', '=', DB::raw('1'));
-            })
-            ->groupBy($this->groupColumns)
-            ->orderByDesc('avg_rating');
+        $query->orderByDesc('reviews_avg_rating');
     }
 
 
@@ -119,14 +150,24 @@ class QueryStringFilter
 
     public function brand($query, $slug)
     {
-        $query->whereHas('brand', function ($brandQuery) use ($slug) {
-            $brandQuery->where('slug', $slug);
+        $slugs = array_filter(is_array($slug) ? $slug : explode(',', (string) $slug));
+        
+        if (empty($slugs)) {
+            return;
+        }
+
+        $query->whereHas('brand', function ($brandQuery) use ($slugs) {
+            $brandQuery->whereIn('slug', $slugs);
         });
     }
 
 
     public function category($query, $slug)
     {
+        if ($slug === setting('products_page_slug', 'products')) {
+            return;
+        }
+
         $category = Category::where('slug', $slug)->first();
 
         if ($category) {
@@ -135,6 +176,14 @@ class QueryStringFilter
             $query->whereHas('categories', function ($categoryQuery) use ($categoryIds) {
                 $categoryQuery->whereIn('categories.id', $categoryIds);
             });
+
+            $query->leftJoin('product_categories as pc_sort', function($join) use ($category) {
+                $join->on('products.id', '=', 'pc_sort.product_id')
+                     ->where('pc_sort.category_id', '=', $category->id);
+            });
+
+            $query->addSelect('pc_sort.position as category_position');
+            $query->orderByRaw('category_position IS NULL, category_position ASC');
         } else {
             $query->whereHas('categories', function ($categoryQuery) use ($slug) {
                 $categoryQuery->where('slug', $slug);
@@ -151,16 +200,57 @@ class QueryStringFilter
     }
 
 
+    public function rating($query, $minRating)
+    {
+        $minRating = (float) $minRating;
+        
+        if ($minRating > 0) {
+            $query->where(function ($query) use ($minRating) {
+                $query->whereRaw("(SELECT AVG(rating) FROM reviews WHERE products.id = reviews.product_id AND is_approved = 1) >= ?", [$minRating]);
+            });
+        }
+    }
+
+
     public function attribute($query, $attributeFilters)
     {
-        foreach ($this->getAttributeIds($attributeFilters) as $index => $attributeId) {
-            $query->join("product_attributes as pa_{$index}", 'products.id', '=', "pa_{$index}.product_id")
-                ->whereRaw("pa_{$index}.attribute_id = {$attributeId} AND EXISTS (
-                    SELECT *
-                    FROM `product_attribute_values`
-                    WHERE `pa_{$index}`.`id` = `product_attribute_values`.`product_attribute_id`
-                    AND `attribute_value_id` in ({$this->getAttributeValueIds($attributeFilters)})
-                )");
+        foreach ($attributeFilters as $slug => $values) {
+            if (empty($values)) {
+                continue;
+            }
+
+            // For range filters, if both min/max are empty/null, skip.
+            if (is_array($values) && (isset($values['min']) || isset($values['max']))) {
+                $hasMin = isset($values['min']) && $values['min'] !== '';
+                $hasMax = isset($values['max']) && $values['max'] !== '';
+                if (!$hasMin && !$hasMax) {
+                    continue;
+                }
+            }
+
+            $query->whereHas('attributes', function ($q) use ($slug, $values) {
+                $q->whereHas('attribute', function($aq) use ($slug) {
+                    $aq->where('slug', $slug);
+                });
+
+                $q->whereHas('values.attributeValue', function ($vq) use ($values) {
+                    $vq->whereHas('translations', function ($tq) use ($values) {
+                        if (is_array($values) && (isset($values['min']) || isset($values['max']))) {
+                            if (isset($values['min']) && $values['min'] !== '') {
+                                $tq->where(DB::raw('CAST(value AS DECIMAL(10,2))'), '>=', $values['min']);
+                            }
+                            if (isset($values['max']) && $values['max'] !== '') {
+                                $tq->where(DB::raw('CAST(value AS DECIMAL(10,2))'), '<=', $values['max']);
+                            }
+                        } else {
+                            $vArray = array_filter((array) $values);
+                            if (!empty($vArray)) {
+                                $tq->whereIn('value', $vArray);
+                            }
+                        }
+                    });
+                });
+            });
         }
     }
 

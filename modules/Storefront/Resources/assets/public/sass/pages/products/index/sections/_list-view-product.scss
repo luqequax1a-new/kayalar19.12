@@ -11,7 +11,7 @@
     padding: 10px;
 }
 
-.list-view-product-card {  
+.list-view-product-card {
     display: flex;
     width: 100%;
     padding: 12px;
@@ -78,7 +78,7 @@
         align-items: center;
         z-index: 1;
 
-        
+
         span {
             font-size: 16px;
             font-weight: var(--font-medium);
@@ -96,7 +96,7 @@
             text-decoration-line: underline;
             text-decoration-color: transparent;
         }
-        
+
         &:hover {
             span {
                 text-decoration-color: var(--color-black);
@@ -105,6 +105,7 @@
     }
 
     .product-rating {
+
         .reviews,
         .rating-count {
             font-size: 13px;
@@ -167,15 +168,15 @@
                 opacity: 0;
             }
         }
-        
-        > i {
+
+        >i {
             font-size: 15px;
             margin-right: 8px;
             vertical-align: top;
             color: var(--color-white);
         }
 
-        > svg {
+        >svg {
             margin-right: 8px;
             width: 15px;
             height: 15px;
@@ -184,7 +185,7 @@
                 stroke: var(--color-white);
             }
         }
-        
+
         &:hover {
             background: var(--color-primary-hover);
         }
@@ -194,7 +195,7 @@
             color: #CAC7D1;
             border-color: #EFEEF1;
 
-            > svg {
+            >svg {
                 path {
                     stroke: #CAC7D1;
                 }
@@ -220,12 +221,12 @@
             &:hover {
                 color: var(--color-primary);
 
-                > i {
+                >i {
                     color: var(--color-gray);
                 }
             }
 
-            > svg {
+            >svg {
                 margin-right: 4px;
                 width: 16px;
                 height: 16px;
@@ -247,12 +248,12 @@
             transform: scale(0.5);
             visibility: hidden;
             opacity: 0;
-            
+
             svg {
                 width: 14px;
                 height: 14px;
                 margin-right: 0;
-                
+
                 path {
                     stroke: var(--color-white);
                     transition: var(--transition-150);
@@ -262,11 +263,11 @@
             &:hover {
                 background: var(--color-primary);
             }
-            
+
             &.added {
                 background: var(--color-primary);
                 transition: var(--transition-150);
-                
+
                 svg {
                     path {
                         stroke: var(--color-white);
@@ -274,14 +275,14 @@
                 }
             }
         }
-        
+
         .btn-wishlist {
             &.added {
                 transform: scale(1);
                 visibility: visible;
                 opacity: 1;
                 background: transparent;
-                
+
                 svg {
                     path {
                         stroke: unset;
@@ -301,6 +302,7 @@
 
     &:hover {
         .product-card-actions {
+
             .btn-compare,
             .btn-wishlist {
                 transform: scale(1);
@@ -309,7 +311,7 @@
 
                 &.added {
                     background: var(--color-primary);
-    
+
                     svg {
                         path {
                             stroke: var(--color-white) !important;
@@ -334,11 +336,13 @@
 
 
     .product-image {
-        position: relative; 
+        position: relative;
         width: 170px;
         padding-bottom: 100%;
         transition: var(--transition-150);
         overflow: hidden;
+        mask-image: -webkit-radial-gradient(white, black);
+        transform: translateZ(0);
         display: flex;
         align-items: center;
         justify-content: center;

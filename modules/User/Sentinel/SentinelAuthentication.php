@@ -28,6 +28,36 @@ class SentinelAuthentication implements Authentication
 
 
     /**
+     * Validate a user.
+     *
+     * @param array $credentials
+     *
+     * @return User|bool
+     */
+    public function validate($credentials)
+    {
+        return Sentinel::stateless($credentials);
+    }
+
+
+    /**
+     * Login a user by id.
+     *
+     * @param int $id
+     * @param bool $remember
+     *
+     * @return User
+     */
+    public function loginById($id, $remember = false)
+    {
+        $user = Sentinel::findById($id);
+
+        return Sentinel::login($user, $remember);
+    }
+
+
+
+    /**
      * Register a new user.
      *
      * @param array $data

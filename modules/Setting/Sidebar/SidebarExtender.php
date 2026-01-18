@@ -26,17 +26,62 @@ class SidebarExtender extends BaseSidebarExtender
             $group->item(trans('admin::sidebar.automations'), function (Item $item) {
                 $item->weight(21);
                 $item->icon('fa fa-tasks');
+                $item->authorize(true);
 
-                $item->item(trans('admin::sidebar.review_campaigns'), function (Item $item) {
+                // Email Campaigns Folder
+                $item->item(trans('admin::sidebar.email_automations'), function (Item $item) {
                     $item->weight(1);
-                    $item->route('admin.settings.review_campaign');
-                    $item->authorize(
-                        $this->auth->hasAccess('admin.settings.edit')
-                    );
+                    $item->icon('fa fa-envelope');
+                    $item->authorize($this->auth->hasAccess('admin.settings.edit'));
+
+                    $item->item(trans('admin::sidebar.abandoned_carts'), function (Item $item) {
+                        $item->weight(1);
+                        $item->icon('fa fa-shopping-cart');
+                        $item->route('admin.abandoned_carts.index');
+                        $item->authorize(
+                            $this->auth->hasAccess('admin.coupons.index')
+                        );
+                    });
+
+                    $item->item(trans('admin::sidebar.settings'), function (Item $item) {
+                        $item->weight(2);
+                        $item->icon('fa fa-gear');
+                        $item->route('admin.settings.abandoned_cart');
+                        $item->authorize(
+                            $this->auth->hasAccess('admin.settings.edit')
+                        );
+                    });
                 });
 
-                $item->item(trans('admin::sidebar.whatsapp_module'), function (Item $item) {
+                // Review Campaigns Folder
+                $item->item(trans('admin::sidebar.review_campaigns'), function (Item $item) {
                     $item->weight(2);
+                    $item->icon('fa fa-star');
+                    $item->authorize($this->auth->hasAccess('admin.settings.edit'));
+
+                    $item->item('Yorum Kuponları', function (Item $item) {
+                        $item->weight(1);
+                        $item->icon('fa fa-gift');
+                        $item->route('admin.review_coupons.index');
+                        $item->authorize(
+                            $this->auth->hasAccess('admin.coupons.index')
+                        );
+                    });
+
+                    $item->item(trans('admin::sidebar.settings'), function (Item $item) {
+                        $item->weight(2);
+                        $item->icon('fa fa-gear');
+                        $item->route('admin.settings.review_campaign');
+                        $item->authorize(
+                            $this->auth->hasAccess('admin.settings.edit')
+                        );
+                    });
+                });
+
+                // Other items
+                $item->item(trans('admin::sidebar.whatsapp_module'), function (Item $item) {
+                    $item->weight(3);
+                    $item->icon('fa fa-whatsapp');
                     $item->route('admin.settings.whatsapp_module');
                     $item->authorize(
                         $this->auth->hasAccess('admin.settings.edit')
@@ -44,7 +89,7 @@ class SidebarExtender extends BaseSidebarExtender
                 });
 
                 $item->item('Etiket-Görsel', function (Item $item) {
-                    $item->weight(3);
+                    $item->weight(4);
                     $item->route('admin.tag_badges.index');
                     $item->icon('fa fa-image');
                     $item->authorize(
@@ -52,17 +97,8 @@ class SidebarExtender extends BaseSidebarExtender
                     );
                 });
 
-                $item->item('Pop-up', function (Item $item) {
-                    $item->weight(4);
-                    $item->route('admin.popups.index');
-                    $item->icon('fa fa-window-restore');
-                    $item->authorize(
-                        $this->auth->hasAccess('admin.settings.edit')
-                    );
-                });
-                
                 $item->item('Özelleştirmeler', function (Item $item) {
-                    $item->weight(5);
+                    $item->weight(6);
                     $item->icon('fa fa-magic');
                     $item->route('admin.settings.customizations');
                     $item->authorize(

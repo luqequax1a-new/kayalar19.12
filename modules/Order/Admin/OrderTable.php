@@ -124,10 +124,37 @@ class OrderTable extends AdminTable
                             'unit' => $p->unit_label,
                             'line_total' => $p->line_total->format(),
                             'image' => $p->product_variant?->base_image?->path 
-                                ?? ($p->product?->base_image?->path 
-                                ?? ($p->product_image_path ?? null)),
+                                 ?? ($p->product?->base_image?->path 
+                                 ?? ($p->product_image_path ?? null)),
+                            'is_upsell' => $p->is_upsell,
+                            'original_price' => $p->original_price?->format(),
                         ];
-                    })
+                    }),
+                    'payment_method' => $order->payment_method,
+                    'coupon_code' => $order->coupon_code,
+                    'totals' => [
+                        'sub_total' => $order->sub_total->format(),
+                        'shipping_method' => $order->shipping_method,
+                        'shipping_cost' => $order->shipping_cost->format(),
+                        'discount' => $order->discount->format(),
+                        'tax' => $order->totalTax()->format(),
+                        'cod_fee' => (function() use ($order) {
+                            if ($order->isCodPayment()) {
+                                $codFee = \Modules\Shipping\SmartShippingCod::codFeeForSubtotal($order->sub_total);
+                                if (!$codFee->isZero()) {
+                                    return $codFee->convert($order->currency, $order->currency_rate)->format($order->currency);
+                                }
+                            }
+                            return null;
+                        })(),
+                        'taxes' => $order->taxes->map(function ($tax) {
+                            return [
+                                'name' => $tax->name,
+                                'amount' => $tax->order_tax->amount->format(),
+                            ];
+                        }),
+                        'total' => $order->total->format(),
+                    ]
                 ];
             })
             ->editColumn('created', function ($order) {

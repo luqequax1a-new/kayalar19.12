@@ -48,7 +48,17 @@ class CategoryTreeResponse implements Responsable
      */
     private function transform()
     {
-        return $this->categories->map(function ($category) {
+        // Add virtual "Main Category" for /products page
+        $mainCategory = [
+            'id' => 0,
+            'parent' => '#',
+            'text' => trans('category::categories.main_category'),
+            'data' => [
+                'position' => -1,
+            ],
+        ];
+
+        $transformedCategories = $this->categories->map(function ($category) {
             return [
                 'id' => $category->id,
                 'parent' => $category->parent_id ?: '#',
@@ -58,5 +68,8 @@ class CategoryTreeResponse implements Responsable
                 ],
             ];
         });
+
+        // Prepend main category to the beginning
+        return collect([$mainCategory])->merge($transformedCategories);
     }
 }

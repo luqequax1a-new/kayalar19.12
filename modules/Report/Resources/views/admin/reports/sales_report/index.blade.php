@@ -33,7 +33,7 @@
                 <tbody>
                     @forelse ($report as $data)
                         <tr>
-                            <td>{{ $data->start_date->toFormattedDateString() }} - {{ $data->end_date->toFormattedDateString() }}</td>
+                            <td>{{ $data->start_date->translatedFormat('j F Y') }} - {{ $data->end_date->translatedFormat('j F Y') }}</td>
                             <td>{{ $data->total_orders }}</td>
                             <td>{{ $data->total_products }}</td>
                             <td>{{ $data->sub_total->format() }}</td>

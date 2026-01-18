@@ -43,6 +43,12 @@ class AppServiceProvider extends ServiceProvider
 
         \Carbon\Carbon::setLocale('tr');
 
+        // Register event listeners
+        Event::listen(
+            \Modules\User\Events\CustomerRegistered::class,
+            \FleetCart\Listeners\SendCustomerNotification::class
+        );
+
         $profileParam = app('request')->query('__profile');
         if ($profileParam === null) {
             $profileParam = app('request')->query('profile');

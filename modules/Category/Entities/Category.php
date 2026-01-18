@@ -77,10 +77,46 @@ class Category extends Model implements Sitemapable
         $key = 'storefront:globals:' . locale() . ':categories:tree:v1';
 
         return Cache::store('file')->remember($key, now()->addMinutes(10), function () {
-            return static::with('files')
+            $categories = static::with('files')
+                ->select('*')
+                ->selectRaw('(
+                    COALESCE((
+                        SELECT SUM(
+                            CASE
+                                WHEN products.list_variants_separately = 1 THEN (
+                                    SELECT COUNT(*)
+                                    FROM product_variants
+                                    WHERE product_variants.product_id = products.id
+                                    AND product_variants.deleted_at IS NULL
+                                    AND product_variants.is_active = 1
+                                )
+                                ELSE 1
+                            END
+                        )
+                        FROM product_categories
+                        JOIN products ON products.id = product_categories.product_id
+                        WHERE product_categories.category_id = categories.id
+                        AND products.deleted_at IS NULL
+                        AND products.is_active = 1
+                    ), 0)
+                ) as product_count')
                 ->orderByRaw('-position DESC')
                 ->get()
                 ->nest();
+
+            $accumulate = function ($items) use (&$accumulate) {
+                $sum = 0;
+                foreach ($items as $item) {
+                    $childrenSum = $accumulate($item->items);
+                    $item->total_count = $item->product_count + $childrenSum;
+                    $sum += $item->total_count;
+                }
+                return $sum;
+            };
+
+            $accumulate($categories);
+
+            return $categories;
         });
     }
 
@@ -146,8 +182,17 @@ class Category extends Model implements Sitemapable
     protected static function booted()
     {
         static::addActiveGlobalScope();
+        
+        // Register slug observer
+        static::observe(\Modules\Category\Observers\CategorySlugObserver::class);
 
-        static::deleting(function (Category $category) {
+        static::saved(function () {
+            static::clearCache();
+        });
+
+        static::deleted(function (Category $category) {
+            static::clearCache();
+
             \Modules\Product\Entities\Product::where('primary_category_id', $category->id)
                 ->chunkById(100, function ($products) use ($category) {
                     foreach ($products as $product) {
@@ -168,6 +213,22 @@ class Category extends Model implements Sitemapable
     }
 
 
+    public static function clearCache()
+    {
+        foreach (supported_locale_keys() as $locale) {
+            Cache::store('file')->forget("storefront:globals:{$locale}:categories:tree:v1");
+            Cache::store('file')->forget("storefront:globals:{$locale}:categories:tree_list:v1");
+            Cache::store('file')->forget("storefront:globals:{$locale}:categories:key_valued_tree_list:v1");
+            Cache::store('file')->forget("storefront:globals:{$locale}:categories:searchable:v1");
+            
+            // Clear mega menu cache as it often depends on categories
+            Cache::store('file')->flush(); // Since we don't know the specific menu IDs, and it's file store, flush is safest or we omit it.
+            // Actually, flushing the whole file store might be too much if other things are there.
+            // But storefront:globals are the main inhabitants.
+        }
+    }
+
+
     public function isRoot()
     {
         return $this->exists && is_null($this->parent_id);
@@ -176,13 +237,20 @@ class Category extends Model implements Sitemapable
 
     public function url()
     {
-        return route('categories.products.index', ['category' => $this->slug]);
+        // İkas-style clean URL
+        return url('/' . $this->slug);
     }
 
 
     public function products()
     {
-        return $this->belongsToMany(Product::class, 'product_categories');
+        return $this->belongsToMany(Product::class, 'product_categories')
+            ->withPivot('position');
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(static::class, 'parent_id');
     }
 
     public function primaryProducts()

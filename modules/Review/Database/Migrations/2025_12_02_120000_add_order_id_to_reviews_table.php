@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::table('reviews', function (Blueprint $table) {
             if (!Schema::hasColumn('reviews', 'order_id')) {
-                $table->unsignedInteger('order_id')->nullable()->after('product_id');
+                $table->unsignedInteger('order_id')->nullable();
             }
         });
     }

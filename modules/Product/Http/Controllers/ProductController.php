@@ -27,6 +27,7 @@ use Modules\Category\Entities\Category;
 use Modules\DynamicCategory\Entities\DynamicCategory;
 use Modules\DynamicCategory\Services\DynamicCategoryProductService;
 use Modules\Product\Events\ShowingProductList;
+use Modules\FlashSale\Entities\FlashSale;
 
 class ProductController extends BaseController
 {
@@ -75,166 +76,11 @@ class ProductController extends BaseController
             $response = null;
 
             if ($categorySlug) {
-                $category = Category::findBySlug($categorySlug);
-
-                // Normal kategori varsa mevcut akış
-                if ($category->exists) {
-                    $response = $this->searchProducts($model, $productFilter);
-                }
-
-                // Normal kategori yoksa, dinamik kategori dene
-                $dynamicCategory = DynamicCategory::where('slug', $categorySlug)->first();
-
-                if ($dynamicCategory) {
-                    $service = app(DynamicCategoryProductService::class);
-                    $query = $service->buildQuery($dynamicCategory);
-
-                    $perPage = (int) request('perPage', 30);
-                    $page = max(1, (int) request('page', 1));
-
-                    $all = $query->get();
-                    $all->load([
-                        'variants' => function ($q) {
-                            $q->orderBy('position');
-                        },
-                        'variations',
-                        'tags',
-                        'tags.tagBadges' => function ($q) {
-                            $q->active();
-                        },
-                    ]);
-
-                    $items = $all->flatMap(function (Product $product) {
-                        $tagBadges = $product->badgeVisualsFor('listing')->map(function ($badge) {
-                            return [
-                                'name' => $badge->name,
-                                'image_url' => $badge->image_url,
-                                'listing_position' => $badge->listing_position,
-                                'detail_position' => $badge->detail_position,
-                                'priority' => $badge->priority,
-                            ];
-                        })->values();
-                        $variantLabel = optional($product->variations->first())->name;
-                        if ($product->list_variants_separately) {
-                            $variants = $product->variants()->orderBy('position')->get();
-                            $actives = $variants->filter(function ($v) {
-                                return (bool) ($v->is_active ?? false);
-                            });
-
-                            if ($actives->isNotEmpty()) {
-                                return $actives->map(function ($variant) use ($product, $tagBadges, $variantLabel) {
-                                    $p = $product->clean();
-                                    $p['variant_attribute_label'] = $variantLabel;
-                                    $p['name'] = $product->name;
-                                    $p['listing_key'] = 'p' . (int) $product->id . '-v' . (int) $variant->id;
-                                    $p['variant'] = $variant->toArray();
-                                    $p['url'] = $variant->url() ?? $product->url();
-                                    $p['base_image'] = ($variant->base_image ?? $product->base_image);
-                                    $p['base_image_thumb'] = [
-                                        'path' => media_variant_url(
-                                            ($variant->base_image ?? $product->base_image),
-                                            (int) config('image_optimization.variants.widths.grid', 400)
-                                        )
-                                    ];
-                                    $p['variant']['base_image_thumb'] = [
-                                        'path' => media_variant_url(
-                                            ($variant->base_image ?? $product->base_image),
-                                            (int) config('image_optimization.variants.widths.thumb', 80)
-                                        )
-                                    ];
-                                    $p['formatted_price'] = $variant->formatted_price ?? $product->formatted_price;
-                                    $p['formatted_price_range'] = null;
-                                    $p['reviews_count'] = $product->reviews_count ?? ($product->relationLoaded('reviews') ? $product->reviews->count() : 0);
-                                    $p['rating_percent'] = $product->rating_percent;
-                                    $p['tag_badges'] = $tagBadges;
-                                    return $p;
-                                });
-                            }
-                        }
-
-                        $base = $product->clean();
-                        $base['variant_attribute_label'] = $variantLabel;
-                        $base['listing_key'] = 'p' . (int) $product->id;
-                        $base['reviews_count'] = $product->reviews_count ?? ($product->relationLoaded('reviews') ? $product->reviews->count() : 0);
-                        $base['rating_percent'] = $product->rating_percent;
-                        $base['base_image_thumb'] = [
-                            'path' => media_variant_url(
-                                $product->base_image,
-                                (int) config('image_optimization.variants.widths.grid', 400)
-                            )
-                        ];
-                        $base['tag_badges'] = $tagBadges;
-
-                        return collect([$base]);
-                    })->values();
-
-                    $total = $items->count();
-                    $sliced = $items->forPage($page, $perPage)->values();
-                    $paginator = new \Illuminate\Pagination\LengthAwarePaginator(
-                        $sliced,
-                        $total,
-                        $perPage,
-                        $page,
-                        [
-                            'path' => request()->url(),
-                            'query' => request()->query(),
-                        ]
-                    );
-
-                    event(new ShowingProductList($paginator));
-
-                    $response = response()->json([
-                        'products' => $paginator,
-                        'attributes' => collect(),
-                        // Frontend expects a category object with description_html
-                        // to render rich description & FAQ below the product list.
-                        'category' => [
-                            'description_html' => $dynamicCategory->description ?? '',
-                            'faq_items' => [],
-                        ],
-                    ]);
-                }
+                $response = $this->searchProducts($model, $productFilter);
             }
 
             if ($response === null) {
                 $response = $this->searchProducts($model, $productFilter);
-            }
-
-            if ($shouldInstrument && $start !== null) {
-                $totalTimeMs = (microtime(true) - $start) * 1000;
-                $memMb = memory_get_peak_usage(true) / 1024 / 1024;
-
-                $bytes = null;
-                try {
-                    if (method_exists($response, 'getContent')) {
-                        $content = $response->getContent();
-                        if (is_string($content)) {
-                            $bytes = strlen($content);
-                        }
-                    }
-                } catch (\Throwable $e) {
-                    $bytes = null;
-                }
-
-                try {
-                    if (isset($response->headers)) {
-                        $response->headers->set('X-Listing-Time', (string) round($totalTimeMs, 2));
-                        $response->headers->set('X-Listing-Queries', (string) $queryCount);
-                        $response->headers->set('X-Listing-DBTime', (string) round($dbTimeMs, 2));
-                        $response->headers->set('X-Listing-Mem', (string) round($memMb, 2));
-                    }
-                } catch (\Throwable $e) {
-                }
-
-                Log::info(sprintf(
-                    'listing_instr method=%s path=%s total_ms=%.2f q=%d db_ms=%.2f bytes=%s',
-                    request()->method(),
-                    request()->getPathInfo(),
-                    $totalTimeMs,
-                    $queryCount,
-                    $dbTimeMs,
-                    $bytes === null ? 'n/a' : (string) $bytes
-                ));
             }
 
             return $response;
@@ -257,8 +103,13 @@ class ProductController extends BaseController
         return view('storefront::public.products.index', [
             'initialProducts' => $payload['products'] ?? null,
             'initialAttributes' => $payload['attributes'] ?? null,
+            'initialBrands' => $payload['brands'] ?? null,
             'initialCategoryData' => $payload['category'] ?? null,
             'firstProduct' => $firstProduct,
+            'category' => $this->resolvedCategory(),
+            'categoryName' => $payload['category']['name'] ?? null,
+            'categoryMetaTitle' => $payload['category']['meta_title'] ?? null,
+            'categoryMetaDescription' => $payload['category']['meta_description'] ?? null,
         ]);
     }
 
@@ -270,7 +121,7 @@ class ProductController extends BaseController
      *
      * @return Response
      */
-    public function show($slug)
+    public function show($slug, \Modules\Cart\Services\CartUpsellService $upsellService)
     {
         $path = request()->getPathInfo();
 
@@ -384,7 +235,37 @@ class ProductController extends BaseController
 
                 // Continue with the rest of the existing controller flow unchanged.
             } else {
-                $sourcePath = '/products/' . ltrim($slug, '/');
+                // 1. Check for inactive product specific redirection settings
+                $inactiveProduct = Product::withoutGlobalScope('active')->where('slug', $slug)->first();
+                
+                if ($inactiveProduct && !$inactiveProduct->is_active) {
+                    $rType = $inactiveProduct->redirect_type ?? '404'; // Default to 404 if null
+                    $rTargetId = $inactiveProduct->redirect_target_id;
+                    
+                    if ($rType === '410') {
+                        abort(410);
+                    }
+                    
+                    if ($rTargetId) {
+                        $statusCode = str_contains($rType, '301') ? 301 : 302;
+                        
+                        if (str_contains($rType, 'category')) {
+                            $targetCat = Category::find($rTargetId);
+                            if ($targetCat) {
+                                return redirect($targetCat->url(), $statusCode);
+                            }
+                        } elseif (str_contains($rType, 'product')) {
+                            $targetProd = Product::find($rTargetId);
+                            if ($targetProd) {
+                                return redirect($targetProd->url(), $statusCode);
+                            }
+                        }
+                    }
+                    // If type is 404 or target missing, fall through to UrlRedirect check
+                }
+
+                $baseSlug = setting('products_page_slug', 'products');
+                $sourcePath = '/' . $baseSlug . '/' . ltrim($slug, '/');
                 $redirect = UrlRedirect::where('source_path', $sourcePath)
                     ->where('is_active', true)
                     ->first();
@@ -428,11 +309,18 @@ class ProductController extends BaseController
             'unit_decimal',
         ]);
 
-        // Ensure productMedia is loaded for frontend JSON (used by Alpine)
+        // Ensure frontend relations are loaded for Alpine.js
         try {
-            $product->load(['productMedia' => function ($q) {
-                $q->active()->orderBy('position');
-            }]);
+            $product->loadMissing([
+                'files',
+                'variants.files',
+                'variations.values',
+                'variations.values.files',
+                'options.values',
+                'productMedia' => function ($q) {
+                    $q->active()->orderBy('position');
+                }
+            ]);
         } catch (\Throwable $e) {}
 
         $flashSalePrice = false;
@@ -690,6 +578,8 @@ class ProductController extends BaseController
 
         event(new ProductViewed($product));
 
+        $upsellOffer = $upsellService->resolveBestRule(\Modules\Cart\Facades\Cart::instance(), 'product', $product);
+
         return view('storefront::public.products.show', compact(
             'product',
             'review',
@@ -699,7 +589,8 @@ class ProductController extends BaseController
             'gallery',
             'hasVideo',
             'videoUrl',
-            'videoThumbnailUrl'
+            'videoThumbnailUrl',
+            'upsellOffer'
         ));
     }
 

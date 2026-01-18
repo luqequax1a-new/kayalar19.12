@@ -66,6 +66,14 @@
                             </a>
                         </li>
 
+                        <li class="{{ request()->routeIs('account.coupons.index') ? 'active' : '' }}">
+                            <a href="{{ route('account.coupons.index') }}">
+                                <i class="las la-ticket-alt"></i>
+
+                                {{ trans('storefront::account.pages.my_coupons') }}
+                            </a>
+                        </li>
+
                         <li class="{{ request()->routeIs('account.addresses.index') ? 'active' : '' }}">
                             <a href="{{ route('account.addresses.index') }}">
                                 <i class="las la-address-book"></i>
@@ -106,4 +114,73 @@
     @vite([
         'modules/Storefront/Resources/assets/public/sass/pages/account/main.scss'
     ])
+@endpush
+
+@push('scripts')
+    @if(session('toast'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const toast = @json(session('toast'));
+                if (toast && toast.message) {
+                    showToast(toast.message, toast.type || 'success');
+                }
+            });
+
+            function showToast(message, type = 'success') {
+                const colors = {
+                    success: { bg: '#10b981', border: '#059669' },
+                    error: { bg: '#ef4444', border: '#dc2626' },
+                    info: { bg: '#3b82f6', border: '#2563eb' }
+                };
+                const color = colors[type] || colors.success;
+
+                const toast = document.createElement('div');
+                toast.style.cssText = `
+                    position: fixed;
+                    bottom: 24px;
+                    right: 24px;
+                    min-width: 320px;
+                    max-width: 400px;
+                    background: ${color.bg};
+                    color: white;
+                    padding: 16px 20px;
+                    border-radius: 12px;
+                    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+                    z-index: 10000;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    font-size: 14px;
+                    font-weight: 500;
+                    animation: slideIn 0.3s ease-out;
+                    border-left: 4px solid ${color.border};
+                `;
+
+                toast.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <span>${message}</span>
+                `;
+
+                document.body.appendChild(toast);
+
+                setTimeout(() => {
+                    toast.style.animation = 'slideOut 0.3s ease-in forwards';
+                    setTimeout(() => toast.remove(), 300);
+                }, 5000);
+            }
+        </script>
+        <style>
+            @keyframes slideIn {
+                from { transform: translateX(120%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(120%); opacity: 0; }
+            }
+        </style>
+    @endif
 @endpush

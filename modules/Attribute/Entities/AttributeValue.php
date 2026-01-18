@@ -26,5 +26,5 @@ class AttributeValue extends Model
      *
      * @var array
      */
-    protected $fillable = ['position','attribute_id'];
+    protected $fillable = ['position','attribute_id', 'color'];
 }

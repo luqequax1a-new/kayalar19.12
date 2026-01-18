@@ -1,65 +1,232 @@
 <!DOCTYPE html>
 <html lang="{{ locale() }}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ setting('store_name') }}</title>
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Yorumunuz için teşekkürler</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8fafc;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+        }
+        .wrapper {
+            width: 100%;
+            table-layout: fixed;
+            background-color: #f8fafc;
+            padding: 20px 0 40px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .header {
+            background: linear-gradient(135deg, {{ mail_theme_color() }}, #0ea5e9);
+            padding: 50px 20px;
+            text-align: center;
+            color: #ffffff;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            line-height: 1.3;
+        }
+        .header .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-top: 8px;
+        }
+        .content {
+            padding: 40px 30px;
+            color: #334155;
+            line-height: 1.6;
+            text-align: center;
+        }
+        .content p {
+            margin: 0 0 16px;
+            font-size: 15px;
+        }
+        .greeting {
+            font-size: 20px;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 16px;
+        }
+        .coupon-box {
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 16px;
+            padding: 30px 25px;
+            margin: 30px 0;
+            text-align: center;
+        }
+        .coupon-badge {
+            display: inline-block;
+            font-size: 12px;
+            color: #075985;
+            background: #e0f2fe;
+            padding: 8px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+        .coupon-label {
+            font-size: 16px;
+            color: #64748b;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .coupon-code-wrapper {
+            background: #ffffff;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 16px 0;
+        }
+        .coupon-code {
+            font-size: 32px;
+            letter-spacing: 3px;
+            color: #0f172a;
+            font-weight: 800;
+            font-family: 'Courier New', monospace;
+        }
+        .coupon-details {
+            margin-top: 16px;
+            font-size: 14px;
+            color: #334155;
+        }
+        .coupon-detail-item {
+            display: inline-block;
+            margin: 0 12px;
+            white-space: nowrap;
+        }
+        .btn {
+            display: inline-block;
+            background-color: {{ mail_theme_color() }};
+            color: #ffffff !important;
+            padding: 14px 32px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 15px;
+            text-align: center;
+            margin: 25px 0 10px;
+        }
+        .footer {
+            text-align: center;
+            padding: 25px 20px;
+            font-size: 13px;
+            color: #94a3b8;
+            background: #0f172a;
+        }
+        .footer a {
+            color: #ffffff;
+            text-decoration: none;
+        }
+        .footer-divider {
+            margin: 0 8px;
+            opacity: 0.5;
+        }
+        @media screen and (max-width: 600px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
+            }
+            .content {
+                padding: 30px 20px;
+            }
+            .header {
+                padding: 40px 20px;
+            }
+            .header h1 {
+                font-size: 24px;
+            }
+            .coupon-code {
+                font-size: 24px;
+                letter-spacing: 2px;
+            }
+            .coupon-detail-item {
+                display: block;
+                margin: 8px 0;
+            }
+        }
+    </style>
 </head>
-<body style="margin:0;padding:0;background:#0f172a;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#0f172a;">
-    <tr>
-        <td align="center" style="padding:0;">
-            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="width:100%;background:#ffffff;">
-                <tr>
-                    <td style="padding:40px 15px;text-align:center;background:linear-gradient(135deg, {{ mail_theme_color() }}, #0ea5e9); color:#ffffff;">
-                        <div style="font-family:'Open Sans',sans-serif;font-size:24px;line-height:32px;font-weight:700;">
-                            ❤️ Yorumunuz için teşekkürler
-                        </div>
-                        <div style="font-family:'Open Sans',sans-serif;font-size:14px;opacity:.9;margin-top:6px;">
-                            {{ setting('store_name') }}
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding:24px 15px;background:#ffffff;text-align:center;">
-                        <h2 style="font-family:'Open Sans',sans-serif;font-size:22px;color:#0f172a;margin:0 0 10px;">{{ $order->customer_first_name }} {{ $order->customer_last_name }}, indirim kuponunuz hazır!</h2>
-                        <p style="font-family:'Open Sans',sans-serif;font-size:15px;color:#334155;margin:0 0 18px;">
-                            Geri bildiriminiz bizim için çok değerli. Yorumlarınız ürün ve hizmetlerimizi geliştirmemize yardımcı oluyor.
-                        </p>
+<body>
+    <div class="wrapper">
+        <div class="container">
+            <div class="header">
+                <h1>❤️ Yorumunuz için teşekkürler</h1>
+                <div class="subtitle">{{ setting('store_name') }}</div>
+            </div>
+            
+            <div class="content">
+                <div class="greeting">
+                    {{ $order->customer_first_name }} {{ $order->customer_last_name }}, indirim kuponunuz hazır!
+                </div>
+                
+                <p>
+                    Geri bildiriminiz bizim için çok değerli. Yorumlarınız ürün ve hizmetlerimizi geliştirmemize yardımcı oluyor.
+                </p>
 
-                        <div style="padding:18px;border:1px dashed #cbd5e1;border-radius:12px;background:#f8fafc;margin-bottom:20px;max-width:560px;width:100%;margin-left:auto;margin-right:auto;text-align:center;">
-                            <div style="display:inline-block;font-family:'Open Sans',sans-serif;font-size:12px;color:#075985;background:#e0f2fe;padding:8px 12px;border-radius:8px;margin-bottom:12px;font-weight:700;">Not: Kupon tek kullanımlıktır.</div>
-                            <div style="font-family:'Open Sans',sans-serif;font-size:20px;color:#0f172a;font-weight:800;">Kupon</div>
-                            <div style="margin-top:12px;padding:14px;border:1px solid #e2e8f0;border-radius:10px;background:#ffffff;text-align:center;width:100%;max-width:520px;margin-left:auto;margin-right:auto;">
-                                <div style="font-family:'Open Sans',sans-serif;font-size:28px;letter-spacing:2px;color:#0f172a;font-weight:800;">{{ $coupon->code }}</div>
-                            </div>
-                            <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin-top:12px;">
-                                <tr>
-                                    <td style="font-family:'Open Sans',sans-serif;font-size:14px;color:#0f172a;white-space:nowrap;">
-                                        🔖 İndirim: <strong>%{{ (int) ($coupon->value) }}</strong>
-                                    </td>
-                                    <td style="width:16px;"></td>
-                                    <td style="font-family:'Open Sans',sans-serif;font-size:14px;color:#0f172a;white-space:nowrap;">
-                                        🗓️ Geçerlilik: {{ optional($coupon->end_date)->format('Y-m-d') }}
-                                    </td>
-                                </tr>
-                            </table>
+                <div class="coupon-box">
+                    <div class="coupon-badge">
+                        ⚠️ Not: Kupon tek kullanımlıktır
+                    </div>
+                    
+                    <div class="coupon-label">İndirim Kuponunuz</div>
+                    
+                    <div class="coupon-code-wrapper">
+                        <div class="coupon-code">{{ $coupon->code }}</div>
+                    </div>
+                    
+                    <div class="coupon-details">
+                        <div class="coupon-detail-item">
+                            🔖 İndirim: <strong>%{{ (int) ($coupon->value) }}</strong>
                         </div>
+                        <div class="coupon-detail-item">
+                            🗓️ Geçerlilik: <strong>{{ optional($coupon->end_date)->format('d.m.Y') }}</strong>
+                        </div>
+                    </div>
+                </div>
 
-                        <a href="{{ route('home') }}" style="display:inline-block;background:{{ mail_theme_color() }};color:#fff;text-decoration:none;padding:12px 22px;border-radius:6px;font-family:'Open Sans',sans-serif;font-weight:700;">
-                            Hemen Kullan
-                        </a>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding:16px;text-align:center;background:#0f172a;color:#fff;font-family:'Open Sans',sans-serif;font-size:12px;">
-                        {{ setting('store_phone_hide') ? '' : setting('store_phone') }} · {{ setting('store_email_hide') ? '' : setting('store_email') }}
-                    </td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-</table>
+                <a href="{{ route('home') }}" class="btn">
+                    🛍️ Hemen Kullan
+                </a>
+                
+                <p style="margin-top: 30px; font-size: 14px; color: #64748b;">
+                    Kuponunuzu sepet sayfasında kullanabilirsiniz. İyi alışverişler! 🎉
+                </p>
+            </div>
+            
+            <div class="footer">
+                <div style="margin-bottom: 10px; font-size: 14px; font-weight: 600;">
+                    <a href="{{ route('home') }}">{{ setting('store_name') }}</a>
+                </div>
+                @if (setting('store_phone') && !setting('store_phone_hide'))
+                    <a href="tel:{{ setting('store_phone') }}">{{ setting('store_phone') }}</a>
+                @endif
+                @if (setting('store_phone') && !setting('store_phone_hide') && setting('store_email') && !setting('store_email_hide'))
+                    <span class="footer-divider">•</span>
+                @endif
+                @if (setting('store_email') && !setting('store_email_hide'))
+                    <a href="mailto:{{ setting('store_email') }}">{{ setting('store_email') }}</a>
+                @endif
+                <div style="margin-top: 12px; opacity: 0.7; font-size: 12px;">
+                    &copy; {{ date('Y') }} {{ setting('store_name') }}
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

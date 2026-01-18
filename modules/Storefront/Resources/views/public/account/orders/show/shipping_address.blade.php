@@ -1,15 +1,39 @@
-<div class="order-details-card order-shipping-details">
-    <h4>{{ trans('storefront::account.view_order.shipping_address') }}</h4>
+<div class="modern-address-block">
+    <h5 class="section-subtitle"><i class="las la-truck"></i> {{ trans('storefront::account.view_order.shipping_address') }}</h5>
 
-    @php($shipping = $order->shippingAddress)
-    @if ($shipping)
-        <address class="d-flex flex-column cursor-default m-b-0">
-            <span>{{ $shipping->first_name }} {{ $shipping->last_name }}</span>
-            <span>{{ $shipping->address_line ?? $shipping->address_1 }}</span>
-            <span>{{ $shipping->city ?? $shipping->city_id }} / {{ $shipping->state ?? $shipping->district_id }}</span>
-            @if ($shipping->phone)
-                <span>{{ $shipping->phone }}</span>
+    @php
+        $shipping = $order->shippingAddress;
+        $shippingSnapshot = $order->shippingSnapshot;
+        $activeShippingData = $shippingSnapshot ?: $shipping;
+        $shippingPhone = ($shippingSnapshot->phone ?? null) ?: (($shipping->phone ?? null) ?: ($order->customer_phone ?: '-'));
+    @endphp
+
+    @if ($activeShippingData)
+        <div class="modern-info-grid">
+            <div class="info-item">
+                <span class="info-label">Ad-Soyad</span>
+                <span class="info-value">{{ ($activeShippingData->first_name ?? '-') }} {{ ($activeShippingData->last_name ?? '') }}</span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">Adres</span>
+                <span class="info-value">{{ ($activeShippingData->address_line ?? null) ?: ((($activeShippingData->address_line ?? $activeShippingData->address_1) ?? null) ?: '-') }}</span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">İl / İlçe</span>
+                <span class="info-value">
+                     {{ ($activeShippingData->city_title ?? $activeShippingData->city ?? '-') }} / 
+                     {{ ($activeShippingData->state ?? $activeShippingData->district_title ?? $activeShippingData->district ?? '-') }}
+                </span>
+            </div>
+
+            @if ($shippingPhone && $shippingPhone !== '-')
+                <div class="info-item">
+                    <span class="info-label">Telefon</span>
+                    <span class="info-value">{{ $shippingPhone }}</span>
+                </div>
             @endif
-        </address>
+        </div>
     @endif
 </div>

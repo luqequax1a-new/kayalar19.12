@@ -9,5 +9,6 @@
         @endif
 
         {{ Form::checkbox('is_filterable', trans('attribute::attributes.attributes.is_filterable'), trans('attribute::admin.form.use_this_attribute_for_filtering_products'), $errors, $attribute) }}
+        {{ Form::select('filterable_type', trans('attribute::attributes.attributes.filterable_type'), $errors, trans('attribute::attributes.filterable_types'), $attribute) }}
     </div>
 </div>

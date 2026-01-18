@@ -1,6 +1,6 @@
 <?php
 
 return [
-    'approved' => 'Approved',
-    'unapproved' => 'Unapproved',
+    'approved' => 'Onaylandı',
+    'unapproved' => 'Onay Bekliyor',
 ];

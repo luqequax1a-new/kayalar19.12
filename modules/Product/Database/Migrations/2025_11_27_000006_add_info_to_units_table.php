@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::table('units', function (Blueprint $table) {
             if (!Schema::hasColumn('units', 'info')) {
-                $table->text('info')->nullable()->after('short_suffix');
+                $table->text('info')->nullable();
             }
         });
     }

@@ -39,7 +39,7 @@ class Brand extends Model implements Sitemapable
      *
      * @var array
      */
-    protected $fillable = ['slug', 'is_active'];
+    protected $fillable = ['slug', 'is_active', 'description', 'faq_items'];
 
     /**
      * The attributes that should be cast to native types.
@@ -48,6 +48,7 @@ class Brand extends Model implements Sitemapable
      */
     protected $casts = [
         'is_active' => 'boolean',
+        'faq_items' => 'array',
     ];
     /**
      * The attribute that will be slugged.
@@ -112,6 +113,8 @@ class Brand extends Model implements Sitemapable
     protected static function booted()
     {
         static::addActiveGlobalScope();
+
+        static::observe(\Modules\Brand\Observers\BrandSlugObserver::class);
     }
 
 
@@ -122,7 +125,11 @@ class Brand extends Model implements Sitemapable
      */
     public function url()
     {
-        return route('brands.products.index', $this->slug);
+        if (config('app.env') === 'local') {
+             // Fallback for old style if needed, but we want new style
+             // return route('brands.products.index', $this->slug);
+        }
+        return url('/' . $this->slug);
     }
 
 
@@ -156,6 +163,27 @@ class Brand extends Model implements Sitemapable
     public function products()
     {
         return $this->hasMany(Product::class);
+    }
+
+    public function getFaqJsonArrayAttribute(): array
+    {
+        $raw = $this->faq_items;
+
+        if (is_array($raw)) {
+            return $raw;
+        }
+
+        if (! is_string($raw) || trim($raw) === '') {
+            return [];
+        }
+
+        $decoded = json_decode($raw, true);
+
+        if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+            return $decoded;
+        }
+
+        return [];
     }
 
 

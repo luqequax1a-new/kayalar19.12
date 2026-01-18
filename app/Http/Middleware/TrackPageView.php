@@ -13,6 +13,11 @@ class TrackPageView
         $response = $next($request);
 
         try {
+            // Performance FIX: Disable tracking on local to prevent 14s LCP treshold
+            if (app()->environment('local') || in_array(request()->getHost(), ['127.0.0.1', 'localhost'])) {
+                return $response;
+            }
+
             if (!$request->isMethod('get')) {
                 return $response;
             }
@@ -45,12 +50,17 @@ class TrackPageView
             $fingerprint = $sessionId !== '' ? $sessionId : ($ip !== '' ? $ip : 'anon');
             $fingerprintHash = hash('sha256', $fingerprint);
 
-            // Unique daily visit per fingerprint (DB-based, so truncation resets immediately)
+            // Unique daily visit per fingerprint (cached for performance)
             $today = now()->toDateString();
-            $already = DB::table('page_views')
-                ->where('fingerprint', $fingerprintHash)
-                ->whereDate('created_at', $today)
-                ->exists();
+            $cacheKey = 'page_view_tracked_' . $fingerprintHash . '_' . $today;
+            
+            // Check cache first to avoid database query
+            $already = cache()->remember($cacheKey, 86400, function () use ($fingerprintHash, $today) {
+                return DB::table('page_views')
+                    ->where('fingerprint', $fingerprintHash)
+                    ->whereDate('created_at', $today)
+                    ->exists();
+            });
 
             if ($already) {
                 return $response;

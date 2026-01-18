@@ -14,7 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('slider_slide_translations', function (Blueprint $table) {
-            $table->integer('file_id')->after('locale')->nullable()->unsigned();
+            $table->integer('file_id')->nullable()->unsigned();
         });
     }
 

@@ -127,10 +127,16 @@ function renderTrafficChart(breakdown) {
 
     const values = trafficMetric === "revenue" ? revenue : orders;
     const datasetLabel = trafficMetric === "revenue" ? "Ciro" : "Sipariş";
-    const datasetColor =
-        trafficMetric === "revenue"
-            ? "rgba(0, 104, 225, .55)"
-            : "rgba(14, 30, 62, .65)";
+    
+    const colors = [
+        'rgba(102, 126, 234, 0.8)',
+        'rgba(240, 147, 251, 0.8)',
+        'rgba(48, 207, 208, 0.8)',
+        'rgba(250, 112, 154, 0.8)',
+        'rgba(254, 225, 64, 0.8)',
+        'rgba(118, 75, 162, 0.8)',
+        'rgba(245, 87, 108, 0.8)',
+    ];
 
     if (trafficChart) trafficChart.destroy();
 
@@ -142,8 +148,10 @@ function renderTrafficChart(breakdown) {
                 {
                     label: datasetLabel,
                     data: values,
-                    borderRadius: 6,
-                    backgroundColor: datasetColor,
+                    borderRadius: 10,
+                    backgroundColor: colors,
+                    hoverBackgroundColor: colors.map(c => c.replace('0.8', '1')),
+                    borderWidth: 0,
                 },
             ],
         },
@@ -153,6 +161,13 @@ function renderTrafficChart(breakdown) {
             plugins: {
                 legend: { display: false },
                 tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#ffffff',
+                    padding: 12,
+                    borderColor: 'rgba(102, 126, 234, 0.5)',
+                    borderWidth: 1,
+                    cornerRadius: 8,
                     callbacks: {
                         label(ctx) {
                             const idx = ctx.dataIndex;
@@ -168,9 +183,17 @@ function renderTrafficChart(breakdown) {
             },
             scales: {
                 x: {
+                    grid: {
+                        display: false,
+                    },
                     ticks: {
                         maxRotation: 45,
                         minRotation: 0,
+                        color: '#64748b',
+                        font: {
+                            size: 11,
+                            weight: 600,
+                        },
                         callback(value) {
                             const label = this.getLabelForValue(value);
                             const s = String(label ?? "");
@@ -180,7 +203,16 @@ function renderTrafficChart(breakdown) {
                 },
                 y: {
                     beginAtZero: true,
+                    grid: { 
+                        color: 'rgba(226, 232, 240, 0.5)',
+                        drawBorder: false,
+                    },
                     ticks: {
+                        color: '#64748b',
+                        font: {
+                            size: 11,
+                            weight: 600,
+                        },
                         callback(value) {
                             if (trafficMetric === "revenue") {
                                 return moneyFormat(value);
@@ -296,6 +328,10 @@ function renderTrendChart(daily) {
 
     if (trendChart) trendChart.destroy();
 
+    const gradient = el.getContext('2d').createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, 'rgba(240, 147, 251, 0.25)');
+    gradient.addColorStop(1, 'rgba(245, 87, 108, 0.05)');
+
     trendChart = new Chart(el, {
         type: "line",
         data: {
@@ -304,12 +340,17 @@ function renderTrendChart(daily) {
                 {
                     label: "Sipariş",
                     data: orders,
-                    borderColor: "rgba(255, 49, 111, 0.9)",
-                    backgroundColor: "rgba(255, 49, 111, 0.10)",
+                    borderColor: "rgba(245, 87, 108, 1)",
+                    backgroundColor: gradient,
                     yAxisID: "yOrders",
-                    tension: 0.35,
-                    fill: false,
+                    tension: 0.4,
+                    fill: true,
                     pointRadius: 0,
+                    pointHoverRadius: 6,
+                    pointHoverBackgroundColor: "#f5576c",
+                    pointHoverBorderColor: "#ffffff",
+                    pointHoverBorderWidth: 3,
+                    borderWidth: 3,
                 },
             ],
         },
@@ -321,6 +362,13 @@ function renderTrendChart(daily) {
                 legend: { display: false },
                 tooltip: {
                     displayColors: false,
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#ffffff',
+                    padding: 12,
+                    borderColor: 'rgba(245, 87, 108, 0.5)',
+                    borderWidth: 1,
+                    cornerRadius: 8,
                     callbacks: {
                         label(ctx) {
                             return `Sipariş: ${numberFormat(ctx.parsed.y)}`;
@@ -329,13 +377,33 @@ function renderTrendChart(daily) {
                 },
             },
             scales: {
+                x: {
+                    grid: {
+                        display: false,
+                    },
+                    ticks: {
+                        color: '#64748b',
+                        font: {
+                            size: 11,
+                            weight: 600,
+                        },
+                    },
+                },
                 yOrders: {
                     type: "linear",
                     position: "right",
                     beginAtZero: true,
-                    grid: { drawOnChartArea: false },
+                    grid: { 
+                        color: 'rgba(226, 232, 240, 0.5)',
+                        drawBorder: false,
+                    },
                     ticks: {
                         precision: 0,
+                        color: '#64748b',
+                        font: {
+                            size: 11,
+                            weight: 600,
+                        },
                     },
                 },
             },
@@ -359,16 +427,20 @@ function renderCustomersChart(daily) {
             labels,
             datasets: [
                 {
-                    label: "Yeni",
+                    label: "Yeni Müşteriler",
                     data: newCustomers,
-                    borderRadius: 6,
-                    backgroundColor: "rgba(136, 194, 115, .7)",
+                    borderRadius: 8,
+                    backgroundColor: "rgba(48, 207, 208, 0.8)",
+                    hoverBackgroundColor: "rgba(48, 207, 208, 1)",
+                    borderWidth: 0,
                 },
                 {
-                    label: "Dönen",
+                    label: "Dönen Müşteriler",
                     data: returning,
-                    borderRadius: 6,
-                    backgroundColor: "rgba(139, 93, 255, .7)",
+                    borderRadius: 8,
+                    backgroundColor: "rgba(102, 126, 234, 0.8)",
+                    hoverBackgroundColor: "rgba(102, 126, 234, 1)",
+                    borderWidth: 0,
                 },
             ],
         },
@@ -376,11 +448,60 @@ function renderCustomersChart(daily) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: true },
-                tooltip: { displayColors: false },
+                legend: { 
+                    display: true,
+                    position: 'top',
+                    align: 'end',
+                    labels: {
+                        boxWidth: 12,
+                        boxHeight: 12,
+                        borderRadius: 6,
+                        padding: 15,
+                        font: {
+                            size: 12,
+                            weight: 700,
+                        },
+                        color: '#64748b',
+                    },
+                },
+                tooltip: { 
+                    displayColors: true,
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#ffffff',
+                    padding: 12,
+                    borderColor: 'rgba(102, 126, 234, 0.5)',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                },
             },
             scales: {
-                y: { beginAtZero: true },
+                x: {
+                    grid: {
+                        display: false,
+                    },
+                    ticks: {
+                        color: '#64748b',
+                        font: {
+                            size: 11,
+                            weight: 600,
+                        },
+                    },
+                },
+                y: { 
+                    beginAtZero: true,
+                    grid: { 
+                        color: 'rgba(226, 232, 240, 0.5)',
+                        drawBorder: false,
+                    },
+                    ticks: {
+                        color: '#64748b',
+                        font: {
+                            size: 11,
+                            weight: 600,
+                        },
+                    },
+                },
             },
         },
     });
@@ -431,12 +552,11 @@ function renderTopProductsTable(products) {
             const resolvedImageUrl = imageUrl || placeholderUrl;
             const imgHtml = resolvedImageUrl
                 ? `<img src="${escapeHtml(
-                      resolvedImageUrl
-                  )}" alt="" loading="lazy" onerror="this.onerror=null;${
-                      placeholderUrl
-                          ? `this.src='${escapeHtml(placeholderUrl)}';`
-                          : "this.remove();"
-                  }" />`
+                    resolvedImageUrl
+                )}" alt="" loading="lazy" onerror="this.onerror=null;${placeholderUrl
+                    ? `this.src='${escapeHtml(placeholderUrl)}';`
+                    : "this.remove();"
+                }" />`
                 : `<span class="tp-thumb-fallback"></span>`;
 
             return `
@@ -448,13 +568,12 @@ function renderTopProductsTable(products) {
                             </div>
                             <div class="tp-meta">
                                 <div class="tp-name">${escapeHtml(name)}</div>
-                                ${
-                                    variantText
-                                        ? `<div class="tp-variant">${escapeHtml(
-                                              variantText
-                                          )}</div>`
-                                        : ""
-                                }
+                                ${variantText
+                    ? `<div class="tp-variant">${escapeHtml(
+                        variantText
+                    )}</div>`
+                    : ""
+                }
                                 <div class="tp-bar"><span style="width:${pct}%"></span></div>
                             </div>
                         </div>
@@ -558,28 +677,28 @@ async function initCartActivityPanel() {
             const items = Array.isArray(c.items) ? c.items : [];
             const previewText = items.length
                 ? items
-                      .map((it) => {
-                          const name = it.name ? String(it.name) : "";
-                          const qty = it.qty == null ? 1 : Number(it.qty || 0);
-                          return `${name} x${qty}`;
-                      })
-                      .join(", ")
+                    .map((it) => {
+                        const name = it.name ? String(it.name) : "";
+                        const qty = it.qty == null ? 1 : Number(it.qty || 0);
+                        return `${name} x${qty}`;
+                    })
+                    .join(", ")
                 : "";
 
             const previewHtml = previewText
                 ? `<div class="cart-items-preview">${escapeHtml(
-                      previewText
-                  )}</div>`
+                    previewText
+                )}</div>`
                 : "";
 
             return `<div class="cart-activity-item">
                 <div class="cart-activity-item-head">
                     <div class="cart-activity-item-metrics">${numberFormat(
-                        itemsQty
-                    )} ürün</div>
+                itemsQty
+            )} ürün</div>
                     <div class="cart-activity-item-total">${escapeHtml(
-                        total
-                    )}</div>
+                total
+            )}</div>
                 </div>
                 ${previewHtml}
             </div>`;

@@ -1,8 +1,8 @@
 <?php
 
 return [
-    'email' => 'Email',
-    'subject' => 'Subject',
-    'message' => 'Message',
-    'g-recaptcha' => 'Captcha',
+    'email' => 'E-posta',
+    'subject' => 'Konu',
+    'message' => 'Mesaj',
+    'g-recaptcha' => 'Güvenlik Doğrulaması',
 ];

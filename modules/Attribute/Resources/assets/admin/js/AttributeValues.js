@@ -11,6 +11,7 @@ export default class {
 
         this.eventListeners();
         this.sortable();
+        this.toggleColorColumn();
 
         window.admin.removeSubmitButtonOffsetOn("#values");
     }
@@ -21,7 +22,7 @@ export default class {
         }
     }
 
-    addAttributeValue(value = { id: "", value: "" }) {
+    addAttributeValue(value = { id: "", value: "", color: "#000000" }) {
         let template = _.template($("#attribute-value-template").html());
         let html = template({ valueId: this.valuesCount++, value });
 
@@ -36,6 +37,18 @@ export default class {
         $("#attribute-values").on("click", ".delete-row", (e) => {
             $(e.currentTarget).closest("tr").remove();
         });
+
+        $('select[name="filterable_type"]').on('change', () => {
+            this.toggleColorColumn();
+        });
+    }
+
+    toggleColorColumn() {
+        if ($('select[name="filterable_type"]').val() === 'color') {
+            $('#attribute-values-wrapper').addClass('show-color-column');
+        } else {
+            $('#attribute-values-wrapper').removeClass('show-color-column');
+        }
     }
 
     sortable() {

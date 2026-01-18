@@ -42,7 +42,7 @@ if (ikasDebugEnabled()) {
             }
         });
         po.observe({ type: "largest-contentful-paint", buffered: true });
-    } catch (e) {}
+    } catch (e) { }
 
     document.addEventListener(
         "DOMContentLoaded",
@@ -104,22 +104,38 @@ function injectRealImage(container, src, alt) {
     container.appendChild(img);
 }
 
+
 function startIkasImageLoad() {
     if (window.__fleetcartIkasImageLoadInitialized) return;
     window.__fleetcartIkasImageLoadInitialized = true;
 
     let canInject = false;
 
+    // chunked run implementation
     const run = (root = document) => {
         if (!canInject) return;
-        if (!root || !root.querySelectorAll) return;
-        root.querySelectorAll(".product-image-shell[data-real-img]").forEach((el) => {
-            if (!el || el.dataset.loaded) return;
-            const src = el.dataset.realImg;
-            if (!src) return;
-            el.dataset.loaded = "1";
-            injectRealImage(el, src, el.dataset.alt);
-        });
+
+        // If root allows querySelectorAll, find candidates
+        const nodes = root.querySelectorAll?.(".product-image-shell[data-real-img]");
+        if (!nodes || !nodes.length) return;
+
+        let i = 0;
+        const step = () => {
+            // Process in chunks of 20
+            const end = Math.min(i + 20, nodes.length);
+            for (; i < end; i++) {
+                const el = nodes[i];
+                if (!el || el.dataset.loaded) continue;
+                const src = el.dataset.realImg;
+                if (!src) continue;
+                el.dataset.loaded = "1";
+                injectRealImage(el, src, el.dataset.alt);
+            }
+            if (i < nodes.length) {
+                requestAnimationFrame(step);
+            }
+        };
+        requestAnimationFrame(step);
     };
 
     const schedule = () => {
@@ -148,9 +164,30 @@ function startIkasImageLoad() {
 
     if ("MutationObserver" in window) {
         const mo = new MutationObserver((mutations) => {
+            if (!canInject) return; // Wait until global enable
+
             for (const m of mutations) {
                 for (const node of m.addedNodes) {
-                    if (node && node.nodeType === 1) run(node);
+                    if (!node || node.nodeType !== 1) continue;
+
+                    // Fast filter
+                    if (node.matches?.(".product-image-shell[data-real-img]")) {
+                        // Pass parent or document to safely scope (though 'run' finds children)
+                        // Actually 'run' finds children in 'root'. If node itself is the shell,
+                        // querySelectorAll works on it if it's an element, but search within itself
+                        // might not find itself depending on browser. 
+                        // Safest is to run on node if it has children, or check node itself.
+                        // Our 'run' uses querySelectorAll. Let's make it work on itself too?
+                        // Actually easier: if it matches, inject directly:
+                        if (!node.dataset.loaded && node.dataset.realImg) {
+                            node.dataset.loaded = "1";
+                            injectRealImage(node, node.dataset.realImg, node.dataset.alt);
+                        }
+                    }
+                    // Search children if it's a wrapper
+                    if (node.querySelector?.(".product-image-shell[data-real-img]")) {
+                        run(node);
+                    }
                 }
             }
         });
@@ -196,8 +233,27 @@ Alpine.data("ProductCard", (product, idx = 0) => ({
     selectedVariantUid: null,
     showAllVariants: false,
     gallerySwiper: null,
+    galleryInitTried: false,
+    galleryInitRetries: 0,
+
     init() {
         startIkasImageLoad();
+
+        // Initialize gallery lazily when visible
+        const el = this.$el;
+        if ("IntersectionObserver" in window) {
+            const io = new IntersectionObserver((entries) => {
+                if (entries.some(e => e.isIntersecting)) {
+                    this.$nextTick(() => requestAnimationFrame(() => this.initGallery()));
+                    io.disconnect();
+                }
+            }, { rootMargin: "200px" });
+            io.observe(el);
+        } else {
+            this.$nextTick(() => requestAnimationFrame(() => this.initGallery()));
+        }
+
+        // --- Watchers ---
 
         // When variant/hover changes, Alpine updates :data-src; trigger a re-scan so the
         // new real image can be swapped in after LCP without touching LCP timing.
@@ -205,12 +261,14 @@ Alpine.data("ProductCard", (product, idx = 0) => ({
             const shell = this.$refs?.pshell;
             if (!shell) return;
 
-            // If image is already injected, update it; otherwise do nothing (ikas timing).
-            if (shell.dataset?.loaded === "1") {
-                queueMicrotask(() => {
-                    injectRealImage(shell, shell.dataset.realImg, shell.dataset.alt);
-                });
-            }
+            // Just mark/inject this specific shell
+            this.$nextTick(() => {
+                if (shell.dataset?.loaded === "1") {
+                    queueMicrotask(() => {
+                        injectRealImage(shell, shell.dataset.realImg, shell.dataset.alt);
+                    });
+                }
+            });
 
             queueMicrotask(() => {
                 if (this.gallerySwiper && typeof this.gallerySwiper.update === "function") {
@@ -238,8 +296,6 @@ Alpine.data("ProductCard", (product, idx = 0) => ({
                 }
             });
         });
-
-        // Gallery init is intentionally lazy (on first user interaction)
     },
 
     initGallery() {
@@ -255,6 +311,20 @@ Alpine.data("ProductCard", (product, idx = 0) => ({
                 return;
             }
 
+            const slideCount = container.querySelectorAll('.swiper-slide:not(.swiper-slide-duplicate)').length;
+
+            // If we expect to loop (more than 1 item) but DOM isn't ready, retry safely
+            if (slideCount < 2) {
+                if (this.galleryInitRetries < 5) {
+                    this.galleryInitRetries++;
+                    this.$nextTick(() => requestAnimationFrame(() => this.initGallery()));
+                }
+                return;
+            }
+
+            // Disable loop for 2 or fewer items to suppress warnings and ensure stability
+            const shouldLoop = items.length > 2 && slideCount > 2;
+
             const nextEl = this.$refs?.galleryNext;
             const prevEl = this.$refs?.galleryPrev;
             const paginationEl = this.$refs?.galleryPagination;
@@ -264,13 +334,21 @@ Alpine.data("ProductCard", (product, idx = 0) => ({
                 slidesPerView: 1,
                 spaceBetween: 0,
                 allowTouchMove: true,
-                loop: true,
+
+                // Enable observers to handle dynamic rendering/v-cloak/x-cloak
+                observer: true,
+                observeParents: true,
+                watchSlidesProgress: true,
+                checkOverflow: true,
+
+                loop: shouldLoop,
+
                 navigation: nextEl && prevEl ? { nextEl, prevEl } : undefined,
                 pagination: paginationEl
                     ? {
-                          el: paginationEl,
-                          clickable: true,
-                      }
+                        el: paginationEl,
+                        clickable: true,
+                    }
                     : undefined,
             });
 
@@ -337,10 +415,12 @@ Alpine.data("ProductCard", (product, idx = 0) => ({
     },
 
     get productUrl() {
-        let url = `/products/${this.product.slug}`;
+        // İkas-style: Use backend URL or clean format
+        let url = this.product.url || `/${this.product.slug}`;
         const uid = this.selectedVariantUid || (this.hasAnyVariant && this.item?.uid ? this.item.uid : null);
         if (uid) {
-            url += `?variant=${uid}`;
+            const separator = url.includes('?') ? '&' : '?';
+            url += `${separator}variant=${uid}`;
         }
         return url;
     },
@@ -374,7 +454,9 @@ Alpine.data("ProductCard", (product, idx = 0) => ({
     },
 
     urlForVariant(variant) {
-        return `/products/${this.product.slug}?variant=${variant.uid}`;
+        const baseUrl = this.product.url || `/${this.product.slug}`;
+        const separator = baseUrl.includes('?') ? '&' : '?';
+        return `${baseUrl}${separator}variant=${variant.uid}`;
     },
 
     toggleAllVariants() {
@@ -435,7 +517,7 @@ Alpine.data("ProductCard", (product, idx = 0) => ({
 
     get imageSrcsets() {
         const f = this.currentSourceFile;
-        
+
         // Prefer listing srcsets (optimized for category pages)
         if (f?.listing_avif_srcset || f?.listing_webp_srcset || f?.listing_jpeg_srcset) {
             return {
@@ -444,7 +526,7 @@ Alpine.data("ProductCard", (product, idx = 0) => ({
                 jpeg: f?.listing_jpeg_srcset || '',
             };
         }
-        
+
         // Fallback to building srcset from individual variants
         const makeSrcset = (thumbUrl, cardUrl, card2xUrl, gridUrl) => {
             const entries = [];

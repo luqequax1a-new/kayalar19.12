@@ -50,7 +50,9 @@ Alpine.data("CustomFilterSelect", () => ({
         this.open = false;
 
         if (this.selected !== value) {
-            this.changeSort(value);
+            window.dispatchEvent(
+                new CustomEvent("filter-sort-changed", { detail: value })
+            );
         }
 
         this.selected = value;

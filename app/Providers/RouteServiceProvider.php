@@ -25,6 +25,7 @@ class RouteServiceProvider extends ServiceProvider
     public function map(): void
     {
         $this->mapWebRoutes();
+        $this->mapNotificationRoutes();
     }
 
 
@@ -40,5 +41,18 @@ class RouteServiceProvider extends ServiceProvider
         Route::middleware('web')
             ->namespace($this->namespace)
             ->group(base_path('routes/web.php'));
+    }
+
+    /**
+     * Define the notification routes for the application.
+     *
+     * @return void
+     */
+    protected function mapNotificationRoutes(): void
+    {
+        if (file_exists(base_path('routes/notifications.php'))) {
+            Route::namespace($this->namespace)
+                ->group(base_path('routes/notifications.php'));
+        }
     }
 }

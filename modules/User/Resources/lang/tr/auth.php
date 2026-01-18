@@ -39,4 +39,10 @@ return [
     'or' => 'Veya',
     'do_not_have_an_account' => 'Hesabınız yok mu?',
     'sign_up' => 'Kayıt ol',
+    'two_factor_verification' => 'İki Faktörlü Doğrulama',
+    '2fa_verification' => '2FA Doğrulaması',
+    'enter_the_code_sent_to_your_email' => 'E-posta adresinize gönderilen 6 haneli doğrulama kodunu girin.',
+    'verification_code' => 'Doğrulama Kodu',
+    'verify' => 'Doğrula',
+    'resend_code' => 'Kodu Tekrar Gönder',
 ];

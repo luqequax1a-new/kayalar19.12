@@ -139,6 +139,23 @@
                                         </div>
                                     </div>
 
+                                    @if(auth()->check())
+                                        <div class="col-md-9">
+                                            <div class="form-group">
+                                                <label for="order_number">
+                                                    Sipariş Numarası <small>(İsteğe Bağlı)</small>
+                                                </label>
+
+                                                <input type="text" name="order_number" value="{{ old('order_number') }}" id="order_number"
+                                                       class="form-control" placeholder="Örn: #KYM_1234">
+
+                                                @error('order_number')
+                                                <span class="error-message">{{ $message }}</span>
+                                                @enderror
+                                            </div>
+                                        </div>
+                                    @endif
+
                                     <div class="col-md-18">
                                         <div class="form-group">
                                             <label for="message">

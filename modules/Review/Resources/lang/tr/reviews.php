@@ -1,27 +1,27 @@
 <?php
 
 return [
-    'review' => 'Review',
-    'reviews' => 'Reviews',
+    'review' => 'Değerlendirme',
+    'reviews' => 'Değerlendirmeler',
     'products' => [
-        'reviews' => 'Reviews',
+        'reviews' => 'Değerlendirmeler',
     ],
     'table' => [
-        'product' => 'Product',
-        'reviewer_name' => 'Reviewer Name',
-        'rating' => 'Rating',
-        'approved' => 'Approved',
+        'product' => 'Ürün',
+        'reviewer_name' => 'Değerlendiren',
+        'rating' => 'Derecelendirme',
+        'approved' => 'Onaylandı mı?',
     ],
     'tabs' => [
         'group' => [
-            'review_information' => 'Review Information',
+            'review_information' => 'Değerlendirme Bilgileri',
         ],
-        'general' => 'General',
+        'general' => 'Genel',
     ],
     'form' => [
-        'approve_this_review' => 'Approve this review',
+        'approve_this_review' => 'Bu değerlendirmeyi onayla',
     ],
     'shortcuts' => [
-        'back_to_product_edit_page' => 'Back to product edit page',
+        'back_to_product_edit_page' => 'Ürün düzenleme sayfasına dön',
     ],
 ];

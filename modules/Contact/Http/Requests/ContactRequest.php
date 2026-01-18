@@ -21,6 +21,7 @@ class ContactRequest extends Request
             'email' => ['required', 'email'],
             'subject' => ['required'],
             'message' => ['required'],
+            'order_number' => ['nullable', 'string', 'max:50'],
             'g-recaptcha-response' => ['bail', 'sometimes', 'required', new GoogleRecaptcha()],
         ];
     }

@@ -1,6 +1,10 @@
-import tinymce from "tinymce";
-
 export default function (options = {}) {
+    // TinyMCE is loaded globally via script tag in layout
+    if (typeof tinymce === 'undefined') {
+        console.error('TinyMCE is not loaded. Make sure tinymce script is included.');
+        return null;
+    }
+
     tinymce.baseURL = `${window.location.origin}/build/assets/tinymce`;
 
     tinymce.init({

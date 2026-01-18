@@ -1,5 +1,6 @@
 import { fullscreenMode } from "./functions";
 import NProgress from "nprogress";
+import { Turkish } from "flatpickr/dist/l10n/tr.js";
 
 export default class {
     constructor() {
@@ -90,6 +91,9 @@ export default class {
                 enableTime: el.hasAttribute("data-time"),
                 noCalender: el.hasAttribute("data-no-calender"),
                 altInput: true,
+                altFormat: "d.m.Y",
+                dateFormat: "Y-m-d",
+                locale: Turkish,
             });
         }
     }

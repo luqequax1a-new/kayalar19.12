@@ -37,10 +37,21 @@ class SavePageRequest extends Request
         $rules = $this->route()->getName() === 'admin.pages.update'
             ? ['required']
             : ['sometimes'];
-
-        $slug = Page::withoutGlobalScope('active')->where('id', $this->id)->value('slug');
-
-        $rules[] = Rule::unique('pages', 'slug')->ignore($slug, 'slug');
+        
+        $rules[] = 'regex:/^[a-z0-9-]+$/';
+        
+        // Global slug uniqueness check
+        $rules[] = function ($attribute, $value, $fail) {
+            if (\Modules\Support\Entities\UrlSlug::isReserved($value)) {
+                $fail('Bu URL rezerve edilmiştir ve kullanılamaz.');
+                return;
+            }
+            
+            $pageId = $this->id;
+            if (!\Modules\Support\Entities\UrlSlug::isAvailable($value, 'page', $pageId)) {
+                $fail('Bu URL başka bir ürün, kategori veya sayfa tarafından kullanılmaktadır.');
+            }
+        };
 
         return $rules;
     }

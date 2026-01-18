@@ -1,7 +1,7 @@
 .modal {
     position: fixed;
     inset: 0;
-    z-index: 1050;
+    z-index: $z-index-modal !important;
     background: rgba(0, 0, 0, 0.6);
     padding-right: 0 !important;
     transition: var(--transition-150);
@@ -22,12 +22,16 @@
     margin: 15px auto;
     max-width: 600px;
     width: 90%;
+    position: relative;
+    z-index: $z-index-modal + 1;
 }
 
 .modal-content {
     padding: 0;
     border: none;
     border-radius: var(--radius-default);
+    position: relative;
+    z-index: $z-index-modal + 2;
 }
 
 .modal-body {

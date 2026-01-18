@@ -101,13 +101,7 @@
     
                         <div class="auth-form-header-content">
                             <div class="auth-form-header-top">
-                                <a href="{{ route('home') }}" class="auth-form-header-logo">
-                                    @if (is_null($logo))
-                                        <h3>{{ setting('store_name') }}</h3>
-                                    @else
-                                        <img src="{{ $logo }}" alt="Logo">
-                                    @endif
-                                </a>
+
 
                                 @include('storefront::public.auth.partials.language_picker')
                             </div>
@@ -125,13 +119,7 @@
                         @honeypot
 
                         <div class="auth-form-body-top">
-                            <a href="{{ route('home') }}" class="auth-form-header-logo">
-                                @if (is_null($logo))
-                                    <h3>{{ setting('store_name') }}</h3>
-                                @else
-                                    <img src="{{ $logo }}" alt="Logo">
-                                @endif
-                            </a>
+
 
                             @include('storefront::public.auth.partials.language_picker')
                         </div>

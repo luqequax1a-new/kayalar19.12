@@ -11,6 +11,8 @@ use Modules\Coupon\Entities\Coupon;
 use Modules\Product\Entities\Product;
 use Modules\Product\Entities\ProductVariant;
 use Modules\Shipping\Facades\ShippingMethod;
+use Illuminate\Support\Facades\Mail;
+use Modules\Product\Mail\AdminStockAlertMail;
 use Darryldecode\Cart\Cart as DarryldecodeCart;
 use Modules\Variation\Entities\VariationValue;
 use Modules\Product\Services\ChosenProductOptions;
@@ -70,28 +72,11 @@ class Cart extends DarryldecodeCart implements JsonSerializable
      */
     public function clear(): void
     {
-        try {
-            \Log::info('[CART] clear.before', [
-                'session_id' => session()->getId(),
-                'count' => $this->count(),
-            ]);
-        } catch (\Throwable $e) {
-        }
-
         parent::clear();
 
         $this->clearCache();
 
         $this->clearCartConditions();
-
-
-        try {
-            \Log::info('[CART] clear.after', [
-                'session_id' => session()->getId(),
-                'count' => $this->count(),
-            ]);
-        } catch (\Throwable $e) {
-        }
     }
 
 
@@ -128,14 +113,23 @@ class Cart extends DarryldecodeCart implements JsonSerializable
         /** @var CartUpsellService $upsellService */
         $upsellService = app(CartUpsellService::class);
 
+        $placement = $data['placement'] ?? 'checkout';
+
         $resolved = $upsellService->resolveRuleForAdd(
             $this,
             (int) ($data['rule_id'] ?? 0),
             $product,
             $variant,
+            $placement
         );
 
         if (!$resolved) {
+            \Log::error('[CART] storeUpsell.validation_failed', [
+                'rule_id' => $data['rule_id'] ?? null,
+                'product_id' => $productId,
+                'variant_id' => $variantId,
+                'placement' => $placement,
+            ]);
             throw new InvalidItemException('Upsell rule is no longer valid.');
         }
 
@@ -180,15 +174,6 @@ class Cart extends DarryldecodeCart implements JsonSerializable
                 ],
             ],
         ]);
-
-        try {
-            \Log::info('[CART] storeUpsell.after', [
-                'session_id' => session()->getId(),
-                'count' => $this->count(),
-                'rule_id' => $ruleId,
-            ]);
-        } catch (\Throwable $e) {
-        }
     }
 
 
@@ -207,17 +192,6 @@ class Cart extends DarryldecodeCart implements JsonSerializable
     {
         $options = array_filter($options);
         $variations = [];
-
-        try {
-            \Log::info('[CART] store.before', [
-                'session_id' => session()->getId(),
-                'count' => $this->count(),
-                'product_id' => $productId,
-                'variant_id' => $variantId,
-                'qty' => $qty,
-            ]);
-        } catch (\Throwable $e) {
-        }
 
         $product = Product::with('files', 'categories', 'taxClass')->findOrFail($productId);
         $variant = ProductVariant::find($variantId);
@@ -253,14 +227,6 @@ class Cart extends DarryldecodeCart implements JsonSerializable
                 'created_at' => time(),
             ],
         ]);
-
-        try {
-            \Log::info('[CART] store.after', [
-                'session_id' => session()->getId(),
-                'count' => $this->count(),
-            ]);
-        } catch (\Throwable $e) {
-        }
     }
 
 
@@ -353,7 +319,12 @@ class Cart extends DarryldecodeCart implements JsonSerializable
         return $this->cachedItems = $this->getContent()
             ->sortBy('attributes.created_at', SORT_REGULAR, true)
             ->map(function ($item) {
-                return new CartItem($item);
+                $cartItem = new CartItem($item);
+                
+                // FIXED: Auto-refresh stock for each item to ensure accuracy
+                $cartItem->refreshStock();
+                
+                return $cartItem;
             });
     }
 
@@ -436,6 +407,34 @@ class Cart extends DarryldecodeCart implements JsonSerializable
     {
         $this->manageStock(function ($cartItem) {
             $cartItem->item->decrement('qty', $cartItem->qty);
+
+            try {
+                $item = $cartItem->item->refresh();
+
+                // If stock drops below 3 and stock tracking is enabled
+                if ($item->manage_stock && $item->qty < 3) {
+                    $product = ($item instanceof Product) ? $item : $item->product;
+                    $variantName = ($item instanceof ProductVariant) ? $item->name : null;
+                    $sku = $item->sku ?: $product->sku;
+
+                    $img = null;
+                    if ($item->base_image && (int) ($item->base_image->id ?? 0) > 0) {
+                        $img = $item->base_image->thumb_webp_url ?: ($item->base_image->thumb_jpeg_url ?: $item->base_image->url);
+                    }
+                    if (!$img && $product->base_image && (int) ($product->base_image->id ?? 0) > 0) {
+                        $img = $product->base_image->thumb_webp_url ?: ($product->base_image->thumb_jpeg_url ?: $product->base_image->url);
+                    }
+
+                    $variationLabels = ($item instanceof ProductVariant) ? $item->getVariationLabels()->toArray() : [];
+
+                    Mail::to(setting('store_email'))->send(
+                        new AdminStockAlertMail($product, $item->qty, $variantName, $img, $sku, $variationLabels)
+                    );
+                }
+            } catch (\Throwable $e) {
+                // Ignore mail failures during checkout
+                report($e);
+            }
         });
     }
 
@@ -806,11 +805,19 @@ class Cart extends DarryldecodeCart implements JsonSerializable
             ? Money::inDefaultCurrency(0)
             : $this->codFee();
 
-        return $subTotal
+        // FIXED: Calculate pre-discount total for tax purposes
+        $preDiscountTotal = $subTotal
             ->add($shippingCost)
-            ->add($codFee)
-            ->subtract($this->coupon()->value())
-            ->add($this->tax());
+            ->add($codFee);
+
+        // Apply coupon discount
+        $discountAmount = $this->coupon()->value();
+        $postDiscountTotal = $preDiscountTotal->subtract($discountAmount);
+
+        // Calculate tax on post-discount total (more accurate)
+        $taxAmount = $this->tax();
+
+        return $postDiscountTotal->add($taxAmount);
     }
 
 

@@ -18,16 +18,21 @@ class UsersTableSeeder extends Seeder
     {
         $adminRole = Role::find(1);
 
-        $envaySoft = User::create([
-            'first_name' => 'Envay',
-            'last_name' => 'Soft',
-            'email' => 'envaysoft@gmail.com',
-            'password' => bcrypt(123456),
-        ]);
+        $envaySoft = User::where('email', 'envaysoft@gmail.com')->first();
+        if (!$envaySoft) {
+            $envaySoft = User::create([
+                'first_name' => 'Envay',
+                'last_name' => 'Soft',
+                'email' => 'envaysoft@gmail.com',
+                'password' => bcrypt(123456),
+            ]);
 
-        $activation = Activation::create($envaySoft);
-        Activation::complete($envaySoft, $activation->code);
+            $activation = Activation::create($envaySoft);
+            Activation::complete($envaySoft, $activation->code);
+        }
 
-        $adminRole->users()->attach($envaySoft);
+        if ($adminRole) {
+            $envaySoft->roles()->syncWithoutDetaching($adminRole);
+        }
     }
 }

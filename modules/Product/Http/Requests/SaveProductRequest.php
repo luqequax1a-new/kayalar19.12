@@ -126,7 +126,25 @@ class SaveProductRequest extends Request
                 'sale_unit_id' => ['nullable', Rule::exists('units', 'id')],
                 'primary_category_id' => ['nullable', Rule::exists('categories', 'id')],
                 'price' => 'required_unless:has_active_variants,1|nullable|numeric|min:0|max:99999999999999',
-                'special_price' => 'nullable|numeric|min:0|max:99999999999999',
+                'special_price' => [
+                    'nullable',
+                    'numeric',
+                    'min:0',
+                    'max:99999999999999',
+                    function ($attribute, $value, $fail) {
+                        $type = $this->input('special_price_type');
+                        if ($type === 'percent') {
+                            return;
+                        }
+                        $price = $this->input('price');
+                        if ($value === null || $value === '') {
+                            return;
+                        }
+                        if (is_numeric($price) && is_numeric($value) && (float) $value > (float) $price) {
+                            $fail('İndirimli fiyat satış fiyatından yüksek olamaz.');
+                        }
+                    },
+                ],
                 'special_price_type' => ['nullable', Rule::in(['fixed', 'percent'])],
                 'special_price_start' => 'nullable|date|before_or_equal:special_price_end',
                 'special_price_end' => 'nullable|date|after_or_equal:special_price_start',
@@ -139,6 +157,8 @@ class SaveProductRequest extends Request
                 'is_active' => 'required|boolean',
                 'media' => 'nullable|array',
                 'media.*' => 'integer|min:1',
+                'redirect_type' => ['nullable', 'string', Rule::in(['404', '410', '301-category', '302-category', '301-product', '302-product'])],
+                'redirect_target_id' => 'nullable|integer|min:1',
             ],
             $this->getInventoryRules()
         );
@@ -189,7 +209,34 @@ class SaveProductRequest extends Request
             'variants.*.name' => 'required',
             'variants.*.sku' => 'nullable',
             'variants.*.price' => 'required_if:variants.*.is_active,true|nullable|numeric|min:0|max:99999999999999',
-            'variants.*.special_price' => 'nullable|numeric|min:0|max:99999999999999',
+            'variants.*.special_price' => [
+                'nullable',
+                'numeric',
+                'min:0',
+                'max:99999999999999',
+                function ($attribute, $value, $fail) {
+                    if ($value === null || $value === '') {
+                        return;
+                    }
+
+                    $parts = explode('.', (string) $attribute);
+                    $key = $parts[1] ?? null;
+                    if ($key === null) {
+                        return;
+                    }
+
+                    $type = data_get($this->input('variants'), $key . '.special_price_type');
+                    if ($type === 'percent') {
+                        return;
+                    }
+
+                    $price = data_get($this->input('variants'), $key . '.price');
+
+                    if (is_numeric($price) && is_numeric($value) && (float) $value > (float) $price) {
+                        $fail('İndirimli fiyat satış fiyatından yüksek olamaz.');
+                    }
+                },
+            ],
             'variants.*.special_price_type' => ['nullable', Rule::in(['fixed', 'percent'])],
             'variants.*.special_price_start' => 'nullable|date|before_or_equal:variants.*.special_price_end',
             'variants.*.special_price_end' => 'nullable|date|after_or_equal:variants.*.special_price_start',
@@ -240,12 +287,21 @@ class SaveProductRequest extends Request
     private function getSlugRules(): array
     {
         $rules = $this->route()->getName() === 'admin.products.update' ? ['required'] : ['sometimes'];
-
-        $slug = Product::withoutGlobalScope('active')
-            ->where('id', $this->id)
-            ->value('slug');
-
-        $rules[] = Rule::unique('products', 'slug')->ignore($slug, 'slug');
+        
+        $rules[] = 'regex:/^[a-z0-9-]+$/';
+        
+        // Global slug uniqueness check
+        $rules[] = function ($attribute, $value, $fail) {
+            if (\Modules\Support\Entities\UrlSlug::isReserved($value)) {
+                $fail('Bu URL rezerve edilmiştir ve kullanılamaz.');
+                return;
+            }
+            
+            $productId = $this->id;
+            if (!\Modules\Support\Entities\UrlSlug::isAvailable($value, 'product', $productId)) {
+                $fail('Bu URL başka bir ürün, kategori veya sayfa tarafından kullanılmaktadır.');
+            }
+        };
 
         return $rules;
     }

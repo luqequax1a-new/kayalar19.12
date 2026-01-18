@@ -9,11 +9,11 @@ return new class extends Migration {
     {
         Schema::table('coupons', function (Blueprint $table) {
             if (! Schema::hasColumn('coupons', 'redeemed_order_id')) {
-                $table->unsignedInteger('redeemed_order_id')->nullable()->after('order_id');
+                $table->unsignedInteger('redeemed_order_id')->nullable();
             }
 
             if (! Schema::hasColumn('coupons', 'redeemed_at')) {
-                $table->timestamp('redeemed_at')->nullable()->after('redeemed_order_id');
+                $table->timestamp('redeemed_at')->nullable();
             }
         });
     }

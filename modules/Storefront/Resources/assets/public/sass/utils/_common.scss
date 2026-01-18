@@ -26,15 +26,29 @@
     top: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(15, 23, 42, 0.5);
     opacity: 0;
     visibility: hidden;
-    z-index: 180;
-    transition: 150ms ease-in-out;
+    z-index: $z-index-overlay;
+    transition: all 0.3s ease;
 
     &.active {
         opacity: 1;
         visibility: visible;
+    }
+}
+
+html {
+    scrollbar-gutter: stable;
+}
+
+body {
+    width: 100%;
+    overflow-x: hidden;
+
+    &.has-sidebar-open {
+        overflow: hidden !important;
+        height: 100vh !important;
     }
 }
 
@@ -93,7 +107,7 @@
 .btn-wishlist {
     &.added {
         &:hover {
-            > svg {
+            >svg {
                 path {
                     fill: var(--color-primary) !important;
                     stroke: transparent !important;
@@ -101,7 +115,7 @@
             }
         }
 
-        > svg {
+        >svg {
             animation: bounceIn 1.2s both cubic-bezier(0.45, 0.05, 0.55, 0.95);
 
             path {
@@ -115,14 +129,14 @@
 .btn-wishlist,
 .btn-add-to-cart {
     &:hover {
-        > svg {
+        >svg {
             path {
                 stroke: var(--color-primary);
             }
         }
     }
 
-    > svg {
+    >svg {
         width: 14px;
         height: 14px;
 
@@ -141,14 +155,14 @@
 
     &.added {
         &:hover {
-            > svg {
+            >svg {
                 path {
                     stroke: var(--color-primary) !important;
                 }
             }
         }
 
-        > svg {
+        >svg {
             animation: bounceIn 1.2s both cubic-bezier(0.45, 0.05, 0.55, 0.95);
 
             path {
@@ -158,14 +172,14 @@
     }
 
     &:hover {
-        > svg {
+        >svg {
             path {
                 stroke: var(--color-primary);
             }
         }
     }
 
-    > svg {
+    >svg {
         path {
             stroke: var(--color-gray);
             transition: var(--transition-150);
@@ -205,6 +219,7 @@
             color: var(--color-black);
             text-overflow: ellipsis;
             -webkit-line-clamp: 2;
+            line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
             transition: var(--transition-150);
@@ -399,7 +414,7 @@
         .address-card-data {
             margin-bottom: 10px;
 
-            > span {
+            >span {
                 font-weight: var(--font-medium);
                 display: block;
 
@@ -420,8 +435,7 @@
 
 .arrow-black {
     appearance: none;
-    background: transparent url("../../images/arrow-black.png") no-repeat right
-        0px center;
+    background: transparent url("../../images/arrow-black.png") no-repeat right 0px center;
     background-size: 10px;
 }
 
@@ -452,7 +466,7 @@
             }
         }
 
-        > span {
+        >span {
             line-height: 22px;
             display: inline-block;
             margin-left: 10px;
@@ -698,6 +712,7 @@
 .daily-deals,
 .grid-products,
 .landscape-left-tab-products {
+
     .swiper-button-prev,
     .swiper-button-next {
         font-size: 14px;
@@ -748,6 +763,7 @@
 }
 
 .landscape-products {
+
     .swiper-button-prev,
     .swiper-button-next {
         top: -68px;
@@ -795,12 +811,12 @@
             animation-fill-mode: forwards;
         }
 
-        > img {
+        >img {
             transform: scale(1.05);
         }
     }
 
-    > img {
+    >img {
         width: 100%;
         border-radius: var(--radius-default);
         transform: scale(1);
@@ -812,24 +828,26 @@
 .banner-wrap.three-column-banner,
 .banner-wrap.three-column-full-width-banner {
     .banner {
+
         &:before,
         &:after {
             display: none;
         }
 
         &:hover {
+
             &:before,
             &:after {
                 animation: none;
                 opacity: 0;
             }
 
-            > img {
+            >img {
                 transform: none;
             }
         }
 
-        > img {
+        >img {
             transition: none;
         }
     }
@@ -846,17 +864,15 @@
 .skeleton {
     @extend .skeleton-animation;
 
-    > * {
+    >* {
         opacity: 0;
     }
 }
 
 .skeleton-animation {
-    -webkit-mask-image: linear-gradient(
-        75deg,
-        #000 30%,
-        rgba(0, 0, 0, 0.65) 80%
-    );
+    -webkit-mask-image: linear-gradient(75deg,
+            #000 30%,
+            rgba(0, 0, 0, 0.65) 80%);
     mask-image: linear-gradient(75deg, #000 30%, rgba(0, 0, 0, 0.65) 80%);
     -webkit-mask-size: 200%;
     mask-size: 200%;
@@ -1066,7 +1082,7 @@
         background: var(--color-white);
     }
 
-    > svg {
+    >svg {
         transform: rotate(-90deg);
         height: 40px;
         width: 40px;
@@ -1106,7 +1122,7 @@
 
 .rtl {
     .scroll-to-top {
-        > svg {
+        >svg {
             transform: rotate(-90deg);
         }
     }

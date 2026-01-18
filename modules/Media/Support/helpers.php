@@ -4,24 +4,35 @@ use Illuminate\Support\Facades\Storage;
 
 function media_variant_url($file, int $width, string $format = null): ?string
 {
+    static $urlCache = [];
+
     $raw = null;
     $disk = null;
+    $cacheKey = '';
+
     if ($file instanceof \Modules\Media\Entities\File) {
         $raw = $file->getRawOriginal('path');
         $disk = $file->disk ?: 'public';
+        $cacheKey = "file_{$file->id}_{$width}_{$format}";
     } elseif (is_array($file) && isset($file['path'])) {
         $url = $file['path'];
         $base = Storage::disk(config('filesystems.default'))->url('');
         $raw = ltrim(str_replace($base, '', $url), '/');
         $disk = config('filesystems.default');
+        $cacheKey = "path_" . md5($url) . "_{$width}_{$format}";
     } elseif (is_object($file) && isset($file->path)) {
         $url = $file->path;
         $base = Storage::disk(config('filesystems.default'))->url('');
         $raw = ltrim(str_replace($base, '', $url), '/');
         $disk = config('filesystems.default');
+        $cacheKey = "path_" . md5($url) . "_{$width}_{$format}";
     }
 
     if (!$raw) return is_array($file) && isset($file['path']) ? $file['path'] : (string) ($file->path ?? '');
+
+    if (isset($urlCache[$cacheKey])) {
+        return $urlCache[$cacheKey];
+    }
 
     $raw = str_replace('\\', '/', $raw);
     $raw = str_starts_with($raw, 'public/') ? substr($raw, 7) : $raw;
@@ -39,19 +50,20 @@ function media_variant_url($file, int $width, string $format = null): ?string
     $dir = trim(dirname($raw), '/');
     $variantRel = ($dir ? $dir.'/' : '').$name.'-'.$width.'w'.'.'.$fmt;
 
+    $result = null;
     if (Storage::disk($disk)->exists($variantRel)) {
-        return Storage::disk($disk)->url($variantRel);
+        $result = Storage::disk($disk)->url($variantRel);
+    } elseif ($disk !== 'public' && Storage::disk('public')->exists($variantRel)) {
+        $result = Storage::disk('public')->url($variantRel);
+    } elseif ($format === null) {
+        $result = Storage::disk($disk)->url($raw);
     }
 
-    if ($disk !== 'public' && Storage::disk('public')->exists($variantRel)) {
-        return Storage::disk('public')->url($variantRel);
+    if ($cacheKey) {
+        $urlCache[$cacheKey] = $result;
     }
 
-    if ($format === null) {
-        return Storage::disk($disk)->url($raw);
-    }
-
-    return null;
+    return $result;
 }
 
 function media_variant_url_no_check($file, int $width, string $format): ?string

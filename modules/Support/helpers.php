@@ -57,16 +57,18 @@ if (!function_exists('currency')) {
     function currency()
     {
         if (app('inAdminPanel')) {
-            return setting('default_currency');
+            return setting('default_currency') ?: 'TRY';
         }
 
         $currency = Cookie::get('currency');
+        
+        $supportedCurrencies = setting('supported_currencies') ?: ['TRY'];
 
-        if (!in_array($currency, setting('supported_currencies'))) {
-            $currency = setting('default_currency');
+        if (!in_array($currency, $supportedCurrencies)) {
+            $currency = setting('default_currency') ?: 'TRY';
         }
 
-        return $currency;
+        return $currency ?: 'TRY';
     }
 }
 
@@ -131,7 +133,9 @@ if (!function_exists('is_multilingual')) {
      */
     function is_multilingual()
     {
-        return count(supported_locales()) > 1;
+        $locales = supported_locales();
+        
+        return is_array($locales) && count($locales) > 1;
     }
 }
 
@@ -143,7 +147,9 @@ if (!function_exists('is_multi_currency')) {
      */
     function is_multi_currency()
     {
-        return count(setting('supported_currencies')) > 1;
+        $currencies = setting('supported_currencies');
+        
+        return is_array($currencies) && count($currencies) > 1;
     }
 }
 
@@ -305,13 +311,18 @@ if (!function_exists('currency_symbol')) {
     /**
      * Convert currency code to currency symbol.
      *
-     * @param string $currencyCode
+     * @param string|null $currencyCode
      *
      * @return string
      */
 
-    function currency_symbol(string $currencyCode): string
+    function currency_symbol(?string $currencyCode = null): string
     {
+        // Fallback to TRY if null
+        if (!$currencyCode) {
+            $currencyCode = 'TRY';
+        }
+        
         $code = strtoupper($currencyCode);
         if ($code === 'TRY') {
             return '₺';

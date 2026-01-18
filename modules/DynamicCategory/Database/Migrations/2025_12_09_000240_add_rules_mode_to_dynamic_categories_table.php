@@ -8,7 +8,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('dynamic_categories', function (Blueprint $table) {
-            $table->string('rules_mode', 10)->default('all')->after('is_active');
+            $table->string('rules_mode', 10)->default('all');
         });
     }
 

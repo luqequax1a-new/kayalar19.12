@@ -25,3 +25,14 @@ Route::get('/sales-analytics', [
 Route::resource('tag-badges', 'TagBadgeController')
     ->except(['show'])
     ->names('admin.tag_badges');
+
+// Web Analytics Routes
+Route::get('web-analytics', 'WebAnalyticsController@index')
+    ->name('admin.web_analytics.index')
+    ->middleware('can:admin.settings.edit');
+Route::post('web-analytics/update', 'WebAnalyticsController@update')
+    ->name('admin.web_analytics.update')
+    ->middleware('can:admin.settings.edit');
+Route::post('web-analytics/test', 'WebAnalyticsController@test')
+    ->name('admin.web_analytics.test')
+    ->middleware('can:admin.settings.edit');

@@ -42,7 +42,7 @@
                 <tbody>
                     @forelse ($report as $data)
                         <tr>
-                            <td>{{ $data->start_date->toFormattedDateString() }} - {{ $data->end_date->toFormattedDateString() }}</td>
+                            <td>{{ $data->start_date->translatedFormat('j F Y') }} - {{ $data->end_date->translatedFormat('j F Y') }}</td>
                             <td>{{ $data->customer_full_name }}</td>
                             <td>{{ $data->customer_email }}</td>
                             <td>{{ is_null($data->customer_id) ? trans('report::admin.table.guest') : trans('report::admin.table.registered') }}</td>

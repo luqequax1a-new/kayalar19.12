@@ -32,7 +32,8 @@ trait EloquentRelations
 
     public function categories(): BelongsToMany
     {
-        return $this->belongsToMany(Category::class, 'product_categories');
+        return $this->belongsToMany(Category::class, 'product_categories')
+            ->withPivot('position');
     }
 
 
@@ -68,6 +69,14 @@ trait EloquentRelations
     }
 
 
+    public function variant(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(ProductVariant::class, 'product_id')
+            ->where('is_default', true);
+    }
+
+
+
     public function options(): BelongsToMany
     {
         return $this->belongsToMany(Option::class, 'product_options')
@@ -96,5 +105,11 @@ trait EloquentRelations
     public function saleUnit(): BelongsTo
     {
         return $this->belongsTo(Unit::class, 'sale_unit_id');
+    }
+
+
+    public function questions(): HasMany
+    {
+        return $this->hasMany(\Modules\Question\Entities\Question::class);
     }
 }

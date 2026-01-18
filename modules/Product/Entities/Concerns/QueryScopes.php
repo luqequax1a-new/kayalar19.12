@@ -12,10 +12,11 @@ trait QueryScopes
             ->with('saleUnit')
             ->withPrice()
             ->withCount('options')
-            ->with('reviews')
+            // Only load review count and average, not all reviews (performance optimization)
             ->withCount('reviews')
-            ->with(['variants' => function($q){
-                $q->default()->addSelect([
+            ->withAvg('reviews', 'rating')
+            ->with(['variant' => function($q){
+                $q->addSelect([
                     'id','product_id','uid','is_default',
                     'price','special_price','special_price_type','special_price_start','special_price_end',
                     'selling_price'
@@ -29,6 +30,7 @@ trait QueryScopes
                 [
                     'products.id',
                     'products.slug',
+                    'products.created_at',
                 ]
             );
     }

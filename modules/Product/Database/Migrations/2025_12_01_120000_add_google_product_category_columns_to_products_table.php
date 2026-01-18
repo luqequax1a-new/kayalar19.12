@@ -8,8 +8,8 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->unsignedBigInteger('google_product_category_id')->nullable()->after('primary_category_id');
-            $table->string('google_product_category_path')->nullable()->after('google_product_category_id');
+            $table->unsignedBigInteger('google_product_category_id')->nullable();
+            $table->string('google_product_category_path')->nullable();
         });
     }
 

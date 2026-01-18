@@ -1,0 +1,712 @@
+/* MULTI-OFFER UPSELL STYLES */
+
+/* Container - Positioned bottom right */
+.fc-upsell-wrapper {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 2147483640;
+    pointer-events: none;
+    max-width: 440px;
+    width: calc(100vw - 48px);
+}
+
+/* Card Design */
+.fc-upsell-offer-card {
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12), 0 5px 15px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    pointer-events: auto;
+    position: relative;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    margin-top: 10px;
+}
+
+/* Animations */
+.upsell-enter {
+    animation: upsellPopIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes upsellPopIn {
+    from { opacity: 0; transform: scale(0.9) translateY(40px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.upsell-exit {
+    animation: upsellPopOut 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes upsellPopOut {
+    to { opacity: 0; transform: scale(0.9) translateX(100px); }
+}
+
+/* Header with Gradient */
+.fc-upsell-header {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ff8e53 100%);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #ffffff;
+}
+
+.fc-upsell-header-title {
+    font-size: 1.125rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    margin: 0;
+    flex: 1;
+    text-align: center;
+}
+
+.fc-upsell-close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #fff;
+}
+
+.fc-upsell-close-btn:hover {
+    background: rgba(255, 255, 255, 0.35);
+    transform: rotate(90deg);
+}
+
+/* Body */
+.fc-upsell-body {
+    padding: 24px;
+}
+
+.fc-upsell-timer {
+    background: #fff5f5;
+    color: #ef4444;
+    font-size: 0.875rem;
+    font-weight: 700;
+    padding: 10px;
+    border-radius: 12px;
+    text-align: center;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid #fee2e2;
+}
+
+/* Product Section */
+.fc-upsell-item {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 24px;
+}
+
+.fc-upsell-item-img {
+    width: 100%;
+    height: 240px;
+    border-radius: 24px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #f8fafc;
+    position: relative;
+}
+
+.fc-upsell-item-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: white;
+    transition: transform 0.3s ease;
+}
+
+.fc-upsell-item-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+}
+
+.fc-upsell-item-subtitle {
+    color: #ff6b6b;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.fc-upsell-item-name {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+}
+
+.fc-upsell-item-price-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+.fc-upsell-price-new {
+    font-size: 1.75rem;
+    font-weight: 900;
+    color: #10b981;
+}
+
+.fc-upsell-price-old {
+    font-size: 1.125rem;
+    color: #94a3b8;
+    text-decoration: line-through;
+    font-weight: 600;
+}
+
+.fc-upsell-badge {
+    background: #ff6b6b;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 0.8125rem;
+    font-weight: 800;
+}
+
+.fc-upsell-btn-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 12px;
+}
+
+.fc-upsell-btn {
+    border-radius: 18px;
+    height: 56px;
+    font-size: 1.0625rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fc-btn-reject {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.fc-btn-add {
+    background: #0f172a;
+    color: white;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+}
+
+.fc-btn-add:hover {
+    background: #1e293b;
+    transform: translateY(-2px);
+}
+
+/* Loading Overlay */
+.fc-upsell-loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 15px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.fc-upsell-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #10b981;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.fc-upsell-loading-text {
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 0.9375rem;
+}
+
+/* Modal Overlay */
+.fc-upsell-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(10px);
+    z-index: 2147483645;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    pointer-events: auto;
+}
+
+.fc-upsell-modal {
+    background: #ffffff;
+    border-radius: 32px;
+    padding: 32px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
+    animation: modalScaleUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalScaleUp {
+    from { opacity: 0; transform: scale(0.85) translateY(30px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Variant Picker */
+.fc-upsell-variant-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 8px;
+    justify-items: center;
+}
+
+.fc-variant-box {
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    background: transparent;
+    width: 100%;
+    max-width: 140px;
+}
+
+.fc-variant-box img {
+    width: 110px;
+    height: 110px;
+    object-fit: cover;
+    border-radius: 16px;
+    margin: 0 auto 10px;
+    display: block;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.2s;
+}
+
+.fc-variant-box.active img {
+    box-shadow: 0 4px 16px rgba(255,107,107,0.3);
+    border: 3px solid #ff6b6b;
+}
+
+.fc-variant-box span {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #1e293b;
+    display: block;
+    line-height: 1.3;
+}
+
+/* Decimal Quantity Card */
+.fc-upsell-decimal-quantity-card {
+    flex-direction: column;
+    align-items: flex-start;
+    background: #ffffff;
+    border: 1px solid #ededed;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    gap: 10px;
+    width: 100%;
+    box-shadow: 0 2px 8px rgba(17, 24, 39, 0.04);
+    margin-bottom: 20px;
+}
+
+.fc-upsell-decimal-quantity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+    width: 100%;
+}
+
+.fc-upsell-decimal-quantity-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #0f172a;
+}
+
+.fc-upsell-decimal-quantity-desc {
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+.fc-upsell-decimal-quantity-main {
+    display: grid;
+    grid-template-columns: 44px max-content 44px;
+    align-items: center;
+    gap: 0;
+    width: max-content;
+    margin: 10px auto 4px;
+    border: 1px solid #e6e6e6;
+    border-radius: 999px;
+    background: #fff;
+}
+
+.fc-upsell-btn-quantity {
+    height: 44px;
+    width: 44px;
+    border-radius: 999px;
+    border: none;
+    background: transparent;
+    line-height: 1;
+    font-size: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    margin: 0;
+    cursor: pointer;
+    color: #0f172a;
+}
+
+.fc-upsell-btn-quantity:hover {
+    color: #ff6b6b;
+}
+
+.fc-upsell-btn-quantity[disabled] {
+    color: #94a3b8;
+    background: transparent;
+    cursor: not-allowed;
+}
+
+.fc-upsell-decimal-quantity-input {
+    position: relative;
+    justify-self: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    min-width: 140px;
+    max-width: 180px;
+    width: 100%;
+}
+
+.fc-upsell-input-quantity-decimal {
+    width: 100%;
+    max-width: 180px;
+    height: 42px;
+    border-radius: 999px;
+    padding: 0 18px;
+    text-align: center;
+    font-size: 16px;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+}
+
+.fc-upsell-input-overlay {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 16px;
+    font-weight: 600;
+    color: #0f172a;
+    pointer-events: none;
+    white-space: nowrap;
+    padding: 0 6px;
+    z-index: 1;
+}
+
+.fc-upsell-input-overlay-target {
+    color: transparent;
+    caret-color: #0f172a;
+}
+
+.fc-upsell-input-overlay-target:focus {
+    color: #0f172a;
+}
+
+.fc-upsell-decimal-quantity-input:focus-within .fc-upsell-input-overlay {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.fc-upsell-decimal-quantity-input:focus-within .fc-upsell-input-overlay-target {
+    color: #0f172a;
+}
+
+.fc-upsell-decimal-quantity-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+    justify-content: center;
+    align-items: center;
+}
+
+.fc-upsell-chip {
+    padding: 8px 18px;
+    border: 1px solid #eaeaea;
+    background: #fbfbfb;
+    border-radius: 999px;
+    font-size: 15px;
+    line-height: 1;
+    transition: all 0.15s;
+    box-shadow: 0 2px 6px rgba(17, 24, 39, 0.06);
+    cursor: pointer;
+}
+
+.fc-upsell-chip:hover {
+    border-color: #ff6b6b;
+    color: #ff6b6b;
+    background: #ffffff;
+}
+
+.fc-upsell-chip[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.fc-upsell-chip--desktop-only {
+    display: inline-block;
+}
+
+.fc-upsell-decimal-quantity-info {
+    font-size: 13px;
+    color: #0f172a;
+    text-align: center;
+    width: 100%;
+}
+
+/* Regular Number Picker */
+.fc-upsell-number-picker {
+    margin-bottom: 20px;
+}
+
+.fc-upsell-modal-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: #0f172a;
+    margin-bottom: 12px;
+    display: block;
+}
+
+.fc-upsell-input-group-quantity {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.fc-upsell-input-number {
+    font-size: 15px;
+    height: 45px;
+    width: 100%;
+    padding: 10px 50px 10px 10px;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+}
+
+.fc-upsell-input-number:focus {
+    outline: 0;
+    border-color: #ff6b6b;
+}
+
+.fc-upsell-btn-wrapper {
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+.fc-upsell-btn-number {
+    position: absolute;
+    right: 0;
+    width: 40px;
+    padding: 0;
+    line-height: 18px;
+    background: none;
+    border: 1px solid #e2e8f0;
+    border-radius: 0;
+    cursor: pointer;
+}
+
+.fc-upsell-btn-number:hover {
+    color: #ff6b6b;
+}
+
+.fc-upsell-btn-number[disabled] {
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+.fc-upsell-btn-plus {
+    top: 0;
+    height: 24px;
+    border-top-right-radius: 8px;
+}
+
+.fc-upsell-btn-minus {
+    top: 23px;
+    height: 22px;
+    border-bottom-right-radius: 8px;
+}
+
+.fc-upsell-form-control {
+    display: block;
+    width: 100%;
+    padding: 0.375rem 0.75rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #212529;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #ced4da;
+    appearance: none;
+    border-radius: 0.25rem;
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+
+/* Remove native number input spinners */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type='number'] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+/* Mobile Responsive */
+@media screen and (max-width: 768px) {
+    .fc-upsell-modal-overlay {
+        align-items: flex-end;
+        padding: 0;
+    }
+
+    .fc-upsell-modal {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 24px 24px 0 0;
+        padding: 24px 20px;
+        max-height: 85vh;
+        overflow-y: auto;
+        animation: slideUpMobile 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes slideUpMobile {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+    }
+
+    .fc-upsell-variant-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        padding: 4px;
+        max-height: 350px;
+    }
+
+    .fc-variant-box {
+        max-width: 100%;
+        padding: 0;
+        background: transparent;
+    }
+
+    .fc-variant-box img {
+        width: 85px;
+        height: 85px;
+    }
+
+    .fc-variant-box span {
+        font-size: 0.75rem;
+    }
+
+    .fc-upsell-decimal-quantity-main {
+        grid-template-columns: 40px max-content 40px;
+        margin: 8px auto 4px;
+    }
+
+    .fc-upsell-btn-quantity {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+
+    .fc-upsell-decimal-quantity-input {
+        min-width: 120px;
+        max-width: 140px;
+    }
+
+    .fc-upsell-input-quantity-decimal {
+        width: 100%;
+        max-width: 140px;
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 640px) {
+    .fc-upsell-wrapper {
+        bottom: 12px;
+        left: 12px;
+        right: 12px;
+        width: auto;
+    }
+    
+    .fc-upsell-modal {
+        padding: 24px;
+        border-radius: 24px;
+    }
+}
+
+@media screen and (max-width: 400px) {
+    .fc-upsell-decimal-quantity-card {
+        padding: 12px;
+    }
+
+    .fc-upsell-decimal-quantity-chips {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        justify-items: center;
+    }
+
+    .fc-upsell-chip--desktop-only {
+        display: none;
+    }
+
+    .fc-upsell-chip {
+        font-size: 13px;
+    }
+}

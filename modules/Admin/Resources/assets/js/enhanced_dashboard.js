@@ -3,23 +3,35 @@ import Chart from "chart.js/auto";
 let trendChart = null;
 let customersChart = null;
 let trafficChart = null;
-let hourlyChart = null;
+let categoriesChart = null;
+let brandsChart = null;
 let conversionChart = null;
 let orderStatusChart = null;
 let stockStatusChart = null;
 let trafficMetric = "orders";
-let topProductsLimit = 10;
 
 // Chart.js default configuration
 Chart.defaults.font.family = '"Inter", "Helvetica Neue", Arial, sans-serif';
-Chart.defaults.font.size = 12;
-Chart.defaults.color = '#64748b';
+Chart.defaults.font.size = 11;
+Chart.defaults.color = '#94a3b8';
 
 function moneyFormat(value) {
     try {
         const symbol = FleetCart?.defaultCurrencySymbol || "";
         const num = Number(value || 0);
+        return `${symbol}${num.toLocaleString(undefined, {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        })}`;
+    } catch (e) {
+        return String(value || 0);
+    }
+}
 
+function fullMoneyFormat(value) {
+    try {
+        const symbol = FleetCart?.defaultCurrencySymbol || "";
+        const num = Number(value || 0);
         return `${symbol}${num.toLocaleString(undefined, {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
@@ -27,122 +39,6 @@ function moneyFormat(value) {
     } catch (e) {
         return String(value || 0);
     }
-}
-
-function trafficSourceLabel(key) {
-    const k = String(key || "");
-
-    switch (k) {
-        case "google_ads":
-            return "Google Ads";
-        case "google_organic":
-            return "Google Organic";
-        case "facebook_ads":
-            return "Facebook Ads";
-        case "instagram_ads":
-            return "Instagram Ads";
-        case "direct":
-            return "Direct";
-        case "etsy":
-            return "Etsy";
-        default:
-            return "Other";
-    }
-}
-
-function renderTrafficChart(breakdown) {
-    const el = document.querySelector("[data-chart-traffic]");
-    if (!el) return;
-
-    const rows = Array.isArray(breakdown) ? breakdown : [];
-    const labels = rows.map((r) => trafficSourceLabel(r.source));
-
-    const orders = rows.map((r) => Number(r.orders || 0));
-    const revenue = rows.map((r) => Number(r.revenue || 0));
-
-    const values = trafficMetric === "revenue" ? revenue : orders;
-    const datasetLabel = trafficMetric === "revenue" ? "Ciro" : "Sipariş";
-    const datasetColor =
-        trafficMetric === "revenue"
-            ? "rgba(0, 104, 225, .75)"
-            : "rgba(14, 30, 62, .75)";
-
-    if (trafficChart) trafficChart.destroy();
-
-    trafficChart = new Chart(el, {
-        type: "bar",
-        data: {
-            labels,
-            datasets: [
-                {
-                    label: datasetLabel,
-                    data: values,
-                    borderRadius: 8,
-                    borderSkipped: false,
-                    backgroundColor: datasetColor,
-                    borderColor: datasetColor.replace('.75', '1'),
-                    borderWidth: 1,
-                },
-            ],
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: 'rgba(14, 30, 62, 0.9)',
-                    titleColor: '#fff',
-                    bodyColor: '#fff',
-                    borderColor: '#e2e8f0',
-                    borderWidth: 1,
-                    cornerRadius: 8,
-                    displayColors: false,
-                    callbacks: {
-                        label(ctx) {
-                            const idx = ctx.dataIndex;
-                            const o = orders[idx] ?? 0;
-                            const r = revenue[idx] ?? 0;
-                            return [
-                                `Sipariş: ${numberFormat(o)}`,
-                                `Ciro: ${moneyFormat(r)}`,
-                            ];
-                        },
-                    },
-                },
-            },
-            scales: {
-                x: {
-                    grid: {
-                        display: false,
-                    },
-                    ticks: {
-                        maxRotation: 45,
-                        minRotation: 0,
-                        callback(value) {
-                            const label = this.getLabelForValue(value);
-                            const s = String(label ?? "");
-                            return s.length > 14 ? `${s.slice(0, 14)}…` : s;
-                        },
-                    },
-                },
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(226, 232, 240, 0.5)',
-                    },
-                    ticks: {
-                        callback(value) {
-                            if (trafficMetric === "revenue") {
-                                return moneyFormat(value);
-                            }
-                            return numberFormat(value);
-                        },
-                    },
-                },
-            },
-        },
-    });
 }
 
 function numberFormat(value) {
@@ -153,46 +49,81 @@ function numberFormat(value) {
     }
 }
 
-function renderTrendChart(daily) {
+function formatDateShort(dateStr) {
+    try {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
+    } catch (e) {
+        return dateStr;
+    }
+}
+
+function trafficSourceLabel(key) {
+    const k = String(key || "");
+    switch (k) {
+        case "google_ads": return "Google Ads";
+        case "google_organic": return "Google Organic";
+        case "facebook_ads": return "Facebook Ads";
+        case "instagram_ads": return "Instagram Ads";
+        case "direct": return "Direct";
+        case "etsy": return "Etsy";
+        default: return "Other";
+    }
+}
+
+function renderTrendChart(dailyData) {
     const el = document.querySelector("[data-chart-trend]");
     if (!el) return;
 
-    const labels = daily.map((d) => d.date);
-    const orders = daily.map((d) => Number(d.orders || 0));
-    const revenue = daily.map((d) => Number(d.revenue || 0));
+    if (trendChart) {
+        trendChart.destroy();
+        trendChart = null;
+    }
 
-    if (trendChart) trendChart.destroy();
+    const labels = dailyData.map((d) => formatDateShort(d.date));
+    const orders = dailyData.map((d) => Number(d.orders || 0));
+
+    const revenuesLine = dailyData.map((d) => {
+        const ord = Number(d.orders || 0);
+        return ord > 0 ? Number(d.revenue || 0) : null;
+    });
+
+    const ctx = el.getContext('2d');
+    const blueGradient = ctx.createLinearGradient(0, 0, 0, 400);
+    blueGradient.addColorStop(0, "rgba(0, 104, 225, 0.85)");
+    blueGradient.addColorStop(1, "rgba(0, 104, 225, 0.15)");
 
     trendChart = new Chart(el, {
-        type: "line",
         data: {
             labels,
             datasets: [
                 {
+                    type: "bar",
                     label: "Sipariş",
                     data: orders,
-                    borderColor: "rgba(255, 49, 111, 1)",
-                    backgroundColor: "rgba(255, 49, 111, 0.1)",
-                    yAxisID: "yOrders",
-                    tension: 0.4,
-                    fill: true,
-                    pointRadius: 4,
-                    pointBackgroundColor: "#fff",
-                    pointBorderWidth: 2,
-                    pointHoverRadius: 6,
+                    backgroundColor: blueGradient,
+                    hoverBackgroundColor: "rgba(0, 104, 225, 1)",
+                    borderRadius: 12,
+                    yAxisID: "y",
+                    order: 2,
+                    barPercentage: 0.75,
+                    categoryPercentage: 0.6,
                 },
                 {
+                    type: "line",
                     label: "Ciro",
-                    data: revenue,
-                    borderColor: "rgba(0, 104, 225, 1)",
-                    backgroundColor: "rgba(0, 104, 225, 0.1)",
-                    yAxisID: "yRevenue",
-                    tension: 0.4,
-                    fill: true,
-                    pointRadius: 4,
-                    pointBackgroundColor: "#fff",
-                    pointBorderWidth: 2,
+                    data: revenuesLine,
+                    borderColor: "rgba(255, 49, 111, 1)",
+                    borderWidth: 3,
+                    pointRadius: 0,
                     pointHoverRadius: 6,
+                    pointHoverBackgroundColor: "#fff",
+                    pointHoverBorderWidth: 4,
+                    tension: 0.35,
+                    fill: false,
+                    yAxisID: "y1",
+                    order: 1,
+                    spanGaps: false
                 }
             ],
         },
@@ -200,367 +131,346 @@ function renderTrendChart(daily) {
             responsive: true,
             maintainAspectRatio: false,
             interaction: { mode: "index", intersect: false },
+            layout: {
+                padding: { top: 30, right: 30, left: 10, bottom: 0 }
+            },
             plugins: {
-                legend: {
-                    display: true,
-                    position: 'top',
-                    labels: {
-                        boxWidth: 12,
-                        padding: 15,
-                    }
-                },
+                legend: { display: false },
                 tooltip: {
-                    backgroundColor: 'rgba(14, 30, 62, 0.9)',
-                    titleColor: '#fff',
-                    bodyColor: '#fff',
-                    borderColor: '#e2e8f0',
-                    borderWidth: 1,
-                    cornerRadius: 8,
-                    displayColors: false,
+                    backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                    padding: 18,
+                    cornerRadius: 16,
+                    titleFont: { size: 14, weight: '800', family: 'Inter' },
+                    bodyFont: { size: 13, weight: '500', family: 'Inter' },
+                    bodySpacing: 10,
+                    boxPadding: 6,
+                    usePointStyle: true,
                     callbacks: {
                         label(ctx) {
+                            const idx = ctx.dataIndex;
+                            const d = dailyData[idx];
+                            const ord = Number(d.orders || 0);
+                            const rev = Number(d.revenue || 0);
+                            const aov = ord > 0 ? (rev / ord) : 0;
+
                             if (ctx.datasetIndex === 0) {
-                                return `Sipariş: ${numberFormat(ctx.parsed.y)}`;
-                            } else {
-                                return `Ciro: ${moneyFormat(ctx.parsed.y)}`;
+                                let lines = [
+                                    `📦 Sipariş: ${numberFormat(ord)} adet`,
+                                    `💰 Ciro: ${fullMoneyFormat(rev)}`
+                                ];
+                                if (ord > 0) {
+                                    lines.push(`🛒 Ort. Sepet (AOV): ${fullMoneyFormat(aov)}`);
+                                }
+                                return lines;
                             }
+                            return null;
                         },
                     },
+                    filter: (item) => item.datasetIndex === 0,
                 },
             },
             scales: {
-                yOrders: {
+                x: {
+                    grid: { display: false },
+                    ticks: {
+                        font: { weight: '600' },
+                        padding: 12,
+                        maxTicksLimit: 12
+                    }
+                },
+                y: {
                     type: "linear",
+                    display: true,
                     position: "left",
                     beginAtZero: true,
                     grid: {
-                        color: 'rgba(226, 232, 240, 0.5)',
-                        drawOnChartArea: true
+                        color: 'rgba(241, 245, 249, 0.8)',
+                        drawBorder: false
                     },
                     ticks: {
                         precision: 0,
-                        callback(value) {
-                            return numberFormat(value);
-                        }
-                    },
+                        stepSize: 1,
+                        padding: 12
+                    }
                 },
-                yRevenue: {
+                y1: {
                     type: "linear",
+                    display: true,
                     position: "right",
                     beginAtZero: true,
-                    grid: { drawOnChartArea: false },
+                    grid: { display: false },
                     ticks: {
-                        callback(value) {
-                            return moneyFormat(value);
+                        padding: 12,
+                        callback: v => moneyFormat(v)
+                    }
+                }
+            }
+        }
+    });
+}
+
+function renderTrafficChart(breakdown) {
+    const el = document.querySelector("[data-chart-traffic]");
+    if (!el) return;
+    if (trafficChart) trafficChart.destroy();
+    const rows = Array.isArray(breakdown) ? breakdown : [];
+    const labels = rows.map((r) => trafficSourceLabel(r.source));
+    const orders = rows.map((r) => Number(r.orders || 0));
+    const revenue = rows.map((r) => Number(r.revenue || 0));
+    const values = trafficMetric === "revenue" ? revenue : orders;
+    const datasetColor = trafficMetric === "revenue" ? "rgba(255, 49, 111, 1)" : "rgba(0, 104, 225, 1)";
+    const ctx = el.getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, datasetColor);
+    gradient.addColorStop(1, datasetColor.replace('1)', '0.4)'));
+
+    trafficChart = new Chart(el, {
+        type: "bar",
+        data: {
+            labels,
+            datasets: [{
+                data: values,
+                borderRadius: 8,
+                backgroundColor: gradient,
+                barThickness: 28,
+            }],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                    padding: 12,
+                    cornerRadius: 12,
+                    callbacks: {
+                        label(ctx) {
+                            const idx = ctx.dataIndex;
+                            return [`📦 Sipariş: ${numberFormat(orders[idx])}`, `💰 Ciro: ${fullMoneyFormat(revenue[idx])}`];
                         }
-                    },
+                    }
+                }
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { weight: '600' } } },
+                y: { beginAtZero: true, grid: { color: 'rgba(241, 245, 249, 0.8)', drawBorder: false }, ticks: { callback: v => trafficMetric === 'revenue' ? moneyFormat(v) : v } }
+            }
+        }
+    });
+}
+
+function renderCategoriesChart(categories) {
+    const el = document.querySelector("[data-chart-categories]");
+    if (!el) return;
+
+    if (categoriesChart) {
+        categoriesChart.destroy();
+        categoriesChart = null;
+    }
+
+    const rows = (categories || []).sort((a, b) => Number(b.revenue) - Number(a.revenue)).slice(0, 10);
+    const labels = rows.map((c) => c.name || "Diğer");
+    const revenueValues = rows.map((c) => Number(c.revenue || 0));
+    const orderValues = rows.map((c) => Number(c.orders_qty || 0));
+
+    const ctx = el.getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, "rgba(139, 92, 246, 0.85)");
+    gradient.addColorStop(1, "rgba(139, 92, 246, 0.15)");
+
+    categoriesChart = new Chart(el, {
+        type: "bar",
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: "Ciro",
+                    data: revenueValues,
+                    backgroundColor: gradient,
+                    hoverBackgroundColor: "rgba(139, 92, 246, 1)",
+                    borderRadius: 8,
+                    barThickness: 30,
+                }
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                    padding: 14,
+                    cornerRadius: 12,
+                    callbacks: {
+                        label(ctx) {
+                            const idx = ctx.dataIndex;
+                            return [
+                                `💰 Ciro: ${fullMoneyFormat(revenueValues[idx])}`,
+                                `📦 Sipariş: ${numberFormat(orderValues[idx])} adet`
+                            ];
+                        }
+                    }
                 },
             },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { weight: '600' } }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(241, 245, 249, 0.8)', drawBorder: false },
+                    ticks: { callback: v => moneyFormat(v) }
+                }
+            }
+        }
+    });
+}
+
+function renderBrandsChart(brands) {
+    const el = document.querySelector("[data-chart-brands]");
+    if (!el) return;
+
+    if (brandsChart) {
+        brandsChart.destroy();
+        brandsChart = null;
+    }
+
+    const rows = (brands || []).sort((a, b) => Number(b.revenue) - Number(a.revenue)).slice(0, 10);
+    const labels = rows.map((b) => b.name || "Diğer");
+    const revenueValues = rows.map((b) => Number(b.revenue || 0));
+    const orderValues = rows.map((b) => Number(b.orders_qty || 0));
+
+    const ctx = el.getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, "rgba(34, 197, 94, 0.85)");
+    gradient.addColorStop(1, "rgba(34, 197, 94, 0.15)");
+
+    brandsChart = new Chart(el, {
+        type: "bar",
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: "Ciro",
+                    data: revenueValues,
+                    backgroundColor: gradient,
+                    hoverBackgroundColor: "rgba(34, 197, 94, 1)",
+                    borderRadius: 8,
+                    barThickness: 30,
+                }
+            ],
         },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                    padding: 14,
+                    cornerRadius: 12,
+                    callbacks: {
+                        label(ctx) {
+                            const idx = ctx.dataIndex;
+                            return [
+                                `💰 Ciro: ${fullMoneyFormat(revenueValues[idx])}`,
+                                `📦 Sipariş: ${numberFormat(orderValues[idx])} adet`
+                            ];
+                        }
+                    }
+                },
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { weight: '600' } }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(241, 245, 249, 0.8)', drawBorder: false },
+                    ticks: { callback: v => moneyFormat(v) }
+                }
+            }
+        }
     });
 }
 
 function renderCustomersChart(daily) {
     const el = document.querySelector("[data-chart-customers]");
     if (!el) return;
-
-    const labels = daily.map((d) => d.date);
-    const newCustomers = daily.map((d) => Number(d.new_customers || 0));
-    const returning = daily.map((d) => Number(d.returning_customers || 0));
-
     if (customersChart) customersChart.destroy();
-
+    const labels = daily.map(d => formatDateShort(d.date));
     customersChart = new Chart(el, {
         type: "bar",
         data: {
             labels,
             datasets: [
-                {
-                    label: "Yeni",
-                    data: newCustomers,
-                    borderRadius: 8,
-                    borderSkipped: false,
-                    backgroundColor: "rgba(136, 194, 115, .85)",
-                    borderColor: "rgba(136, 194, 115, 1)",
-                    borderWidth: 1,
-                },
-                {
-                    label: "Dönen",
-                    data: returning,
-                    borderRadius: 8,
-                    borderSkipped: false,
-                    backgroundColor: "rgba(139, 93, 255, .85)",
-                    borderColor: "rgba(139, 93, 255, 1)",
-                    borderWidth: 1,
-                },
-            ],
+                { label: "Yeni", data: daily.map(d => d.new_customers), backgroundColor: "rgba(34, 197, 94, 0.8)", borderRadius: 6 },
+                { label: "Dönen", data: daily.map(d => d.returning_customers), backgroundColor: "rgba(139, 92, 246, 0.8)", borderRadius: 6 }
+            ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    display: true,
-                    position: 'top',
-                    labels: {
-                        boxWidth: 12,
-                        padding: 15,
-                    }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(14, 30, 62, 0.9)',
-                    titleColor: '#fff',
-                    bodyColor: '#fff',
-                    borderColor: '#e2e8f0',
-                    borderWidth: 1,
-                    cornerRadius: 8,
-                    displayColors: false
-                },
+                legend: { position: 'top', align: 'end', labels: { usePointStyle: true, pointStyle: 'circle' } },
+                tooltip: { backgroundColor: 'rgba(30, 41, 59, 0.95)', padding: 12, cornerRadius: 12 }
             },
             scales: {
-                x: {
-                    grid: {
-                        display: false,
-                    },
-                },
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(226, 232, 240, 0.5)',
-                    },
-                },
-            },
-        },
-    });
-}
-
-function renderHourlyChart(hourly) {
-    const el = document.querySelector("[data-chart-hourly]");
-    if (!el) return;
-
-    const hours = Array.from({ length: 24 }, (_, i) => `${i}:00`);
-    const data = Array(24).fill(0);
-
-    hourly.forEach(item => {
-        data[item.hour] = item.orders;
-    });
-
-    if (hourlyChart) hourlyChart.destroy();
-
-    hourlyChart = new Chart(el, {
-        type: "bar",
-        data: {
-            labels: hours,
-            datasets: [
-                {
-                    label: "Sipariş",
-                    data: data,
-                    borderRadius: 8,
-                    borderSkipped: false,
-                    backgroundColor: (context) => {
-                        const index = context.dataIndex;
-                        const currentHour = new Date().getHours();
-                        return index === currentHour ?
-                            "rgba(255, 159, 64, .85)" :
-                            "rgba(76, 201, 254, .85)";
-                    },
-                    borderColor: (context) => {
-                        const index = context.dataIndex;
-                        const currentHour = new Date().getHours();
-                        return index === currentHour ?
-                            "rgba(255, 159, 64, 1)" :
-                            "rgba(76, 201, 254, 1)";
-                    },
-                    borderWidth: 1,
-                },
-            ],
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: 'rgba(14, 30, 62, 0.9)',
-                    titleColor: '#fff',
-                    bodyColor: '#fff',
-                    borderColor: '#e2e8f0',
-                    borderWidth: 1,
-                    cornerRadius: 8,
-                    displayColors: false,
-                    callbacks: {
-                        label(ctx) {
-                            return `Sipariş: ${numberFormat(ctx.parsed.y)}`;
-                        },
-                    },
-                },
-            },
-            scales: {
-                x: {
-                    grid: {
-                        display: false,
-                    },
-                },
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(226, 232, 240, 0.5)',
-                    },
-                    ticks: {
-                        precision: 0,
-                    }
-                },
-            },
-        },
+                x: { stacked: true, grid: { display: false } },
+                y: { stacked: true, grid: { color: 'rgba(241, 245, 249, 0.8)', drawBorder: false } }
+            }
+        }
     });
 }
 
 function renderConversionChart(conversion) {
     const el = document.querySelector("[data-chart-conversion]");
     if (!el) return;
-
     if (conversionChart) conversionChart.destroy();
-
     conversionChart = new Chart(el, {
         type: "doughnut",
         data: {
-            labels: ["Dönüşüm Oranı", "Diğer"],
-            datasets: [
-                {
-                    data: [conversion.conversion_rate, 100 - conversion.conversion_rate],
-                    backgroundColor: [
-                        "rgba(136, 194, 115, .85)",
-                        "rgba(226, 232, 240, .5)"
-                    ],
-                    borderColor: [
-                        "rgba(136, 194, 115, 1)",
-                        "rgba(226, 232, 240, 1)"
-                    ],
-                    borderWidth: 1,
-                    cutout: '75%',
-                },
-            ],
+            labels: ["Dönüşüm", "Diğer"],
+            datasets: [{ data: [conversion.conversion_rate, 100 - conversion.conversion_rate], backgroundColor: ["#22c55e", "#f1f5f9"], borderWidth: 0 }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                tooltip: { enabled: false },
-                centerText: {
-                    display: true,
-                    text: `${conversion.conversion_rate}%`
-                }
-            },
-        },
-        plugins: [{
-            id: 'centerText',
-            beforeDraw: function (chart) {
-                if (chart.config.options.plugins.centerText.display !== true)
-                    return;
-
-                const ctx = chart.ctx;
-                const canvas = chart.canvas;
-                const centerX = (chart.chartArea.left + chart.chartArea.right) / 2;
-                const centerY = (chart.chartArea.top + chart.chartArea.bottom) / 2;
-                const fontSize = (chart.height / 100).toFixed(2);
-
-                ctx.font = `${fontSize}em sans-serif`;
-                ctx.textBaseline = "middle";
-                ctx.fillStyle = "#0e1e3e";
-                ctx.textAlign = 'center';
-
-                const text = chart.config.options.plugins.centerText.text;
-                ctx.fillText(text, centerX, centerY);
-            }
-        }]
+        options: { cutout: '85%', plugins: { legend: { display: false } } }
     });
 }
 
 function renderOrderStatusChart(data) {
     const el = document.querySelector("[data-chart-order-status]");
     if (!el || !data) return;
-
-    const labels = data.map(i => i.label);
-    const counts = data.map(i => i.count);
-
     if (orderStatusChart) orderStatusChart.destroy();
-
     orderStatusChart = new Chart(el, {
         type: "doughnut",
         data: {
-            labels,
-            datasets: [{
-                data: counts,
-                backgroundColor: [
-                    'rgba(255, 49, 111, 0.8)',
-                    'rgba(0, 104, 225, 0.8)',
-                    'rgba(92, 200, 88, 0.8)',
-                    'rgba(250, 109, 66, 0.8)',
-                    'rgba(255, 159, 64, 0.8)',
-                    'rgba(153, 102, 255, 0.8)',
-                    'rgba(76, 201, 254, 0.8)'
-                ],
-                borderWidth: 1
-            }]
+            labels: data.map(i => i.label),
+            datasets: [{ data: data.map(i => i.count), backgroundColor: ['#ff316f', '#0068e1', '#22c55e', '#f97316', '#8b5cf6', '#0ea5e9', '#ec4899'], borderWidth: 2, borderColor: '#fff' }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'right',
-                    labels: { boxWidth: 12 }
-                }
-            }
-        }
+        options: { cutout: '70%', plugins: { legend: { position: 'right', labels: { usePointStyle: true, pointStyle: 'circle' } } } }
     });
 }
 
 function renderStockStatusChart(data) {
     const el = document.querySelector("[data-chart-stock-status]");
     if (!el || !data) return;
-
     if (stockStatusChart) stockStatusChart.destroy();
-
     stockStatusChart = new Chart(el, {
-        type: "pie",
+        type: "doughnut",
         data: {
-            labels: ["Stokta", "Kritik Stok", "Stok Yok"],
-            datasets: [{
-                data: [data.in_stock, data.low_stock, data.out_of_stock],
-                backgroundColor: [
-                    'rgba(92, 200, 88, 0.8)',
-                    'rgba(255, 159, 64, 0.8)',
-                    'rgba(255, 49, 111, 0.8)'
-                ],
-                borderWidth: 1
-            }]
+            labels: ["Stokta", "Kritik", "Stok Yok"],
+            datasets: [{ data: [data.in_stock, data.low_stock, data.out_of_stock], backgroundColor: ['#22c55e', '#f97316', '#ff316f'], borderWidth: 2, borderColor: '#fff' }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: { boxWidth: 12 }
-                }
-            }
-        }
+        options: { cutout: '70%', plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle' } } } }
     });
 }
 
 function resizeCharts() {
-    try {
-        trendChart?.resize();
-        customersChart?.resize();
-        trafficChart?.resize();
-        hourlyChart?.resize();
-        conversionChart?.resize();
-        orderStatusChart?.resize();
-        stockStatusChart?.resize();
-    } catch (e) {
-    }
+    [trendChart, customersChart, trafficChart, categoriesChart, brandsChart, conversionChart, orderStatusChart, stockStatusChart].forEach(c => c?.resize());
 }
 
 window.EnhancedDashboardAnalytics = {
@@ -569,15 +479,12 @@ window.EnhancedDashboardAnalytics = {
     renderTrafficChart,
     renderTrendChart,
     renderCustomersChart,
-    renderHourlyChart,
+    renderCategoriesChart,
+    renderBrandsChart,
     renderConversionChart,
     renderOrderStatusChart,
     renderStockStatusChart,
     resizeCharts,
-    setTrafficMetric(metric) {
-        trafficMetric = metric === "revenue" ? "revenue" : "orders";
-    },
-    getTrafficMetric() {
-        return trafficMetric;
-    },
+    setTrafficMetric(metric) { trafficMetric = metric === "revenue" ? "revenue" : "orders"; },
+    getTrafficMetric() { return trafficMetric; },
 };

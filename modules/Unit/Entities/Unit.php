@@ -100,5 +100,10 @@ class Unit extends Model
 
         // default unit feature disabled: keep column for compatibility but no enforcement
     }
+
+    public function table()
+    {
+        return new \Modules\Unit\Entities\Admin\UnitTable($this->newQuery());
+    }
 }
 

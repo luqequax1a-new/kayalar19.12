@@ -12,6 +12,19 @@
         </a>
     </li>
 
+    <li>
+        <a href="{{ route('brands.index') }}">
+            <div class="sidebar-icon-parent">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="#292D32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 12.88V9.12C2 5.06 2 3.03 3.4 2.12C4.79 1.21 6.57 2.2 10.13 4.19L10.74 4.53C11.53 4.97 12.47 4.97 13.26 4.53L13.87 4.19C17.43 2.2 19.21 1.21 20.6 2.12C21.99 3.03 21.99 5.06 21.99 9.12V12.88C21.99 16.94 21.99 18.97 20.6 19.88C19.21 20.79 17.43 19.8 13.87 17.81L13.26 17.47C12.47 17.03 11.53 17.03 10.74 17.47L10.13 17.81C6.57 19.8 4.79 20.79 3.4 19.88C2 18.97 2 16.94 2 12.88Z" stroke="#292D32" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+
+            <span>{{ trans('storefront::layouts.brands') }}</span>
+        </a>
+    </li>
+
     @if (setting('storefront_blogs_section_enabled'))
         <li>
             <a href="{{ route('blog_posts.index') }}">

@@ -29,7 +29,9 @@ Alpine.data("CustomPageSelect", () => ({
         this.open = false;
 
         if (this.selected !== value) {
-            this.changePerPage(value);
+            window.dispatchEvent(
+                new CustomEvent("filter-per-page-changed", { detail: value })
+            );
         }
 
         this.selected = value;

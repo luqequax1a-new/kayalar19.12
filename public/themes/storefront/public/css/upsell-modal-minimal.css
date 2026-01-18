@@ -1,0 +1,389 @@
+/* MINIMAL MODAL STYLES */
+
+/* Modal Overlay */
+.fc-upsell-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(10px);
+    z-index: 2147483645;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    pointer-events: auto;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Modal Container */
+.fc-upsell-modal-minimal {
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 24px rgba(0, 0, 0, 0.1);
+    max-width: 420px;
+    width: 90%;
+    max-height: 85vh;
+    overflow-y: auto;
+    position: relative;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    animation: modalScaleUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalScaleUp {
+    from { opacity: 0; transform: scale(0.85) translateY(30px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.fc-upsell-modal-minimal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.fc-upsell-modal-minimal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.fc-upsell-modal-minimal-close {
+    background: rgba(0, 0, 0, 0.05);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: #666;
+}
+
+.fc-upsell-modal-minimal-close:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #333;
+}
+
+.fc-upsell-modal-minimal-close svg {
+    width: 16px;
+    height: 16px;
+}
+
+.fc-upsell-modal-minimal-product {
+    padding: 16px 24px 20px;
+    text-align: center;
+}
+
+.fc-upsell-modal-minimal-product-name {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.fc-upsell-modal-minimal-product-price {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #2563eb;
+}
+
+.fc-upsell-modal-minimal-content {
+    padding: 0 24px 24px;
+}
+
+.fc-upsell-modal-minimal-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.fc-upsell-modal-minimal-variants {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.fc-upsell-modal-minimal-variant {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    background: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.fc-upsell-modal-minimal-variant:hover {
+    border-color: #d1d5db;
+    background: #f9fafb;
+}
+
+.fc-upsell-modal-minimal-variant.active {
+    border-color: #2563eb;
+    background: #eff6ff;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.fc-upsell-modal-minimal-variant-image {
+    width: 60px;
+    height: 60px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.fc-upsell-modal-minimal-variant span {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    line-height: 1.3;
+}
+
+.fc-upsell-modal-minimal-quantity {
+    margin-bottom: 24px;
+}
+
+.fc-upsell-modal-minimal-quantity-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.fc-upsell-modal-minimal-qty-btn {
+    width: 40px;
+    height: 40px;
+    border: 2px solid #e5e7eb;
+    background: #ffffff;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #374151;
+    transition: all 0.2s;
+}
+
+.fc-upsell-modal-minimal-qty-btn:hover:not(:disabled) {
+    border-color: #2563eb;
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.fc-upsell-modal-minimal-qty-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.fc-upsell-modal-minimal-qty-input {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: #f9fafb;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.fc-upsell-modal-minimal-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 10px 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+    color: #1a1a1a;
+    outline: none;
+}
+
+.fc-upsell-modal-minimal-qty-suffix {
+    padding: 10px 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #666;
+    background: #f3f4f6;
+}
+
+.fc-upsell-modal-minimal-quick-select {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.fc-upsell-modal-minimal-chip {
+    padding: 8px 16px;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.fc-upsell-modal-minimal-chip:hover {
+    border-color: #2563eb;
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.fc-upsell-modal-minimal-summary {
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+}
+
+.fc-upsell-modal-minimal-summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.fc-upsell-modal-minimal-summary-row:last-child {
+    margin-bottom: 0;
+}
+
+.fc-upsell-modal-minimal-summary-row.total {
+    padding-top: 8px;
+    border-top: 2px solid #e5e7eb;
+    font-weight: 700;
+}
+
+.fc-upsell-modal-minimal-summary-row span:first-child {
+    color: #666;
+    font-size: 0.875rem;
+}
+
+.fc-upsell-modal-minimal-summary-row span:last-child {
+    color: #1a1a1a;
+    font-weight: 600;
+}
+
+.fc-upsell-modal-minimal-summary-row.total span:last-child {
+    color: #2563eb;
+    font-size: 1.125rem;
+}
+
+.fc-upsell-modal-minimal-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.fc-upsell-modal-minimal-btn {
+    flex: 1;
+    padding: 14px 20px;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.fc-upsell-modal-minimal-btn.secondary {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.fc-upsell-modal-minimal-btn.secondary:hover {
+    background: #e5e7eb;
+}
+
+.fc-upsell-modal-minimal-btn.primary {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+.fc-upsell-modal-minimal-btn.primary:hover:not(:disabled) {
+    background: #1d4ed8;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.fc-upsell-modal-minimal-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Mobile Responsive */
+@media (max-width: 640px) {
+    .fc-upsell-modal-minimal {
+        width: 95%;
+        max-height: 90vh;
+        border-radius: 16px;
+    }
+    
+    .fc-upsell-modal-minimal-header {
+        padding: 16px 20px 12px;
+    }
+    
+    .fc-upsell-modal-minimal-title {
+        font-size: 1.125rem;
+    }
+    
+    .fc-upsell-modal-minimal-content {
+        padding: 0 20px 20px;
+    }
+    
+    .fc-upsell-modal-minimal-variants {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        gap: 8px;
+    }
+    
+    .fc-upsell-modal-minimal-variant {
+        padding: 10px 8px;
+    }
+    
+    .fc-upsell-modal-minimal-variant-image {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .fc-upsell-modal-minimal-quantity-controls {
+        gap: 6px;
+    }
+    
+    .fc-upsell-modal-minimal-qty-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 1.125rem;
+    }
+    
+    .fc-upsell-modal-minimal-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .fc-upsell-modal-minimal-btn {
+        padding: 12px 16px;
+    }
+}

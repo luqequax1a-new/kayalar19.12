@@ -21,7 +21,7 @@ html {
 .btn-actions {
     margin: 0 15px 15px 0;
 
-    > i {
+    >i {
         margin-right: 5px;
     }
 }
@@ -56,9 +56,9 @@ html {
 }
 
 .options {
-    &.table > {
-        thead > {
-            tr > {
+    &.table> {
+        thead> {
+            tr> {
                 th {
                     padding: 6px 8px;
                 }
@@ -106,7 +106,7 @@ html {
 .pagination {
     margin-bottom: 10px;
 
-    > li {
+    >li {
         float: left;
         margin-left: -1px;
         padding: 0;
@@ -143,7 +143,7 @@ html {
             }
         }
 
-        > a {
+        >a {
             padding: 10px 15px;
             color: #0068e1;
             border: none;
@@ -161,14 +161,14 @@ html {
             }
         }
 
-        > span {
+        >span {
             display: block;
             padding: 10px 15px;
             border: none;
         }
     }
 
-    > .active {
+    >.active {
         background: #0068e1;
         cursor: default !important;
         border-color: #0068e1;
@@ -177,11 +177,11 @@ html {
             background: #0068e1;
         }
 
-        > a {
+        >a {
             background: transparent !important;
         }
 
-        > span {
+        >span {
             background: transparent !important;
         }
     }
@@ -197,14 +197,20 @@ html {
 
 .image-hover-preview {
     position: fixed;
-    width: 500px;
-    height: 500px;
+    width: 450px;
+    height: 450px;
     pointer-events: none;
-    z-index: 9999;
+    z-index: 100001;
     border: 1px solid #e0e0e0;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     background: #fff;
+    border-radius: 8px;
     overflow: hidden;
+
+    @media (max-width: 600px) {
+        width: 280px;
+        height: 280px;
+    }
 
     img {
         width: 100%;

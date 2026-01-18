@@ -2,6 +2,12 @@
     <div class="product-gallery-wrapper" style="position: relative;">
     </div>
 
+    @php
+        $displayName = ($product->variant && $product->variant->name && $product->variant->uid !== $product->uid)
+            ? $product->name . ' - ' . $product->variant->name
+            : $product->name;
+    @endphp
+
     <div
         class="product-gallery-preview-wrap position-relative overflow-hidden"
         :class="{ 'visible-variation-image': hasAnyVariationImage }"
@@ -28,7 +34,7 @@
                                 <img
                                     src="{{ asset('build/assets/image-placeholder.png') }}"
                                     data-zoom="{{ asset('build/assets/image-placeholder.png') }}"
-                                    alt="{{ $product->name }}"
+                                    alt="{{ $displayName }}"
                                     class="image-placeholder"
                                 >
                             </div>
@@ -42,16 +48,15 @@
                     @foreach ($product->variant->media as $media)
                         @php($isLcp = !$lcpAssigned)
                         @php($lcpAssigned = true)
-                        @php($fallbackAvif = $media->grid_avif_url ?? $media->detail_avif_url)
-                        @php($fallbackWebp = $media->grid_webp_url ?? $media->detail_webp_url)
+                        @php($detailAvif = $media->detail_avif_url)
+                        @php($detailWebp = $media->detail_webp_url)
                         @php(
                             $detailJpeg = $media->detail_jpeg_url
                                 ?? $media->path
                                 ?? asset('build/assets/image-placeholder.png')
                         )
                         @php(
-                            $displayJpeg = $media->grid_jpeg_url
-                                ?? $media->detail_jpeg_url
+                            $displayJpeg = $media->detail_jpeg_url
                                 ?? $media->path
                                 ?? asset('build/assets/image-placeholder.png')
                         )
@@ -60,42 +65,16 @@
                             <div class="gallery-preview-slide">
                                 <div class="gallery-preview-item" @click="triggerGalleryPreviewLightbox($event)">
                                     <picture>
-                                        @if ($media->ikas_avif_srcset)
-                                            <source
-                                                srcset="{{ $media->ikas_avif_srcset }}"
-                                                sizes="{{ $detailSizes }}"
-                                                type="image/avif"
-                                            >
-                                        @elseif ($fallbackAvif)
-                                            <source
-                                                srcset="{{ $fallbackAvif }}"
-                                                sizes="{{ $detailSizes }}"
-                                                type="image/avif"
-                                            >
+                                        @if ($detailAvif)
+                                            <source srcset="{{ $detailAvif }}" type="image/avif">
                                         @endif
-
-                                        @if ($media->ikas_webp_srcset)
-                                            <source
-                                                srcset="{{ $media->ikas_webp_srcset }}"
-                                                sizes="{{ $detailSizes }}"
-                                                type="image/webp"
-                                            >
-                                        @elseif ($fallbackWebp)
-                                            <source
-                                                srcset="{{ $fallbackWebp }}"
-                                                sizes="{{ $detailSizes }}"
-                                                type="image/webp"
-                                            >
+                                        @if ($detailWebp)
+                                            <source srcset="{{ $detailWebp }}" type="image/webp">
                                         @endif
-
                                         <img
                                             src="{{ $displayJpeg }}"
-                                            @if ($media->ikas_jpeg_srcset)
-                                                srcset="{{ $media->ikas_jpeg_srcset }}"
-                                            @endif
-                                            sizes="{{ $detailSizes }}"
                                             data-zoom="{{ $detailJpeg }}"
-                                            alt="{{ $product->name }}"
+                                            alt="{{ $displayName }}"
                                             width="1100"
                                             height="1100"
                                             loading="{{ $isLcp ? 'eager' : 'lazy' }}"
@@ -115,16 +94,15 @@
                     @foreach ($product->media as $media)
                         @php($isLcp = !$lcpAssigned)
                         @php($lcpAssigned = true)
-                        @php($fallbackAvif = $media->grid_avif_url ?? $media->detail_avif_url)
-                        @php($fallbackWebp = $media->grid_webp_url ?? $media->detail_webp_url)
+                        @php($detailAvif = $media->detail_avif_url)
+                        @php($detailWebp = $media->detail_webp_url)
                         @php(
                             $detailJpeg = $media->detail_jpeg_url
                                 ?? $media->path
                                 ?? asset('build/assets/image-placeholder.png')
                         )
                         @php(
-                            $displayJpeg = $media->grid_jpeg_url
-                                ?? $media->detail_jpeg_url
+                            $displayJpeg = $media->detail_jpeg_url
                                 ?? $media->path
                                 ?? asset('build/assets/image-placeholder.png')
                         )
@@ -133,42 +111,16 @@
                             <div class="gallery-preview-slide">
                                 <div class="gallery-preview-item" @click="triggerGalleryPreviewLightbox($event)">
                                     <picture>
-                                        @if ($media->ikas_avif_srcset)
-                                            <source
-                                                srcset="{{ $media->ikas_avif_srcset }}"
-                                                sizes="{{ $detailSizes }}"
-                                                type="image/avif"
-                                            >
-                                        @elseif ($fallbackAvif)
-                                            <source
-                                                srcset="{{ $fallbackAvif }}"
-                                                sizes="{{ $detailSizes }}"
-                                                type="image/avif"
-                                            >
+                                        @if ($detailAvif)
+                                            <source srcset="{{ $detailAvif }}" type="image/avif">
                                         @endif
-
-                                        @if ($media->ikas_webp_srcset)
-                                            <source
-                                                srcset="{{ $media->ikas_webp_srcset }}"
-                                                sizes="{{ $detailSizes }}"
-                                                type="image/webp"
-                                            >
-                                        @elseif ($fallbackWebp)
-                                            <source
-                                                srcset="{{ $fallbackWebp }}"
-                                                sizes="{{ $detailSizes }}"
-                                                type="image/webp"
-                                            >
+                                        @if ($detailWebp)
+                                            <source srcset="{{ $detailWebp }}" type="image/webp">
                                         @endif
-
                                         <img
                                             src="{{ $displayJpeg }}"
-                                            @if ($media->ikas_jpeg_srcset)
-                                                srcset="{{ $media->ikas_jpeg_srcset }}"
-                                            @endif
-                                            sizes="{{ $detailSizes }}"
                                             data-zoom="{{ $detailJpeg }}"
-                                            alt="{{ $product->name }}"
+                                            alt="{{ $displayName }}"
                                             width="1100"
                                             height="1100"
                                             loading="{{ $isLcp ? 'eager' : 'lazy' }}"

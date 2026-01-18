@@ -23,6 +23,7 @@ class EventServiceProvider extends ServiceProvider
             SendNewOrderSms::class,
             AddPlacedOrderToSession::class,
             \Modules\Admin\Listeners\InvalidateAnalyticsCache::class,
+            \FleetCart\Listeners\SendOrderNotification::class,
         ],
     ];
 }

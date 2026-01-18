@@ -2,11 +2,12 @@
 
 return [
     'browse_categories' => 'Kategorilere Göz At',
+    'category' => 'Kategori',
     'categories' => 'Kategoriler',
     'price' => 'Fiyat',
     'filters' => 'Filtreler',
     'latest_products' => 'En Yeni Ürünler',
-    'search_results_for' => 'Arama sonuçları:',
+    'search_results_for' => 'Arama Sonuçları:',
     'shop' => 'Mağaza',
     'grid_view' => 'Izgara Görünüm',
     'list_view' => 'Liste Görünüm',
@@ -26,6 +27,12 @@ return [
         50 => '50',
     ],
     'category_faq_title' => ':category Hakkında Sıkça Sorulan Sorular',
-    'no_products_found' => 'Üzgünüz! Ürün bulunamadı.',
-    'showing_results' => ':total sonuçtan :from–:to arası gösteriliyor',
+    'no_products_found' => 'Aradığınız kriterlere uygun ürün bulunamadı.',
+    'showing_results' => 'Toplam :total sonuç arasından :from - :to gösteriliyor',
+    'brand' => 'Marka',
+    'rating' => 'Değerlendirme',
+    'and_up' => 've Üzeri',
+    'clear_rating' => 'Değerlendirmeyi Temizle',
+    'clear_all' => 'Temizle',
+    'loading' => 'Yükleniyor...',
 ];

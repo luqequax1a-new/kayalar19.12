@@ -1,0 +1,17 @@
+{
+    "name": "fleetcart/analytics-module",
+    "description": "Professional E-commerce Analytics & Tracking System for FleetCart",
+    "type": "fleetcart-module",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Kayalar Manifatura",
+            "email": "kayalarmanifatura@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Modules\\Analytics\\": ""
+        }
+    }
+}

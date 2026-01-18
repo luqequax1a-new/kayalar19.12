@@ -154,19 +154,26 @@ class CheckoutCompleteController
 
         $order->storeTransaction($response);
 
-        // Deactivate abandoned cart coupon if used
+        // Delete auto-generated coupons after use (abandoned cart & review coupons)
         try {
             if ($order->hasCoupon()) {
                 $coupon = $order->coupon;
-                // Check if it's an abandoned cart coupon (starts with SEPET-)
-                // Or simply deactivate it if it's a generic single-use coupon logic
+                
+                // Delete abandoned cart coupons (SEPET-XXXXXX)
                 if ($coupon && str_starts_with($coupon->code, 'SEPET-')) {
-                    $coupon->update(['is_active' => false]);
-                    Log::info('Abandoned cart coupon deactivated: ' . $coupon->code);
+                    $couponCode = $coupon->code;
+                    $coupon->delete();
+                    Log::info('Abandoned cart coupon deleted after use: ' . $couponCode);
+                }
+                // Delete review coupons (RVW-XXXX-XXXX)
+                elseif ($coupon && str_starts_with($coupon->code, 'RVW-')) {
+                    $couponCode = $coupon->code;
+                    $coupon->delete();
+                    Log::info('Review coupon deleted after use: ' . $couponCode);
                 }
             }
         } catch (\Exception $e) {
-            Log::error('Failed to deactivate coupon: ' . $e->getMessage());
+            Log::error('Failed to delete auto-generated coupon: ' . $e->getMessage());
         }
 
         event(new OrderPlaced($order));
@@ -203,13 +210,6 @@ class CheckoutCompleteController
                 }
             }
         }
-
-        Log::channel('checkout')->info('checkout.complete_page', [
-            'order_id' => $order ? $order->id : null,
-            'user_id' => optional(auth()->user())->id,
-            'session_id' => request()->session()->getId(),
-            'referer' => request()->headers->get('referer'),
-        ]);
 
         return $order
             ? view('storefront::public.checkout.complete.show', compact('order'))

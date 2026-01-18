@@ -14,7 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('slider_slides', function (Blueprint $table) {
-            $table->integer('position')->after('open_in_new_window')->nullable();
+            $table->integer('position')->nullable();
         });
     }
 

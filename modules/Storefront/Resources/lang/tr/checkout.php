@@ -32,6 +32,7 @@ return [
     'enter_coupon_code' => 'Kupon kodu girin',
     'apply' => 'Uygula',
     'coupon' => 'Kupon Kodu',
+    'coupon_code' => 'Kupon Kodu',
     'shipping_cost' => 'Kargo',
     'cod_fee' => 'Kapıda Nakit Ödeme İşlem Ücreti',
     'cod_fee_suffix' => 'Ücret',
@@ -47,5 +48,6 @@ return [
     'street_address' => 'Adres',
     'email' => 'E-posta',
     'ship_to_different_address' => 'Fatura Adresim, Teslimat Adresimden Farklı',
-    'order_note' => 'Sipariş Notu'
+    'order_note' => 'Sipariş Notu',
+    'abandoned_cart_mail_subject' => 'Unuttuğun Bir Şeyler Var! - :store_name',
 ];

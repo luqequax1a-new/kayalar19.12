@@ -1,50 +1,81 @@
 .all-brands-wrap {
-    margin-top: 50px;
+    margin: 30px 0 50px;
 }
 
 .all-brands {
-    .all-brands-inner {
+    .brand-card {
         display: flex;
-        flex-wrap: wrap;
-        margin: 0 -10px -20px;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: #fff;
+        height: 100%;
+        width: 100%; // Sütunu doldur
+        text-decoration: none;
+        transition: 0.2s;
+        padding: 15px;
+        position: relative;
+        overflow: hidden;
 
-        .col-9 {
-            padding: 0 10px;
+        &:hover {
+            border-color: var(--color-primary);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+
+            .brand-name {
+                color: var(--color-primary);
+            }
         }
     }
 
     .brand-image {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 120px;
+        padding: 15px;
+        margin-bottom: 0;
         position: relative;
-        display: block;
-        margin-bottom: 20px;
-        padding-bottom: 70%;
-        border: 1px solid var(--color-gray-lite);
-        border-radius: var(--radius-default);
-        overflow: hidden;
-        transition: var(--transition-150);
+        border-bottom: 1px solid #f1f5f9;
 
-        &:hover {
-            border-color: var(--color-primary);
-
-            > img {
-                transform: translate(-50%, -50%) scale(1.1);
-            }
-        }
-
-        > img {
-            position: absolute;
-            left: 50%;
-            top: 50%;
-            max-height: 100%;
-            max-width: 100%;
-            transform: translate(-50%, -50%) scale(1);
-            transition: var(--transition-150);
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: transform 0.2s;
         }
 
         .image-placeholder {
-            height: 65px;
-            width: 65px;
+            width: 50px;
+            height: 50px;
+            opacity: 0.5;
         }
+    }
+
+    .brand-info {
+        width: 100%;
+        margin-top: auto; // İçeriği yukarı, bunu alta itmek istersek. Ama center alignment için gerek yok.
+    }
+
+    .brand-name {
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--color-black);
+        margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: block;
+        line-height: 1.2;
+    }
+
+    .brand-products-count {
+        font-size: 13px;
+        color: #64748b;
+        display: block;
+        font-weight: 500;
     }
 
     .empty-message {
@@ -64,9 +95,38 @@
                 stroke: var(--color-white);
                 stroke-miterlimit: 10;
                 stroke-width: 5px;
-
                 fill: var(--color-primary);
             }
+        }
+    }
+}
+
+@media screen and (max-width: 576px) {
+    .all-brands-wrap {
+        margin-top: 20px;
+
+        >.container {
+            padding-left: 5px;
+            padding-right: 5px;
+        }
+    }
+
+    .all-brands {
+        .brand-card {
+            padding: 8px;
+        }
+
+        .brand-image {
+            height: 70px;
+            margin-bottom: 5px;
+        }
+
+        .brand-name {
+            font-size: 13px;
+        }
+
+        .brand-products-count {
+            font-size: 11px;
         }
     }
 }

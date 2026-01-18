@@ -59,8 +59,18 @@ class SettingController
                 ->with('success', trans('setting::messages.settings_updated'));
         }
 
+        if ($request->get('context') === 'abandoned_cart') {
+            return redirect()->route('admin.settings.abandoned_cart')
+                ->with('success', trans('setting::messages.settings_updated'));
+        }
+
         if ($request->get('context') === 'customizations') {
             return redirect()->route('admin.settings.customizations')
+                ->with('success', trans('setting::messages.settings_updated'));
+        }
+
+        if ($request->get('context') === 'search') {
+            return redirect()->route('admin.settings.edit', ['tab' => 'search'])
                 ->with('success', trans('setting::messages.settings_updated'));
         }
 

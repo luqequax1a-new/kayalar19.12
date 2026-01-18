@@ -12,6 +12,7 @@ return [
         'save_and_exit' => 'Save & Exit',
         'delete' => 'Delete',
         'cancel' => 'Cancel',
+        'close' => 'Close',
     ],
     'table' => [
         'id' => 'ID',

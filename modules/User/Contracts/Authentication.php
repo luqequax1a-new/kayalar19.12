@@ -20,6 +20,28 @@ interface Authentication
 
 
     /**
+     * Validate a user.
+     *
+     * @param array $credentials
+     *
+     * @return User|bool
+     */
+    public function validate($credentials);
+
+
+    /**
+     * Login a user by id.
+     *
+     * @param int $id
+     * @param bool $remember
+     *
+     * @return User
+     */
+    public function loginById($id, $remember = false);
+
+
+
+    /**
      * Register a new user.
      *
      * @param array $data

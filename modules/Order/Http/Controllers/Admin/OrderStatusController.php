@@ -56,7 +56,7 @@ class OrderStatusController
                     $orderProduct->product_variant->increment('qty', $orderProduct->qty);
                 }
 
-                if ($orderProduct->product_variant->qty === 1) {
+                if ($orderProduct->product_variant->qty > 0) {
                     $orderProduct->product_variant->markAsInStock();
                 }
             } else {

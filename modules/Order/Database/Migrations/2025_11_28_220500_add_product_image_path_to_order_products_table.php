@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::table('order_products', function (Blueprint $table) {
             if (!Schema::hasColumn('order_products', 'product_image_path')) {
-                $table->string('product_image_path')->nullable()->after('product_sku');
+                $table->string('product_image_path')->nullable();
             }
         });
     }

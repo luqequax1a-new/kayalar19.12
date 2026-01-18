@@ -11,8 +11,6 @@ import "./layouts/PrimaryMenu";
 import "./layouts/SidebarCart";
 import "./layouts/CookieBar";
 import "./layouts/NewsletterSubscription";
-import "./layouts/NewsletterPopup";
-import "./layouts/Popup";
 import "./layouts/ScrollToTop";
 
 function disableBrowserZoom() {
@@ -25,7 +23,7 @@ function disableBrowserZoom() {
                     if (e.ctrlKey) {
                         e.preventDefault();
                     }
-                } catch (_) {}
+                } catch (_) { }
             },
             { passive: false }
         );
@@ -41,7 +39,7 @@ function disableBrowserZoom() {
                     if (k === "+" || k === "=" || k === "-" || k === "_" || k === "0") {
                         e.preventDefault();
                     }
-                } catch (_) {}
+                } catch (_) { }
             },
             { passive: false }
         );
@@ -52,7 +50,7 @@ function disableBrowserZoom() {
             (e) => {
                 try {
                     e.preventDefault();
-                } catch (_) {}
+                } catch (_) { }
             },
             { passive: false }
         );
@@ -61,7 +59,7 @@ function disableBrowserZoom() {
             (e) => {
                 try {
                     e.preventDefault();
-                } catch (_) {}
+                } catch (_) { }
             },
             { passive: false }
         );
@@ -70,11 +68,11 @@ function disableBrowserZoom() {
             (e) => {
                 try {
                     e.preventDefault();
-                } catch (_) {}
+                } catch (_) { }
             },
             { passive: false }
         );
-    } catch (_) {}
+    } catch (_) { }
 }
 
 document.addEventListener("DOMContentLoaded", () => {

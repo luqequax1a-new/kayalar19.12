@@ -238,7 +238,7 @@
                     </button>
                 </template>
             </template>
-            <template x-if="product.variants.length > 3">
+            <template x-if="product.variants && product.variants.length > 3">
                 <a :href="productUrl" class="variant-count">+<span x-text="product.variants.length - 3"></span></a>
             </template>
         </div>

@@ -10,131 +10,151 @@
 <div class="panel">
     <div class="panel-body" style="padding:0">
         <style>
-            .chat-wrapper{width:100%;margin:0;padding:12px}
-            .chat-card{background:#fff;border-radius:14px;box-shadow:0 10px 30px rgba(15,23,42,.10);overflow:hidden;border:1px solid #eef2f7}
-            .chat-container{display:flex;flex-direction:column;min-height:70vh;background:#f8fafc}
-            .chat-header{position:sticky;top:0;z-index:5;padding:14px 16px;border-bottom:1px solid #eef2f7;background:rgba(255,255,255,.9);backdrop-filter:blur(10px)}
-            .ticket-title{font-size:15px;font-weight:700;color:#0f172a}
-            .ticket-subtitle{font-size:12px;color:#64748b;margin-top:2px}
-            .chat-wrap{padding:16px;display:flex;flex-direction:column;gap:12px;overflow:auto}
-            .msg{max-width:78%;padding:12px 14px;border-radius:16px;position:relative;line-height:1.6;font-size:14px;box-shadow:0 6px 18px rgba(15,23,42,.06)}
-            .msg-user{margin-right:auto;background:#ffffff;border:1px solid #e2e8f0;color:#0f172a}
-            .msg-admin{margin-left:auto;background:linear-gradient(135deg,#4f46e5,#6d28d9);border:1px solid rgba(255,255,255,.15);color:#fff}
-            .msg-author{font-size:12px;font-weight:600;opacity:.9;margin-bottom:6px}
-            .msg-time{font-size:11px;opacity:.75;margin-top:8px;text-align:right}
-            .msg-group{display:flex;flex-direction:column;gap:6px;max-width:78%}
-            .msg-group-user{margin-right:auto;align-items:flex-start}
-            .msg-group-admin{margin-left:auto;align-items:flex-end}
-            .bubble{width:100%}
-            .bubble .attachments{margin-top:0}
-            .attachments{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:10px 0 0}
-            .attachments .item{border-radius:12px;overflow:hidden;border:1px solid rgba(226,232,240,.9);background:#fff}
-            .attachments .item img{display:block;width:100%;height:120px;object-fit:cover}
-            .chat-composer{padding:12px;border-top:1px solid #eef2f7;background:#fff}
-            .chat-composer-inner{display:grid;grid-template-columns:1fr 44px;gap:10px;border:1px solid #e2e8f0;border-radius:14px;background:#fff;padding:10px;width:100%;align-items:end}
-            .send-btn{height:44px;width:44px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;background:#4f46e5;color:#fff;border:none}
-            .file-count{font-size:12px;color:#64748b}
-            .file-input{display:none}
-            .chat-composer textarea{min-height:44px;max-height:220px;resize:none;border:none;outline:none;padding:10px 12px;overflow-y:auto;width:100%;word-break:break-word;background:transparent;font-size:14px;line-height:1.6;color:#0f172a}
-            .composer-top{display:flex;gap:10px;align-items:center;margin-bottom:10px}
-            .upload-btn{display:inline-flex;gap:6px;align-items:center;padding:8px 12px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;cursor:pointer;color:#0f172a}
-            .composer-top input[type="file"]{display:none}
-            .status-chip{display:inline-flex;align-items:center;gap:8px;font-size:12px;padding:6px 10px;border-radius:9999px;border:1px solid #e2e8f0;background:#fff;color:#0f172a}
-            .dot{width:8px;height:8px;border-radius:50%}
-            .dot-waiting-admin{background:#f59e0b}
-            .dot-waiting-customer{background:#3b82f6}
-            .dot-open{background:#10b981}
-            .dot-closed{background:#ef4444}
+            .modern-admin-chat{display:flex;flex-direction:column;height:calc(100vh - 280px);min-height:650px;background:#fff}
+            .admin-chat-header{padding:20px 24px;border-bottom:1.5px solid #f3f4f6;background:#fff;display:flex;justify-content:space-between;align-items:center}
+            .ticket-info{flex:1}
+            .ticket-id-subject{font-size:16px;font-weight:700;color:#111827;margin-bottom:4px}
+            .customer-email{font-size:13px;color:#6b7280}
             .header-actions{display:flex;gap:12px;align-items:center}
-            @media (max-width: 768px){
-                .chat-wrapper{width:100%;padding:8px}
-                .chat-container{min-height:calc(100vh - 160px)}
-                .chat-wrap{padding:12px}
-                .msg{max-width:92%}
-                .attachments{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
-                .attachments .item img{height:110px}
-                .chat-composer{padding:8px}
-                .chat-composer textarea{min-height:40px;max-height:160px}
-                .send-btn{height:42px;width:42px}
+            .status-badge-admin{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;border:1.5px solid}
+            .status-waiting-admin{background:#fef3c7;border-color:#fbbf24;color:#92400e}
+            .status-waiting-customer{background:#dbeafe;border-color:#60a5fa;color:#1e40af}
+            .status-closed{background:#fee2e2;border-color:#f87171;color:#991b1b}
+            .status-open{background:#d1fae5;border-color:#34d399;color:#065f46}
+            .status-dot-admin{width:6px;height:6px;border-radius:50%;background:currentColor}
+            .close-btn-admin{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;background:#fff;border:1.5px solid #e5e7eb;color:#6b7280;cursor:pointer;transition:all 0.2s}
+            .close-btn-admin:hover{border-color:#ef4444;color:#ef4444;background:#fef2f2}
+            .admin-messages-area{flex:1;overflow-y:auto;padding:24px;background:#f9fafb;display:flex;flex-direction:column;gap:16px}
+            .admin-message-group{display:flex;flex-direction:column;gap:8px;max-width:75%}
+            .admin-message-group-customer{align-self:flex-start;align-items:flex-start}
+            .admin-message-group-admin{align-self:flex-end;align-items:flex-end}
+            .admin-message-sender{font-size:12px;font-weight:600;color:#6b7280;margin-bottom:4px;padding:0 4px}
+            .admin-message-bubble{padding:14px 16px;border-radius:12px;font-size:14px;line-height:1.6;word-wrap:break-word;box-shadow:0 2px 8px rgba(0,0,0,0.04)}
+            .admin-message-bubble-customer{background:#fff;color:#111827;border:1.5px solid #e5e7eb;border-bottom-left-radius:4px}
+            .admin-message-bubble-admin{background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border-bottom-right-radius:4px}
+            .admin-message-images{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:8px}
+            .admin-message-image{border-radius:8px;overflow:hidden;cursor:pointer}
+            .admin-message-image *{border:none !important;outline:none !important;box-shadow:none !important}
+            .admin-message-image img{display:block;width:100%;height:140px;object-fit:cover;transition:transform 0.2s}
+            .admin-message-image:hover img{transform:scale(1.02)}
+            .admin-message-time{font-size:11px;color:#9ca3af;margin-top:4px;padding:0 4px}
+            .admin-composer{padding:20px 24px;border-top:1.5px solid #f3f4f6;background:#fff}
+            .admin-composer-upload{margin-bottom:12px;display:flex;gap:10px;align-items:center}
+            .admin-upload-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1.5px solid #e5e7eb;border-radius:8px;background:#fff;color:#6b7280;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s}
+            .admin-upload-btn:hover{border-color:#6366f1;color:#6366f1;background:#f0f1ff}
+            .admin-file-count{font-size:12px;color:#9ca3af}
+            .admin-composer-input-area{display:flex;gap:12px;align-items:flex-end;padding:12px;border:1.5px solid #e5e7eb;border-radius:10px;background:#f9fafb;transition:all 0.2s}
+            .admin-composer-input-area:focus-within{border-color:#6366f1;background:#fff;box-shadow:0 0 0 4px rgba(99,102,241,0.08)}
+            .admin-composer-textarea{flex:1;border:none;background:transparent;outline:none;resize:none;min-height:44px;max-height:200px;font-size:14px;color:#111827;font-family:inherit;line-height:1.6;padding:8px}
+            .admin-composer-textarea::placeholder{color:#9ca3af}
+            .admin-send-btn{width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 12px rgba(99,102,241,0.3)}
+            .admin-send-btn:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(99,102,241,0.4)}
+            @media(max-width:768px){
+                .modern-admin-chat{height:calc(100vh - 200px);min-height:500px}
+                .admin-chat-header{padding:16px 20px;flex-direction:column;align-items:flex-start;gap:12px}
+                .admin-messages-area{padding:16px}
+                .admin-message-group{max-width:85%}
+                .admin-composer{padding:16px 20px}
             }
         </style>
-        <div class="chat-wrapper"><div class="chat-card"><div class="chat-container">
-            <div class="chat-header d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="ticket-title">#{{ $ticket->id }} — {{ $ticket->subject }}</div>
-                    <div class="ticket-subtitle">
+        
+        <div class="modern-admin-chat">
+            <div class="admin-chat-header">
+                <div class="ticket-info">
+                    <div class="ticket-id-subject">#{{ $ticket->id }} — {{ $ticket->subject }}</div>
+                    <div class="customer-email">
                         @if(optional($ticket->user)->email || $ticket->guest_email)
                             {{ optional($ticket->user)->email ?: $ticket->guest_email }}
+                        @endif
+                        
+                        @if($ticket->order_id)
+                            <span style="margin-left:12px;padding:4px 8px;background:#e0e7ff;color:#4338ca;border-radius:6px;font-size:12px;font-weight:600;">
+                                📦 Sipariş: <a href="{{ route('admin.orders.show', $ticket->order_id) }}" style="color:#4338ca;text-decoration:underline;" target="_blank">#{{ $ticket->order->displayOrderNumber() }}</a>
+                            </span>
+                        @endif
+                        
+                        @if($ticket->source === 'contact')
+                            <span style="margin-left:8px;padding:4px 8px;background:#fef3c7;color:#92400e;border-radius:6px;font-size:12px;font-weight:600;">
+                                📧 İletişim Formu
+                            </span>
                         @endif
                     </div>
                 </div>
                 <div class="header-actions">
-                    <div class="status-chip">
+                    <div class="status-badge-admin status-{{ str_replace('_', '-', $ticket->status) }}">
+                        <span class="status-dot-admin"></span>
                         @php($s = (string) $ticket->status)
-                        <span class="dot {{ $s === 'closed' ? 'dot-closed' : ($s === 'waiting_admin' ? 'dot-waiting-admin' : ($s === 'waiting_customer' ? 'dot-waiting-customer' : 'dot-open')) }}"></span>
-                        <span>
-                            {{ $s === 'closed' ? 'Kapalı' : ($s === 'waiting_admin' ? 'Admin Bekleniyor' : ($s === 'waiting_customer' ? 'Müşteri Bekleniyor' : 'Açık')) }}
-                        </span>
+                        {{ $s === 'closed' ? 'Kapalı' : ($s === 'waiting_admin' ? 'Admin Bekleniyor' : ($s === 'waiting_customer' ? 'Müşteri Bekleniyor' : 'Açık')) }}
                     </div>
                     <form method="POST" action="{{ route('admin.tickets.close', $ticket->id) }}" style="display:inline">
                         {{ csrf_field() }}
-                        <button class="btn btn-default">{{ trans('ticket::ticket.close') }}</button>
+                        <button type="submit" class="close-btn-admin">Ticket'ı Kapat</button>
                     </form>
                 </div>
             </div>
-            <div class="chat-wrap">
-            @foreach($ticket->messages as $m)
-                @if($m->is_internal)
-                    @continue
-                @endif
-                <div class="msg-group {{ $m->sender_type === 'admin' ? 'msg-group-admin' : 'msg-group-user' }}">
-                    <div class="msg-author">
-                        @if($m->sender_type === 'admin')
-                            Admin
-                        @else
-                            {{ optional($ticket->user)->full_name ?: ($ticket->guest_email ?: 'Müşteri') }}
-                        @endif
-                    </div>
 
-                    @if($m->attachments->isNotEmpty())
-                        <div class="msg {{ $m->sender_type === 'admin' ? 'msg-admin' : 'msg-user' }} bubble">
-                            <div class="attachments">
+            <div class="admin-messages-area" id="adminMessagesArea">
+                @foreach($ticket->messages as $m)
+                    @if($m->is_internal)
+                        @continue
+                    @endif
+                    <div class="admin-message-group admin-message-group-{{ $m->sender_type === 'admin' ? 'admin' : 'customer' }}">
+                        <div class="admin-message-sender">
+                            @if($m->sender_type === 'admin')
+                                Destek Ekibi
+                            @else
+                                {{ optional($ticket->user)->full_name ?: ($ticket->guest_email ?: 'Müşteri') }}
+                            @endif
+                        </div>
+
+                        @if($m->attachments->isNotEmpty())
+                            <div class="admin-message-images">
                                 @foreach($m->attachments as $a)
-                                    <div class="item">
+                                    <div class="admin-message-image">
                                         <a href="{{ $a->url }}" class="ticket-lightbox" data-gallery="ticket-{{ $ticket->id }}">
                                             <img src="{{ $a->url }}" alt="attachment">
                                         </a>
                                     </div>
                                 @endforeach
                             </div>
-                        </div>
-                    @endif
+                        @endif
 
-                    @if(trim((string) $m->body) !== '')
-                        <div class="msg {{ $m->sender_type === 'admin' ? 'msg-admin' : 'msg-user' }} bubble">
-                            <div>{{ $m->body }}</div>
-                        </div>
-                    @endif
+                        @if(trim((string) $m->body) !== '')
+                            <div class="admin-message-bubble admin-message-bubble-{{ $m->sender_type === 'admin' ? 'admin' : 'customer' }}">
+                                {{ $m->body }}
+                            </div>
+                        @endif
 
-                    <div class="msg-time">{{ optional($m->created_at)->format('Y-m-d H:i') }}</div>
-                </div>
-            @endforeach
-            </div>
-            <form method="POST" action="{{ route('admin.tickets.messages.store', $ticket->id) }}" enctype="multipart/form-data" class="chat-composer">
-                {{ csrf_field() }}
-                <div class="composer-top">
-                    <input id="admin-ticket-upload" type="file" name="images[]" multiple accept="image/*" class="file-input">
-                    <label for="admin-ticket-upload" class="upload-btn"><i class="las la-image"></i> {{ __('Görsel ekle') }}</label>
-                    <span class="file-count"></span>
-                </div>
-                <div class="chat-composer-inner">
-                    <div class="field">
-                        <textarea id="admin-ticket-textarea" name="body" rows="1" placeholder="{{ trans('ticket::ticket.write_message') }}" required></textarea>
+                        <div class="admin-message-time">{{ optional($m->created_at)->format('d.m.Y H:i') }}</div>
                     </div>
-                    <button class="send-btn" type="submit"><i class="fa fa-paper-plane"></i></button>
+                @endforeach
+            </div>
+
+            <form method="POST" action="{{ route('admin.tickets.messages.store', $ticket->id) }}" enctype="multipart/form-data" class="admin-composer">
+                {{ csrf_field() }}
+                <div class="admin-composer-upload">
+                    <input id="adminTicketUpload" type="file" name="images[]" multiple accept="image/*" style="display:none">
+                    <label for="adminTicketUpload" class="admin-upload-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                        Görsel Ekle
+                    </label>
+                    <span class="admin-file-count" id="adminFileCount"></span>
+                </div>
+                <div class="admin-composer-input-area">
+                    <textarea id="adminTicketTextarea" name="body" class="admin-composer-textarea" placeholder="Müşteriye cevap yazın..." required></textarea>
+                    <button type="submit" class="admin-send-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
                 </div>
             </form>
-        </div></div></div>
+        </div>
     </div>
 </div>
 
@@ -142,34 +162,40 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded',function(){
+        document.addEventListener('DOMContentLoaded', function() {
+            // Lightbox
             if (window.GLightbox) {
                 GLightbox({ selector: '.ticket-lightbox' });
             }
-            var wrap = document.querySelector('.chat-wrap');
-            if (wrap) { wrap.scrollTop = wrap.scrollHeight; }
 
-            var fi = document.getElementById('admin-ticket-upload');
-            var fc = document.querySelector('.file-count');
-            if (fi && fc) {
-                fi.addEventListener('change', function(){
-                    fc.textContent = fi.files && fi.files.length ? (fi.files.length + ' dosya') : '';
+            // Scroll to bottom
+            const messagesArea = document.getElementById('adminMessagesArea');
+            if (messagesArea) {
+                messagesArea.scrollTop = messagesArea.scrollHeight;
+            }
+
+            // File upload
+            const fileInput = document.getElementById('adminTicketUpload');
+            const fileCount = document.getElementById('adminFileCount');
+            if (fileInput && fileCount) {
+                fileInput.addEventListener('change', function() {
+                    fileCount.textContent = this.files.length > 0 ? `${this.files.length} dosya seçildi` : '';
                 });
             }
-            
-            var ta = document.getElementById('admin-ticket-textarea');
-            if (ta) {
-                var auto = function(){
-                    ta.style.height = 'auto';
-                    var h = Math.min(ta.scrollHeight, 220);
-                    ta.style.height = h + 'px';
-                    ta.style.overflowY = ta.scrollHeight > 220 ? 'auto' : 'hidden';
-                };
-                ta.addEventListener('input', auto);
-                auto();
 
-                var form = document.querySelector('.chat-composer');
-                ta.addEventListener('keydown', function(e){
+            // Textarea auto-resize
+            const textarea = document.getElementById('adminTicketTextarea');
+            if (textarea) {
+                const autoResize = function() {
+                    textarea.style.height = 'auto';
+                    const newHeight = Math.min(textarea.scrollHeight, 200);
+                    textarea.style.height = newHeight + 'px';
+                };
+                textarea.addEventListener('input', autoResize);
+
+                // Enter to submit (Shift+Enter for new line)
+                const form = textarea.closest('form');
+                textarea.addEventListener('keydown', function(e) {
                     if (e.key === 'Enter' && !e.shiftKey && form) {
                         e.preventDefault();
                         form.submit();

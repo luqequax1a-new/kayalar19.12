@@ -68,6 +68,9 @@ class Page extends Model implements Sitemapable
     protected static function booted()
     {
         static::addActiveGlobalScope();
+        
+        // Register slug observer
+        static::observe(\Modules\Page\Observers\PageSlugObserver::class);
     }
 
 

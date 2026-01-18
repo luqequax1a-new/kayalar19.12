@@ -8,5 +8,6 @@
         {{ Form::text('start_date', trans('coupon::attributes.start_date'), $errors, $coupon, ['class' => 'datetime-picker', 'data-default-date' => $coupon->start_date, 'data-time' => true]) }}
         {{ Form::text('end_date', trans('coupon::attributes.end_date'), $errors, $coupon, ['class' => 'datetime-picker', 'data-default-date' => $coupon->end_date, 'data-time' => true]) }}
         {{ Form::checkbox('is_active', trans('coupon::attributes.is_active'), trans('coupon::coupons.form.enable_the_coupon'), $errors, $coupon) }}
+        {{ Form::checkbox('show_in_checkout', trans('coupon::attributes.show_in_checkout'), trans('coupon::coupons.form.show_in_checkout'), $errors, $coupon) }}
     </div>
 </div>

@@ -70,14 +70,34 @@ class ProductIndexController
 
                         if ($actives->isNotEmpty()) {
                             return $actives->map(function ($variant) use ($product, $tagBadges, $variantLabel) {
+                                $variantImage = ($variant->base_image && ($variant->base_image->id ?? null)) ? $variant->base_image : null;
+                                $productImage = ($product->base_image && ($product->base_image->id ?? null)) ? $product->base_image : null;
+                                $image = $variantImage ?: ($productImage ?: $product->base_image);
+
                                 $p = $product->clean();
                                 $p['variant_attribute_label'] = $variantLabel;
                                 $p['name'] = $product->name;
                                 $p['list_variants_separately'] = true;
                                 $p['listing_key'] = 'p' . (int) $product->id . '-v' . (int) ($variant->id ?? 0);
                                 $p['variant'] = $variant->toArray();
-                                $p['url'] = $variant->url() ?? $product->url();
-                                $p['base_image'] = ($variant->base_image ?? $product->base_image);
+                                $slug = (string) ($product->slug ?? '');
+                                $uid = (string) ($variant->uid ?? '');
+                            $p['url'] = $slug !== ''
+                                ? url('/' . setting('products_page_slug', 'products') . '/' . $slug) . ($uid !== '' ? ('?variant=' . $uid) : '')
+                                : $product->url();
+                                $p['base_image'] = $image;
+                                $p['base_image_thumb'] = [
+                                    'path' => media_variant_url(
+                                        $image,
+                                        (int) config('image_optimization.variants.widths.grid', 400)
+                                    )
+                                ];
+                                $p['variant']['base_image_thumb'] = [
+                                    'path' => media_variant_url(
+                                        $image,
+                                        (int) config('image_optimization.variants.widths.thumb', 80)
+                                    )
+                                ];
                                 $p['formatted_price'] = $variant->formatted_price ?? $product->formatted_price;
                                 $p['formatted_price_range'] = null;
                                 $p['tag_badges'] = $tagBadges;
@@ -180,7 +200,7 @@ class ProductIndexController
                             $slug = (string) ($product->slug ?? '');
                             $uid = (string) ($variant->uid ?? '');
                             $p['url'] = $slug !== ''
-                                ? url('/products/' . $slug) . ($uid !== '' ? ('?variant=' . $uid) : '')
+                                ? url('/' . setting('products_page_slug', 'products') . '/' . $slug) . ($uid !== '' ? ('?variant=' . $uid) : '')
                                 : $product->url();
                             $p['base_image'] = $image;
                             $p['base_image_thumb'] = [
@@ -284,13 +304,34 @@ class ProductIndexController
 
                     if ($actives->isNotEmpty()) {
                         return $actives->map(function ($variant) use ($product, $tagBadges, $variantLabel) {
+                            $variantImage = ($variant->base_image && ($variant->base_image->id ?? null)) ? $variant->base_image : null;
+                            $productImage = ($product->base_image && ($product->base_image->id ?? null)) ? $product->base_image : null;
+                            $image = $variantImage ?: ($productImage ?: $product->base_image);
+
                             $p = $product->clean();
                             $p['variant_attribute_label'] = $variantLabel;
                             $p['name'] = $product->name;
                             $p['list_variants_separately'] = true;
+                            $p['listing_key'] = 'p' . (int) $product->id . '-v' . (int) ($variant->id ?? 0);
                             $p['variant'] = $variant->toArray();
-                            $p['url'] = $variant->url() ?? $product->url();
-                            $p['base_image'] = ($variant->base_image ?? $product->base_image);
+                            $slug = (string) ($product->slug ?? '');
+                            $uid = (string) ($variant->uid ?? '');
+                            $p['url'] = $slug !== ''
+                                ? url('/' . setting('products_page_slug', 'products') . '/' . $slug) . ($uid !== '' ? ('?variant=' . $uid) : '')
+                                : $product->url();
+                            $p['base_image'] = $image;
+                            $p['base_image_thumb'] = [
+                                'path' => media_variant_url(
+                                    $image,
+                                    (int) config('image_optimization.variants.widths.grid', 400)
+                                )
+                            ];
+                            $p['variant']['base_image_thumb'] = [
+                                'path' => media_variant_url(
+                                    $image,
+                                    (int) config('image_optimization.variants.widths.thumb', 80)
+                                )
+                            ];
                             $p['formatted_price'] = $variant->formatted_price ?? $product->formatted_price;
                             $p['formatted_price_range'] = null;
                             $p['tag_badges'] = $tagBadges;
@@ -300,6 +341,7 @@ class ProductIndexController
                 }
                 $base = $product->clean();
                 $base['variant_attribute_label'] = $variantLabel;
+                $base['listing_key'] = 'p' . (int) $product->id;
                 if ($this->variantsMode === 'force_off') {
                     $base['list_variants_separately'] = false;
                 } elseif ($this->variantsMode === 'force_on') {
@@ -370,13 +412,34 @@ class ProductIndexController
 
                     if ($actives->isNotEmpty()) {
                         return $actives->map(function ($variant) use ($product, $tagBadges, $variantLabel) {
+                            $variantImage = ($variant->base_image && ($variant->base_image->id ?? null)) ? $variant->base_image : null;
+                            $productImage = ($product->base_image && ($product->base_image->id ?? null)) ? $product->base_image : null;
+                            $image = $variantImage ?: ($productImage ?: $product->base_image);
+
                             $p = $product->clean();
                             $p['variant_attribute_label'] = $variantLabel;
                             $p['name'] = $product->name;
                             $p['list_variants_separately'] = true;
+                            $p['listing_key'] = 'p' . (int) $product->id . '-v' . (int) ($variant->id ?? 0);
                             $p['variant'] = $variant->toArray();
-                            $p['url'] = $variant->url() ?? $product->url();
-                            $p['base_image'] = ($variant->base_image ?? $product->base_image);
+                            $slug = (string) ($product->slug ?? '');
+                            $uid = (string) ($variant->uid ?? '');
+                            $p['url'] = $slug !== ''
+                                ? url('/' . setting('products_page_slug', 'products') . '/' . $slug) . ($uid !== '' ? ('?variant=' . $uid) : '')
+                                : $product->url();
+                            $p['base_image'] = $image;
+                            $p['base_image_thumb'] = [
+                                'path' => media_variant_url(
+                                    $image,
+                                    (int) config('image_optimization.variants.widths.grid', 400)
+                                )
+                            ];
+                            $p['variant']['base_image_thumb'] = [
+                                'path' => media_variant_url(
+                                    $image,
+                                    (int) config('image_optimization.variants.widths.thumb', 80)
+                                )
+                            ];
                             $p['formatted_price'] = $variant->formatted_price ?? $product->formatted_price;
                             $p['formatted_price_range'] = null;
                             $p['tag_badges'] = $tagBadges;
@@ -386,6 +449,12 @@ class ProductIndexController
                 }
                 $base = $product->clean();
                 $base['variant_attribute_label'] = $variantLabel;
+                $base['listing_key'] = 'p' . (int) $product->id;
+                if ($this->variantsMode === 'force_off') {
+                    $base['list_variants_separately'] = false;
+                } elseif ($this->variantsMode === 'force_on') {
+                    $base['list_variants_separately'] = true;
+                }
                 $base['variants'] = ($product->relationLoaded('variants')
                     ? $product->variants
                     : $product->variants()->get())

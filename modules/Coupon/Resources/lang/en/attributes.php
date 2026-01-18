@@ -17,4 +17,7 @@ return [
     'exclude_categories' => 'Exclude Categories',
     'usage_limit_per_coupon' => 'Usage Limit Per Coupon',
     'usage_limit_per_customer' => 'Usage Limit Per Customer',
+    'exclude_sale_items' => 'Exclude Sale Items',
+    'show_in_checkout' => 'Show in Checkout List',
+    'customer_id' => 'Customer',
 ];

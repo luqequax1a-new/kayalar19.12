@@ -8,7 +8,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->boolean('list_variants_separately')->default(false)->after('is_active');
+            $table->boolean('list_variants_separately')->default(false);
         });
     }
 

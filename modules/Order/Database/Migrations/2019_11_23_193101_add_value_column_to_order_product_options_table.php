@@ -14,7 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('order_product_options', function (Blueprint $table) {
-            $table->text('value')->nullable()->after('option_id');
+            $table->text('value')->nullable();
         });
     }
 

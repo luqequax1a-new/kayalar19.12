@@ -61,12 +61,24 @@
                     </div>
 
                     <div class="dashboard-analytics-tabs" data-dashboard-analytics-tabs>
-                        <a href="#" class="tab active" data-tab="trend">Trend</a>
-                        <a href="#" class="tab" data-tab="customers">Müşteriler</a>
-                        <a href="#" class="tab" data-tab="traffic">Kaynak</a>
-                        <a href="#" class="tab" data-tab="hourly">Saatlik</a>
-                        <a href="#" class="tab" data-tab="order_status">Sipariş Durumu</a>
-                        <a href="#" class="tab" data-tab="conversion">Dönüşüm</a>
+                        <a href="#" class="tab active" data-tab="trend">
+                            <i class="fa fa-line-chart"></i> Trend
+                        </a>
+                        <a href="#" class="tab" data-tab="customers">
+                            <i class="fa fa-users"></i> Müşteriler
+                        </a>
+                        <a href="#" class="tab" data-tab="traffic">
+                            <i class="fa fa-globe"></i> Kaynak
+                        </a>
+                        <a href="#" class="tab" data-tab="hourly">
+                            <i class="fa fa-clock-o"></i> Saatlik
+                        </a>
+                        <a href="#" class="tab" data-tab="order_status">
+                            <i class="fa fa-pie-chart"></i> Sipariş Durumu
+                        </a>
+                        <a href="#" class="tab" data-tab="conversion">
+                            <i class="fa fa-refresh"></i> Dönüşüm
+                        </a>
                     </div>
 
                     <div class="dashboard-analytics-tab-panels">
@@ -148,6 +160,8 @@
         </div>
 
         <div class="col-md-5">
+            @include('admin::dashboard.panels.notifications')
+
             @hasAccess('admin.products.index')
                 <div class="dashboard-panel dashboard-top-products">
                     <div class="grid-header clearfix">
@@ -159,7 +173,12 @@
                             <a href="#" class="range" data-entity-tab="brands">Markalar</a>
                         </div>
 
-                        <div class="pull-right dashboard-top-products-limit" data-top-products-limit>
+                        <div class="pull-right dashboard-top-products-variants" data-top-products-variants style="margin-right: 10px;">
+                            <a href="#" class="range active" data-variants="1">Varyantlı</a>
+                            <a href="#" class="range" data-variants="0">Varyantsız</a>
+                        </div>
+
+                        <div class="pull-right dashboard-top-products-limit" data-top-products-limit style="margin-right: 10px;">
                             <a href="#" class="range" data-limit="5">5</a>
                             <a href="#" class="range active" data-limit="10">10</a>
                             <a href="#" class="range" data-limit="15">15</a>
@@ -182,12 +201,12 @@
                                         <td class="empty" colspan="3">{{ trans('admin::dashboard.no_data') }}</td>
                                     </tr>
                                 </tbody>
-                                <tbody data-top-categories-body class="it-hidden">
+                                <tbody data-top-categories-body style="display: none;">
                                     <tr>
                                         <td class="empty" colspan="3">{{ trans('admin::dashboard.no_data') }}</td>
                                     </tr>
                                 </tbody>
-                                <tbody data-top-brands-body class="it-hidden">
+                                <tbody data-top-brands-body style="display: none;">
                                     <tr>
                                         <td class="empty" colspan="3">{{ trans('admin::dashboard.no_data') }}</td>
                                     </tr>

@@ -27,7 +27,7 @@ return new class extends Migration
     public function down()
     {
         Schema::table('meta_data_translations', function (Blueprint $table) {
-            $table->text('meta_keywords')->nullable()->after('meta_title');
+            $table->text('meta_keywords')->nullable();
         });
     }
 };

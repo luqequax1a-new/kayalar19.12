@@ -173,6 +173,13 @@
                                             </a>
                                         </td>
                                         <td valign="top" style="padding-left: 15px;">
+                                            @if ($product->is_upsell)
+                                                <div style="margin-bottom: 5px;">
+                                                    <span style="background-color: #fef3c7; color: #92400e; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                                        {{ trans('storefront::upsell.offer_badge') }}
+                                                    </span>
+                                                </div>
+                                            @endif
                                             <a href="{{ $prodUrl }}" target="_blank" class="product-name">{{ $product->name }}</a>
                                             <div class="product-meta">
                                                 <div style="margin-bottom: 2px;">Stok Kodu: {{ $product->sku ?: '-' }}</div>
@@ -193,6 +200,11 @@
                                             </div>
                                         </td>
                                         <td align="right" valign="top" style="font-weight: 800; color: #0f172a; white-space: nowrap;">
+                                            @if ($product->is_upsell && $product->original_price)
+                                                <div style="color: #94a3b8; font-size: 11px; text-decoration: line-through; margin-bottom: 2px;">
+                                                    {{ $product->original_price->multiply($product->qty)->convert($order->currency, $order->currency_rate)->format($order->currency) }}
+                                                </div>
+                                            @endif
                                             {{ $product->line_total->convert($order->currency,$order->currency_rate)->format($order->currency) }}
                                         </td>
                                     </tr>

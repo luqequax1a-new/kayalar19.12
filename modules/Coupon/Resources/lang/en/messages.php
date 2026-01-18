@@ -8,4 +8,5 @@ return [
     'maximum_spend' => 'You need to spend less than :amount to apply this coupon',
     'inapplicable' => 'This coupon is not applicable to your cart',
     'usage_limit_reached' => 'The coupon usage limit has been reached',
+    'exclude_sale_items' => 'This coupon cannot be used with sale items.',
 ];

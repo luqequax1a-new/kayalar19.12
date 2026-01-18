@@ -28,20 +28,20 @@
                         </a>
                     </td>
                     <td>
-                        <div class="flex items-center gap-2">
-                            <a
-                                :href="productUrl"
-                                class="product-name"
-                                x-text="productName"
-                            >
-                            </a>
-
-                            <template x-if="cartItem.upsell && cartItem.upsell.is_upsell">
-                                <span class="ml-1 inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold" style="background-color:#fef3c7;color:#92400e;">
+                        <template x-if="cartItem.upsell && cartItem.upsell.is_upsell">
+                            <div class="mb-1">
+                                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold" style="background-color:#fef3c7;color:#92400e; font-size: 11px; border-radius: 4px;">
                                     {{ trans('storefront::upsell.offer_badge') }}
                                 </span>
-                            </template>
-                        </div>
+                            </div>
+                        </template>
+
+                        <a
+                            :href="productUrl"
+                            class="product-name"
+                            x-text="productName"
+                        >
+                        </a>
 
                         <template x-cloak x-if="hasAnyVariation">
                             <ul class="list-inline product-options">
@@ -116,15 +116,15 @@
                 </a>
 
                 <div class="cart-mobile-info">
-                    <div class="flex items-center gap-2">
-                        <a :href="productUrl" class="cart-mobile-name" x-text="productName"></a>
-
-                        <template x-if="cartItem.upsell && cartItem.upsell.is_upsell">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-2xs font-semibold" style="background-color:#fef3c7;color:#92400e;">
+                    <template x-if="cartItem.upsell && cartItem.upsell.is_upsell">
+                        <div style="margin-bottom: 2px;">
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold" style="background-color:#fef3c7;color:#92400e; font-size: 10px; border-radius: 4px;">
                                 {{ trans('storefront::upsell.offer_badge') }}
                             </span>
-                        </template>
-                    </div>
+                        </div>
+                    </template>
+
+                    <a :href="productUrl" class="cart-mobile-name" x-text="productName"></a>
 
                     <template x-cloak x-if="hasAnyVariation">
                         <ul class="cart-mobile-variations">

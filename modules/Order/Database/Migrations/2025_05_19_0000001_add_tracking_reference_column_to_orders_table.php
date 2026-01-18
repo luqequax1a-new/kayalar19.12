@@ -13,7 +13,7 @@ return new class extends Migration {
     public function up()
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->text('tracking_reference')->nullable()->after('note');
+            $table->text('tracking_reference')->nullable();
         });
     }
 

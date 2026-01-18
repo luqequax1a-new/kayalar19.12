@@ -39,4 +39,10 @@ return [
     'or' => 'Or',
     'do_not_have_an_account' => 'Don\'t have an account?',
     'sign_up' => 'Sign up',
+    'two_factor_verification' => 'Two Factor Verification',
+    '2fa_verification' => '2FA Verification',
+    'enter_the_code_sent_to_your_email' => 'Enter the 6-digit verification code sent to your email address.',
+    'verification_code' => 'Verification Code',
+    'verify' => 'Verify',
+    'resend_code' => 'Resend Code',
 ];

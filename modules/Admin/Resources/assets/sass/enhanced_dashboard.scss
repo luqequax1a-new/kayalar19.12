@@ -2,9 +2,9 @@
     .dashboard-analytics-tabs {
         .tab {
             &.active {
-                background: #0e1e3e;
-                border-color: #0e1e3e;
-                color: #ffffff;
+                background: transparent;
+                border-color: transparent;
+                color: #0068e1;
             }
         }
     }
@@ -13,13 +13,13 @@
         .tab-panel {
             .canvas {
                 height: 320px;
-                
+
                 &.conversion-chart-container {
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     height: 200px;
-                    
+
                     canvas {
                         max-width: 200px;
                         max-height: 200px;
@@ -27,16 +27,16 @@
                 }
             }
         }
-        
+
         .conversion-metrics {
             display: flex;
             justify-content: center;
             gap: 30px;
             padding: 20px;
-            
+
             .metric {
                 text-align: center;
-                
+
                 .label {
                     display: block;
                     font-size: 12px;
@@ -44,7 +44,7 @@
                     color: #737881;
                     margin-bottom: 5px;
                 }
-                
+
                 .value {
                     display: block;
                     font-size: 18px;
@@ -52,6 +52,98 @@
                     color: #0e1e3e;
                 }
             }
+        }
+    }
+}
+
+.dashboard-top-products-limit,
+.dashboard-top-products-variants {
+    display: inline-flex;
+    background: #f1f5f9;
+    padding: 3px;
+    border-radius: 10px;
+    gap: 2px;
+    align-items: center;
+
+    .range {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 24px;
+        min-width: 32px;
+        padding: 0 10px;
+        border-radius: 8px;
+        color: #64748b;
+        font-size: 11px;
+        font-weight: 800;
+        text-decoration: none !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+        &:hover {
+            color: #1e293b;
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        &.active {
+            background: #ffffff !important;
+            color: #0068e1 !important;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+        }
+    }
+}
+
+.dashboard-top-products-variants {
+    .range {
+        min-width: 70px;
+    }
+}
+
+.dashboard-top-products {
+    .grid-header {
+        display: flex !important;
+        align-items: flex-start;
+        justify-content: space-between;
+        padding: 15px 20px;
+        border-bottom: 1px solid #f1f5f9;
+
+        .header-left {
+            display: flex;
+            flex-direction: column;
+        }
+
+        h5 {
+            margin: 0;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        &::before,
+        &::after {
+            display: none !important;
+        }
+
+        .pull-right,
+        .pull-left {
+            float: none !important;
+        }
+    }
+
+    // Optimize table rendering
+    table {
+        tbody {
+            transition: opacity 0.15s ease-in-out;
+
+            &[style*="display: none"] {
+                opacity: 0;
+            }
+        }
+    }
+
+    // Optimize image loading
+    .tp-thumb {
+        img {
+            will-change: auto;
+            backface-visibility: hidden;
         }
     }
 }
@@ -72,18 +164,18 @@
     .dashboard-panel.dashboard-analytics {
         .dashboard-analytics-kpis {
             grid-template-columns: repeat(2, minmax(0, 1fr));
-            
+
             .kpi {
                 .label {
                     font-size: 11px;
                 }
-                
+
                 .value {
                     font-size: 14px;
                 }
             }
         }
-        
+
         .dashboard-analytics-tabs {
             .tab {
                 padding: 0 8px;
@@ -100,10 +192,10 @@
             .tab-panel {
                 .canvas {
                     height: 280px;
-                    
+
                     &.conversion-chart-container {
                         height: 180px;
-                        
+
                         canvas {
                             max-width: 180px;
                             max-height: 180px;
@@ -111,16 +203,16 @@
                     }
                 }
             }
-            
+
             .conversion-metrics {
                 flex-direction: column;
                 gap: 15px;
-                
+
                 .metric {
                     .label {
                         font-size: 11px;
                     }
-                    
+
                     .value {
                         font-size: 16px;
                     }

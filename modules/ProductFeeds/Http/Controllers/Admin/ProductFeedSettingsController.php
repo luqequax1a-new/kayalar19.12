@@ -42,10 +42,34 @@ class ProductFeedSettingsController extends Controller
                 'use_variants' => (bool) setting('product_feeds.meta.use_variants', true),
                 'currency' => (string) setting('product_feeds.meta.currency', 'TRY'),
             ],
+            'trendyol' => [
+                'enabled' => (bool) setting('product_feeds.trendyol.enabled', false),
+                'supplier_id' => (string) setting('product_feeds.trendyol.supplier_id', ''),
+                'brand' => (string) setting('product_feeds.trendyol.brand', ''),
+                'cargo_company' => (string) setting('product_feeds.trendyol.cargo_company', ''),
+                'vat_rate' => (string) setting('product_feeds.trendyol.vat_rate', ''),
+                'shipment_time' => (string) setting('product_feeds.trendyol.shipment_time', '1-3'),
+            ],
+            'hepsiburada' => [
+                'enabled' => (bool) setting('product_feeds.hepsiburada.enabled', false),
+            ],
+            'pinterest' => [
+                'enabled' => (bool) setting('product_feeds.pinterest.enabled', false),
+                'format' => (string) setting('product_feeds.pinterest.format', 'tsv'),
+            ],
+            'tiktok' => [
+                'enabled' => (bool) setting('product_feeds.tiktok.enabled', false),
+                'in_stock_only' => (bool) setting('product_feeds.tiktok.in_stock_only', true),
+                'shipping_profile' => (string) setting('product_feeds.tiktok.shipping_profile', ''),
+            ],
             'cache' => [
                 'enabled' => (bool) setting('product_feeds.cache.enabled', false),
                 'google' => (int) setting('product_feeds.cache.google', 60),
                 'meta' => (int) setting('product_feeds.cache.meta', 60),
+                'trendyol' => (int) setting('product_feeds.cache.trendyol', 60),
+                'hepsiburada' => (int) setting('product_feeds.cache.hepsiburada', 60),
+                'pinterest' => (int) setting('product_feeds.cache.pinterest', 60),
+                'tiktok' => (int) setting('product_feeds.cache.tiktok', 60),
                 'token' => (string) setting('product_feeds.cache.token', ''),
             ],
         ];
@@ -59,7 +83,22 @@ class ProductFeedSettingsController extends Controller
         $feedMeta = [
             'google' => $cache->readMeta('google'),
             'meta' => $cache->readMeta('meta'),
+            'trendyol' => $cache->readMeta('trendyol'),
+            'hepsiburada' => $cache->readMeta('hepsiburada'),
+            'pinterest' => $cache->readMeta('pinterest'),
+            'tiktok' => $cache->readMeta('tiktok'),
         ];
+
+        foreach ($feedMeta as $key => $meta) {
+            if (isset($meta['generated_at'])) {
+                $carbon = \Illuminate\Support\Carbon::parse($meta['generated_at']);
+                $feedMeta[$key]['generated_at_formatted'] = sprintf(
+                    '%s (%s)',
+                    $carbon->diffForHumans(),
+                    $carbon->format('d.m.Y H:i')
+                );
+            }
+        }
 
         return view('product_feeds::admin.settings.index', compact('settings', 'feedMeta'));
     }
@@ -91,9 +130,29 @@ class ProductFeedSettingsController extends Controller
             'meta.use_variants' => 'sometimes|boolean',
             'meta.currency' => 'nullable|string|max:3',
 
+            'trendyol.enabled' => 'sometimes|boolean',
+            'trendyol.supplier_id' => 'nullable|string|max:255',
+            'trendyol.brand' => 'nullable|string|max:255',
+            'trendyol.cargo_company' => 'nullable|string|max:255',
+            'trendyol.vat_rate' => 'nullable|string|max:10',
+            'trendyol.shipment_time' => 'nullable|string|max:255',
+
+            'hepsiburada.enabled' => 'sometimes|boolean',
+
+            'pinterest.enabled' => 'sometimes|boolean',
+            'pinterest.format' => 'nullable|string|in:tsv,csv',
+
+            'tiktok.enabled' => 'sometimes|boolean',
+            'tiktok.in_stock_only' => 'sometimes|boolean',
+            'tiktok.shipping_profile' => 'nullable|string|max:255',
+
             'cache.enabled' => 'sometimes|boolean',
             'cache.google' => 'nullable|integer|min:0',
             'cache.meta' => 'nullable|integer|min:0',
+            'cache.trendyol' => 'nullable|integer|min:0',
+            'cache.hepsiburada' => 'nullable|integer|min:0',
+            'cache.pinterest' => 'nullable|integer|min:0',
+            'cache.tiktok' => 'nullable|integer|min:0',
         ]);
 
         $settings = [];

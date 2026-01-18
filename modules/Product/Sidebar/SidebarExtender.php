@@ -44,18 +44,6 @@ class SidebarExtender extends BaseSidebarExtender
                         $this->auth->hasAccess('admin.products.index')
                     );
                 });
-
-                $item->item('Toplu Ürün Güncelleme', function (Item $item) {
-                    $item->weight(7);
-                    $item->route('admin.products.bulk_editor');
-                    $item->isActiveWhen(route('admin.products.bulk_editor', null, false));
-                    $item->authorize(
-                        $this->auth->hasAnyAccess([
-                            'admin.bulk_product_edits.manage',
-                            'admin.products.edit',
-                        ])
-                    );
-                });
             });
         });
 
@@ -99,6 +87,16 @@ class SidebarExtender extends BaseSidebarExtender
                     $item->route('admin.product_feeds.settings.index');
                     $item->isActiveWhen(route('admin.product_feeds.settings.index', null, false));
                     $item->icon('fa fa-rss');
+                    $item->authorize(
+                        $this->auth->hasAccess('admin.settings.edit')
+                    );
+                });
+
+                $item->item('Web Veri İzleme ve Analiz Araçları', function (Item $item) {
+                    $item->weight(6);
+                    $item->route('admin.web_analytics.index');
+                    $item->isActiveWhen(route('admin.web_analytics.index', null, false));
+                    $item->icon('fa fa-chart-bar');
                     $item->authorize(
                         $this->auth->hasAccess('admin.settings.edit')
                     );

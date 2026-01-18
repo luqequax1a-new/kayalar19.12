@@ -1,8 +1,8 @@
 <?php
 
 return [
-    'rating' => 'Rating',
-    'reviewer_name' => 'Reviewer Name',
-    'comment' => 'Comment',
-    'is_approved' => 'Status',
+    'rating' => 'Derecelendirme',
+    'reviewer_name' => 'Değerlendiren Adı',
+    'comment' => 'Yorum',
+    'is_approved' => 'Durum',
 ];

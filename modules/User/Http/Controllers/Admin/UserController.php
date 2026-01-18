@@ -11,6 +11,30 @@ use Cartalyst\Sentinel\Laravel\Facades\Activation;
 class UserController
 {
     use HasCrudActions;
+    
+    public function index(\Illuminate\Http\Request $request)
+    {
+        if ($request->has('query')) {
+            $users = User::where(function ($q) use ($request) {
+                    $searchTerm = "%{$request->get('query')}%";
+                    $q->where('first_name', 'like', $searchTerm)
+                        ->orWhere('last_name', 'like', $searchTerm)
+                        ->orWhere('email', 'like', $searchTerm);
+                })
+                ->limit(15)
+                ->get(['id', 'first_name', 'last_name', 'email'])
+                ->map(function ($user) {
+                    return [
+                        'id' => $user->id,
+                        'name' => "{$user->first_name} {$user->last_name} ({$user->email})",
+                    ];
+                });
+
+            return response()->json($users);
+        }
+
+        return view("{$this->viewPath}.index");
+    }
 
     /**
      * Model for the resource.

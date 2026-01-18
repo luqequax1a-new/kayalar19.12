@@ -180,6 +180,9 @@ export default class {
         $("#is_searchable").prop("checked", category.is_searchable);
         $("#is_active").prop("checked", category.is_active);
 
+        $("#meta_title").val(category.meta_title || "");
+        $("#meta_description").val(category.meta_description || "");
+
         // Kategori açıklamasını hem textarea'ya hem de mevcutsa TinyMCE editörüne yansıt
         const description = category.description || "";
         $("#description").val(description);
@@ -196,6 +199,8 @@ export default class {
         );
 
         $('#category-form input[name="parent_id"]').remove();
+        $("#meta_title").val(category.meta_title);
+        $("#meta_description").val(category.meta_description);
 
         const faqItems = Array.isArray(category.faq_items)
             ? category.faq_items
@@ -235,6 +240,16 @@ export default class {
 
         $("#is_searchable").prop("checked", false);
         $("#is_active").prop("checked", false);
+
+        // Clear description textarea and TinyMCE editor
+        $("#description").val("");
+        if (window.tinymce && window.tinymce.get("description")) {
+            window.tinymce.get("description").setContent("");
+        }
+
+        // Clear SEO fields
+        $("#meta_title").val("");
+        $("#meta_description").val("");
 
         $(".logo .image-holder-wrapper").html(this.imagePlaceholder());
         $(".banner .image-holder-wrapper").html(this.imagePlaceholder());
@@ -362,22 +377,22 @@ export default class {
     buildFaqRow(index, question, answer) {
         const $row = $(
             '<div class="faq-item-row panel panel-default m-b-10" data-index="' +
-                index +
-                '">' +
-                '<div class="panel-heading clearfix">' +
-                '  <div class="pull-left" style="width: 70%;">' +
-                '    <input type="text" class="form-control input-sm faq-question-input" />' +
-                "  </div>" +
-                '  <div class="pull-right text-right" style="width: 30%;">' +
-                '    <button type="button" class="btn btn-xs btn-default faq-move-up"><i class="fa fa-arrow-up"></i></button>' +
-                '    <button type="button" class="btn btn-xs btn-default faq-move-down"><i class="fa fa-arrow-down"></i></button>' +
-                '    <button type="button" class="btn btn-xs btn-danger faq-remove"><i class="fa fa-times"></i></button>' +
-                "  </div>" +
-                "</div>" +
-                '<div class="panel-body">' +
-                '  <textarea class="form-control input-sm faq-answer-textarea" rows="3"></textarea>' +
-                "</div>" +
-                "</div>"
+            index +
+            '">' +
+            '<div class="panel-heading clearfix">' +
+            '  <div class="pull-left" style="width: 70%;">' +
+            '    <input type="text" class="form-control input-sm faq-question-input" />' +
+            "  </div>" +
+            '  <div class="pull-right text-right" style="width: 30%;">' +
+            '    <button type="button" class="btn btn-xs btn-default faq-move-up"><i class="fa fa-arrow-up"></i></button>' +
+            '    <button type="button" class="btn btn-xs btn-default faq-move-down"><i class="fa fa-arrow-down"></i></button>' +
+            '    <button type="button" class="btn btn-xs btn-danger faq-remove"><i class="fa fa-times"></i></button>' +
+            "  </div>" +
+            "</div>" +
+            '<div class="panel-body">' +
+            '  <textarea class="form-control input-sm faq-answer-textarea" rows="3"></textarea>' +
+            "</div>" +
+            "</div>"
         );
 
         $row.find(".faq-question-input").val(question || "");

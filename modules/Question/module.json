@@ -1,0 +1,15 @@
+{
+    "name": "Question",
+    "alias": "question",
+    "description": "Product Question and Answer module.",
+    "keywords": [],
+    "active": 1,
+    "order": 0,
+    "priority": 100,
+    "providers": [
+        "Modules\\Question\\Providers\\QuestionServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "requires": []
+}

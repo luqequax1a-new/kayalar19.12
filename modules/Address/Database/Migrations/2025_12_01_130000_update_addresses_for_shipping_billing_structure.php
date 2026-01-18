@@ -14,11 +14,11 @@ return new class extends Migration {
 
         Schema::table('addresses', function (Blueprint $table) {
             if (!Schema::hasColumn('addresses', 'type')) {
-                $table->enum('type', ['shipping', 'billing'])->nullable()->after('customer_id');
+                $table->enum('type', ['shipping', 'billing'])->nullable();
             }
 
             if (!Schema::hasColumn('addresses', 'user_id')) {
-                $table->unsignedBigInteger('user_id')->nullable()->after('customer_id');
+                $table->unsignedBigInteger('user_id')->nullable();
             }
 
             try {
@@ -33,23 +33,23 @@ return new class extends Migration {
             }
 
             if (!Schema::hasColumn('addresses', 'company_name')) {
-                $table->string('company_name')->nullable()->after('last_name');
+                $table->string('company_name')->nullable();
             }
             if (!Schema::hasColumn('addresses', 'tax_number')) {
-                $table->string('tax_number', 50)->nullable()->after('company_name');
+                $table->string('tax_number', 50)->nullable();
             }
             if (!Schema::hasColumn('addresses', 'tax_office')) {
-                $table->string('tax_office')->nullable()->after('tax_number');
+                $table->string('tax_office')->nullable();
             }
 
             if (!Schema::hasColumn('addresses', 'city_id')) {
-                $table->unsignedBigInteger('city_id')->nullable()->after('city');
+                $table->unsignedBigInteger('city_id')->nullable();
             }
             if (!Schema::hasColumn('addresses', 'district_id')) {
-                $table->unsignedBigInteger('district_id')->nullable()->after('city_id');
+                $table->unsignedBigInteger('district_id')->nullable();
             }
             if (!Schema::hasColumn('addresses', 'address_line')) {
-                $table->text('address_line')->nullable()->after('address_2');
+                $table->text('address_line')->nullable();
             }
         });
 

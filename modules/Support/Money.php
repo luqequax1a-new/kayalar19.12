@@ -180,6 +180,11 @@ public function format($currency = null, $locale = null)
 {
     $currency = $currency ?: currency();
     $locale = $locale ?: locale();
+    
+    // Fallback if currency is still null
+    if (!$currency) {
+        $currency = 'TRY';
+    }
 
     $numberFormatter = new NumberFormatter($locale, NumberFormatter::CURRENCY);
 

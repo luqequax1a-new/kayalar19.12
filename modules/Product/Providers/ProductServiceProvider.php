@@ -22,6 +22,9 @@ class ProductServiceProvider extends ServiceProvider
 
         View::composer('product::admin.products.create', ProductCreatePageComposer::class);
         View::composer('product::admin.products.edit', ProductEditPageComposer::class);
+        
+        // Register slug observer
+        \Modules\Product\Entities\Product::observe(\Modules\Product\Observers\ProductSlugObserver::class);
     }
 
 

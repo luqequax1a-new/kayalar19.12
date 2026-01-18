@@ -19,5 +19,8 @@ class EventServiceProvider extends ServiceProvider
             SendWelcomeEmail::class,
             SendWelcomeSms::class,
         ],
+        \Illuminate\Mail\Events\MessageSent::class => [
+            \Modules\User\Listeners\LogSentEmail::class,
+        ],
     ];
 }

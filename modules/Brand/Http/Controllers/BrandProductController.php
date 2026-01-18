@@ -36,9 +36,14 @@ class BrandProductController
         return view('storefront::public.products.index', [
             'brandName' => $brand->name,
             'brandBanner' => $brand->banner->path,
+            'brand' => $brand, // Pass full brand object
             'initialProducts' => $payload['products'] ?? null,
             'initialAttributes' => $payload['attributes'] ?? null,
-            'initialCategoryData' => $payload['category'] ?? null,
+            'initialCategoryData' => [
+                 'name' => $brand->name,
+                 'description_html' => $brand->description,
+                 'faq_items' => $brand->faq_json_array,
+            ],
         ]);
     }
 }

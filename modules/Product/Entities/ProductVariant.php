@@ -101,7 +101,8 @@ class ProductVariant extends Model
 
     public function url()
     {
-        return route('products.show', ['slug' => $this->product->slug, 'variant' => $this->uid]);
+        // İkas-style clean URL
+        return url('/' . $this->product->slug) . '?variant=' . $this->uid;
     }
 
 
@@ -141,6 +142,19 @@ class ProductVariant extends Model
     public function productMedia()
     {
         return $this->hasMany(ProductMedia::class, 'variant_id')->orderBy('position');
+    }
+
+
+    public function getVariationLabels()
+    {
+        $uids = explode('.', $this->uids);
+        
+        return \Modules\Variation\Entities\VariationValue::whereIn('uid', $uids)
+            ->with('variation')
+            ->get()
+            ->mapWithKeys(function ($value) {
+                return [$value->variation->name => $value->label];
+            });
     }
 
 
@@ -296,11 +310,11 @@ class ProductVariant extends Model
 
     public function isInStock(): bool
     {
-        if ($this->manage_stock && (float) $this->qty <= 0) {
-            return false;
+        if ($this->manage_stock) {
+            return (float) ($this->qty ?? 0) > 0;
         }
 
-        return (bool) $this->in_stock;
+        return true;
     }
 
 
@@ -315,6 +329,12 @@ class ProductVariant extends Model
         $this->withoutEvents(function () {
             $this->update(['in_stock' => true]);
         });
+
+        try {
+            app(\Modules\Product\Listeners\SendBackInStockNotifications::class)->handle($this);
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
 
@@ -328,14 +348,57 @@ class ProductVariant extends Model
 
     public function clean()
     {
-        $cleanExceptAttributes = [
-            'files',
-            'created_at',
-            'updated_at',
-            'deleted_at',
+        $data = [
+            'id' => $this->id,
+            'product_id' => $this->product_id,
+            'uid' => (string) $this->uid,
+            'uids' => (string) $this->uids,
+            'name' => (string) $this->name,
+            'is_active' => (bool) ($this->is_active ?? true),
+            'in_stock' => (bool) ($this->in_stock ?? true),
+            'manage_stock' => (bool) ($this->manage_stock ?? false),
+            'qty' => $this->qty,
+            'is_in_stock' => (bool) $this->is_in_stock,
+            'is_out_of_stock' => (bool) $this->is_out_of_stock,
+            'does_manage_stock' => (bool) $this->does_manage_stock,
+            'has_percentage_special_price' => (bool) $this->has_percentage_special_price,
+            'special_price_percent' => $this->special_price_percent,
+            'position' => $this->position,
+            'unit_suffix' => $this->relationLoaded('product') ? $this->product->unit_suffix : null,
         ];
 
-        return array_except($this->toArray(), $cleanExceptAttributes);
+        foreach (['price', 'special_price', 'selling_price'] as $key) {
+            try {
+                $val = $this->$key;
+                if ($val instanceof Money) {
+                    $data[$key] = $val->jsonSerialize();
+                }
+            } catch (\Throwable $e) {}
+        }
+
+        if ($this->relationLoaded('files')) {
+            $data['base_image'] = $this->base_image;
+            $data['additional_images'] = $this->additional_images->all();
+        } else {
+            $data['base_image'] = null;
+            $data['additional_images'] = [];
+        }
+
+        $data['media'] = $this->relationLoaded('files') ? $this->getMediaPayload() : [];
+
+        $data['base_image_thumb'] = [
+            'path' => media_variant_url($this->base_image, (int) config('image_optimization.variants.widths.thumb', 80))
+        ];
+
+        $data['formatted_price'] = $this->formatted_price;
+
+        return $data;
+    }
+
+
+    private function getMediaPayload()
+    {
+        return $this->media->values()->all();
     }
 
 

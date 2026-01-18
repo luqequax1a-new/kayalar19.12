@@ -1,6 +1,5 @@
 import Errors from "../../../components/Errors";
 import "../../../components/CartItem";
-import registerCartUpsellBox from "../../../components/CartUpsellBox";
 import sehirler from "@modules/../sehirler.json";
 import ilceler from "@modules/../ilceler.json";
 
@@ -27,11 +26,6 @@ function trTitleCase(name) {
 const SEHIRLER = sehirler.map((s) => ({ ...s, sehir_adi: trTitleCase(s.sehir_adi) }));
 const ILCELER = ilceler.map((d) => ({ ...d, sehir_adi: trTitleCase(d.sehir_adi), ilce_adi: trTitleCase(d.ilce_adi) }));
 
-document.addEventListener("alpine:init", () => {
-    if (window.Alpine && typeof registerCartUpsellBox === "function") {
-        registerCartUpsellBox(window.Alpine);
-    }
-});
 
 Alpine.data(
     "Checkout",
@@ -80,6 +74,8 @@ Alpine.data(
                 tax_office: "",
                 tax_number: "",
             },
+            password: "",
+            create_an_account: false,
         },
         states: {
             billing: {},
@@ -98,7 +94,9 @@ Alpine.data(
         shippingMethodName: null,
         selectedShippingMethod: selectedShippingMethod || null,
         applyingCoupon: false,
+        showCouponList: false,
         couponCode: null,
+
         couponError: null,
         placingOrder: false,
         stripe: null,
@@ -202,17 +200,10 @@ Alpine.data(
         },
 
         init() {
+            console.log('[CHECKOUT] Initializing...');
             Alpine.effect(() => {
                 if (this.cartFetched) {
-                    try {
-                        console.log("[CHECKOUT] cartFetched=true, items:", Object.keys(this.cart.items || {}).length);
-                        if (typeof logCheckout === "function") {
-                            logCheckout("cart_fetched", {
-                                item_count: Object.keys(this.cart.items || {}).length,
-                            });
-                        }
-                    } catch (e) { }
-
+                    console.log('[CHECKOUT] cartFetched=true');
                     this.hideSkeleton();
                     const keys = Object.keys(this.gateways || {});
                     const hasSaved = this.lastPaymentMethod && keys.includes(this.lastPaymentMethod);
@@ -335,6 +326,23 @@ Alpine.data(
                 if (this._debouncedUpdateCheckout) this._debouncedUpdateCheckout();
             });
 
+            // Watch customer info fields to save to abandoned cart
+            this.$watch("form.customer_email", () => {
+                if (this._debouncedUpdateCheckout) this._debouncedUpdateCheckout();
+            });
+
+            this.$watch("form.customer_phone", () => {
+                if (this._debouncedUpdateCheckout) this._debouncedUpdateCheckout();
+            });
+
+            this.$watch("form.shipping.first_name", () => {
+                if (this._debouncedUpdateCheckout) this._debouncedUpdateCheckout();
+            });
+
+            this.$watch("form.shipping.last_name", () => {
+                if (this._debouncedUpdateCheckout) this._debouncedUpdateCheckout();
+            });
+
             const defaultShippingId = this.defaultAddress.default_shipping_address_id || this.defaultAddress.address_id;
             const defaultBillingId = this.defaultAddress.default_billing_address_id || this.defaultAddress.address_id;
 
@@ -408,15 +416,8 @@ Alpine.data(
                 const element = document.querySelector(selector);
 
                 if (!element) {
-                    try {
-                        console.log("[CHECKOUT] hideSkeleton: element not found", selector);
-                    } catch (e) { }
                     return;
                 }
-
-                try {
-                    console.log("[CHECKOUT] hideSkeleton: removing", selector);
-                } catch (e) { }
 
                 if (typeof element.remove === "function") {
                     element.remove();
@@ -793,8 +794,6 @@ Alpine.data(
                     });
                     this.gateways = mapped;
                 }
-                const ended = performance.now();
-                try { console.log('[CHECKOUT] update', Math.round(ended - started), 'ms'); } catch (e) { }
             } catch (error) {
                 if (error?.response?.data?.message) {
                     notify(error.response.data.message);
@@ -824,18 +823,21 @@ Alpine.data(
             }
         },
 
-        applyCoupon() {
-            if (!this.couponCode) {
+        applyCoupon(directCode = null) {
+            const code = directCode || this.couponCode;
+            if (!code) {
                 return;
             }
 
             this.applyingCoupon = true;
+            this.couponError = null;
 
             axios
-                .post("/cart/coupon", { coupon: this.couponCode })
+                .post("/cart/coupon", { coupon: code })
                 .then((response) => {
                     this.couponCode = null;
                     this.couponError = null;
+                    this.showCouponList = false;
 
                     this.$store.cart.updateCart(response.data);
                 })
@@ -846,6 +848,12 @@ Alpine.data(
                     this.applyingCoupon = false;
                 });
         },
+
+        applyAvailableCoupon(couponCode) {
+            this.applyCoupon(couponCode);
+        },
+
+
 
         removeCoupon() {
             axios

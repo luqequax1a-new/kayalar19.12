@@ -2,8 +2,8 @@
     width: 263px;
     min-width: 263px;
     min-height: 600px;
-    margin: -6px 30px 0 0;
-    contain: layout paint;
+    margin: 30px 30px 0 0;
+    // contain: layout paint;  <-- This breaks position: fixed children in some cases
 
     .section-title {
         margin-bottom: 24px;
@@ -15,7 +15,7 @@
         min-height: 520px;
     }
 
-    .vertical-products { 
+    .vertical-products {
         margin-top: 29px;
 
         .section-title {

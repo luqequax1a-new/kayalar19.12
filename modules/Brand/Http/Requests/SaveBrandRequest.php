@@ -26,6 +26,10 @@ class SaveBrandRequest extends Request
         return [
             'name' => ['required'],
             'slug' => $this->getSlugRules(),
+            'description' => ['nullable', 'string'],
+            'faq_items' => ['nullable', 'array'],
+            'faq_items.*.question' => ['required', 'string'],
+            'faq_items.*.answer' => ['required', 'string'],
         ];
     }
 

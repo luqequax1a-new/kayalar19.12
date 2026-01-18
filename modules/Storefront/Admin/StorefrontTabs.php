@@ -765,6 +765,31 @@ class StorefrontTabs extends Tabs
     {
         return tap(new Tab('flash_sale_and_vertical_products', trans('storefront::storefront.tabs.flash_sale_and_vertical_products')), function (Tab $tab) {
             $tab->weight(60);
+            
+            $tab->fields([
+                'storefront_flash_sale_and_vertical_products_section_enabled',
+                'translatable.storefront_flash_sale_title',
+                'storefront_active_flash_sale_campaign',
+                'translatable.storefront_vertical_products_1_title',
+                'storefront_vertical_products_1_product_type',
+                'storefront_vertical_products_1_category_id',
+                'storefront_vertical_products_1_products',
+                'storefront_vertical_products_1_products_limit',
+                'storefront_vertical_products_1_variants_mode',
+                'translatable.storefront_vertical_products_2_title',
+                'storefront_vertical_products_2_product_type',
+                'storefront_vertical_products_2_category_id',
+                'storefront_vertical_products_2_products',
+                'storefront_vertical_products_2_products_limit',
+                'storefront_vertical_products_2_variants_mode',
+                'translatable.storefront_vertical_products_3_title',
+                'storefront_vertical_products_3_product_type',
+                'storefront_vertical_products_3_category_id',
+                'storefront_vertical_products_3_products',
+                'storefront_vertical_products_3_products_limit',
+                'storefront_vertical_products_3_variants_mode',
+            ]);
+            
             $tab->view('storefront::admin.storefront.tabs.flash_sale_and_vertical_products', [
                 'flashSales' => $this->getFlashSales(),
                 'verticalProductsOne' => $this->getProductListFromSetting('storefront_vertical_products_1_products'),

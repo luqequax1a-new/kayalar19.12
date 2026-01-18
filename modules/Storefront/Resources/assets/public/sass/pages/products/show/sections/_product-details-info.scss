@@ -175,7 +175,7 @@
                 color: var(--color-primary);
             }
 
-            > svg {
+            >svg {
                 margin-right: 0;
                 width: 28px;
                 height: 28px;
@@ -198,15 +198,15 @@
             margin-top: 3px;
         }
 
-        & + .brief-description {
+        &+.brief-description {
             margin-top: 10px;
         }
 
-        & + .product-price {
+        &+.product-price {
             margin-top: 10px;
         }
 
-        & + .details-info-top-actions {
+        &+.details-info-top-actions {
             margin-top: 8px;
         }
     }
@@ -222,7 +222,7 @@
             color: var(--color-red);
         }
 
-        & + .details-info-top-actions {
+        &+.details-info-top-actions {
             margin-top: 0;
         }
     }
@@ -247,7 +247,7 @@
                 color: var(--color-primary);
             }
 
-            > svg {
+            >svg {
                 margin-right: 5px;
                 width: 16px;
                 height: 16px;
@@ -255,7 +255,7 @@
         }
 
         .size-chart-trigger {
-            > svg {
+            >svg {
                 width: 20px;
                 height: 20px;
             }
@@ -353,7 +353,7 @@
                         width: max-content;
                         max-width: 100%;
 
-                        > div {
+                        >div {
                             position: relative;
                             width: max-content;
 
@@ -418,23 +418,29 @@
         }
 
         .variant-custom-selection {
-            margin-bottom: 10px;
+            margin-bottom: 20px;
 
-            label,
-            > span {
-                font-weight: var(--font-medium);
+            .row>div:first-child {
+                margin-bottom: 10px; // Başlık ve resimler arasındaki 10px boşluk
+            }
+
+            span.d-flex {
+                font-size: 17px;
+                font-weight: 500; // Başlık 500
+                color: #000;
+                line-height: 1;
             }
 
             .variation-label {
-                font-size: 15px;
-                margin-bottom: 6px;
-                font-weight: 400;
+                font-size: 17px;
+                font-weight: 700; // Varyant değeri 700 (Bold)
+                color: #000;
                 padding-left: 5px;
-                color: var(--color-gray);
+                margin-bottom: 0;
             }
 
             .error-message {
-                margin: -4px 0 5px;
+                margin: 4px 0 5px;
             }
         }
 
@@ -442,7 +448,7 @@
             display: inline-flex;
             flex-wrap: wrap;
 
-            > li {
+            >li {
                 font-size: 14px;
                 height: 32px;
                 min-width: 50px;
@@ -463,14 +469,15 @@
                 }
 
                 &:hover {
-                    box-shadow: 0 0 0 2px var(--color-primary-alpha-80);
+                    border-color: var(--color-primary);
                 }
 
                 &.active {
                     cursor: default;
 
                     color: var(--color-primary);
-                    box-shadow: 0 0 0 2px var(--color-primary-alpha-80);
+                    border-color: var(--color-primary) !important;
+                    box-shadow: 0 0 0 1px var(--color-primary) !important;
                 }
 
                 &.disabled {
@@ -484,7 +491,7 @@
                     padding: 0;
                     border-radius: var(--radius-default);
 
-                    > div {
+                    >div {
                         position: absolute;
                         left: 50%;
                         top: 50%;
@@ -492,6 +499,12 @@
                         width: 36px;
                         border-radius: 6px;
                         transform: translate(-50%, -50%);
+                    }
+
+                    &.active {
+                        box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--color-primary) !important;
+                        border-color: #fff !important;
+                        z-index: 1;
                     }
                 }
 
@@ -502,7 +515,9 @@
                     padding: 0;
 
                     &.active {
-                        box-shadow: 0 0 0 3px var(--color-primary) !important;
+                        box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--color-primary) !important;
+                        border-color: #fff !important;
+                        z-index: 1;
                     }
 
                     img {
@@ -545,11 +560,9 @@
                 &::after {
                     width: 20px;
                     height: 20px;
-                    mask: radial-gradient(
-                        farthest-side,
-                        transparent calc(100% - 1.3px),
-                        #fff 0
-                    );
+                    mask: radial-gradient(farthest-side,
+                            transparent calc(100% - 1.3px),
+                            #fff 0);
                 }
             }
         }
@@ -733,7 +746,7 @@
         margin-left: 0;
         padding: 8px 30px;
 
-        > i {
+        >i {
             margin-right: 6px;
         }
 
@@ -766,7 +779,7 @@
                 margin-bottom: 0;
             }
 
-            > span {
+            >span {
                 margin-right: 5px;
             }
 
@@ -791,125 +804,212 @@
     .social-share {
         display: flex;
         align-items: center;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid var(--border-color-lite);
 
         label,
-        > span {
+        >span {
             margin-bottom: 0;
-        }
-    }
-@media screen and (max-width: 991px) {
-    .product-details-info {
-        & {
-            width: 100%;
-            padding-left: 0;
-        }
-        .details-info-middle-actions {
-            flex-direction: column;
-            align-items: stretch;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--color-black);
+            margin-right: 15px;
         }
 
-        .product-name {
-            font-size: 22px;
-            line-height: 26px;
-        }
-
-        .product-variants {
-            margin-top: -5px;
-
-            .variant-custom-selection {
-                label {
-                    padding-top: 0;
-                }
-                .variation-label {
-                    font-size: 14px;
-                }
-            }
-
-            .variant-check,
-            .variant-radio {
-                margin-top: 0;
-
-                label {
-                    margin-bottom: 8px;
-                }
-            }
-
-            .variant-input,
-            .variant-select {
-                label {
-                    padding-top: 0;
-                }
-            }
-
-            .custom-selection {
-                > li {
-                    font-size: 13px;
-                    padding: 5px 12px;
-                }
-            }
-        }
-        .btn-add-to-cart {
-            width: auto;
-            margin-left: 0;
-            margin-top: 10px;
-            align-self: flex-start;
-        }
-    }
-}
-
-@media screen and (max-width: 400px) {
-    .product-details-info {
-        .decimal-quantity-card {
-            padding: 12px 12px;
-        }
-
-        .decimal-quantity-chips {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            justify-items: center;
-        }
-
-        .decimal-quantity-chips .chip--desktop-only { display: none; }
-
-        .decimal-quantity-chips .chip { font-size: 13px; }
-        .product-variants .variant-custom-selection .variation-label { font-size: 13px; }
-        .product-variants .custom-selection > li { font-size: 12px; }
-        .product-name {
-            font-size: 20px;
-            line-height: 24px;
-        }
-
-        .number-picker-lg {
-            label {
-                display: none;
-            }
-        }
-
-        .btn-add-to-cart {
-            width: 100%;
-            margin-left: 0;
-            align-self: flex-start;
-        }
-        .details-info-middle-actions {
-            max-width: 100%;
-        }
-    }
-}
-        .decimal-quantity-card {
-            flex-direction: column;
-            align-items: flex-start;
-            background: #ffffff;
-            border: 1px solid #ededed;
-            border-radius: 12px;
-            padding: 14px 14px;
+        .social-links {
+            margin: 0;
+            padding: 0;
+            list-style: none;
             display: flex;
             gap: 10px;
-            width: 100%;
-            max-width: 420px;
-            margin-left: auto;
-            margin-right: auto;
-            box-shadow: 0 2px 8px rgba(17, 24, 39, 0.04);
+
+            li {
+                padding: 0;
+                margin: 0;
+            }
+
+            a {
+                width: 38px;
+                height: 38px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 20px;
+                color: #fff;
+                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                text-decoration: none;
+
+                &:hover {
+                    transform: translateY(-3px);
+                    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+                }
+
+                i {
+                    line-height: 1;
+                }
+
+                &.facebook {
+                    background: #1877f2;
+                }
+
+                &.twitter {
+                    background: #000000;
+                }
+
+                &.whatsapp {
+                    background: #25d366;
+                }
+
+                &.whatsapp-business {
+                    background: #075e54;
+                }
+
+                &.pinterest {
+                    background: #e60023;
+                }
+
+                &.linkedin {
+                    background: #0077b5;
+                }
+
+                &.copy-link {
+                    background: #64748b;
+                }
+            }
+        }
+    }
+
+    @media screen and (max-width: 991px) {
+        .product-details-info {
+            & {
+                width: 100%;
+                padding-left: 0;
+            }
+
+            .details-info-middle-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .product-name {
+                font-size: 22px;
+                line-height: 26px;
+            }
+
+            .product-variants {
+                margin-top: -5px;
+
+                .variant-custom-selection {
+                    label {
+                        padding-top: 0;
+                    }
+
+                    .variation-label {
+                        font-size: 14px;
+                    }
+                }
+
+                .variant-check,
+                .variant-radio {
+                    margin-top: 0;
+
+                    label {
+                        margin-bottom: 8px;
+                    }
+                }
+
+                .variant-input,
+                .variant-select {
+                    label {
+                        padding-top: 0;
+                    }
+                }
+
+                .custom-selection {
+                    >li {
+                        font-size: 13px;
+                        padding: 5px 12px;
+                    }
+                }
+            }
+
+            .btn-add-to-cart {
+                width: auto;
+                margin-left: 0;
+                margin-top: 10px;
+                align-self: flex-start;
+            }
+        }
+    }
+
+    @media screen and (max-width: 400px) {
+        .product-details-info {
+            .decimal-quantity-card {
+                padding: 12px 12px;
+            }
+
+            .decimal-quantity-chips {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 8px;
+                justify-items: center;
+            }
+
+            .decimal-quantity-chips .chip--desktop-only {
+                display: none;
+            }
+
+            .decimal-quantity-chips .chip {
+                font-size: 13px;
+            }
+
+            .product-variants .variant-custom-selection .variation-label {
+                font-size: 13px;
+            }
+
+            .product-variants .custom-selection>li {
+                font-size: 12px;
+            }
+
+            .product-name {
+                font-size: 20px;
+                line-height: 24px;
+            }
+
+            .number-picker-lg {
+                label {
+                    display: none;
+                }
+            }
+
+            .btn-add-to-cart {
+                width: 100%;
+                margin-left: 0;
+                align-self: flex-start;
+            }
+
+            .details-info-middle-actions {
+                max-width: 100%;
+            }
+        }
+    }
+
+    .decimal-quantity-card {
+        flex-direction: column;
+        align-items: flex-start;
+        background: #ffffff;
+        border: 1px solid #ededed;
+        border-radius: 12px;
+        padding: 14px 14px;
+        display: flex;
+        gap: 10px;
+        width: 100%;
+        max-width: 420px;
+        margin-left: auto;
+        margin-right: auto;
+        box-shadow: 0 2px 8px rgba(17, 24, 39, 0.04);
 
         .decimal-quantity-header {
             display: flex;
@@ -1056,7 +1156,8 @@
             width: 100%;
         }
     }
-// Remove native number input spinners
+
+    // Remove native number input spinners
     input[type='number']::-webkit-outer-spin-button,
     input[type='number']::-webkit-inner-spin-button {
         -webkit-appearance: none;

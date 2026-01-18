@@ -1,0 +1,20 @@
+{
+    "name": "Analytics",
+    "alias": "analytics",
+    "description": "Professional E-commerce Analytics & Tracking System",
+    "keywords": [
+        "analytics",
+        "tracking",
+        "google analytics",
+        "facebook pixel",
+        "tiktok pixel",
+        "conversion tracking",
+        "gdpr",
+        "consent management"
+    ],
+    "priority": 0,
+    "providers": [
+        "Modules\\Analytics\\Providers\\AnalyticsServiceProvider"
+    ],
+    "files": []
+}

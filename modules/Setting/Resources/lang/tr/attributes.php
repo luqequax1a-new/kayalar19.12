@@ -11,6 +11,9 @@ return [
     'reviews_enabled' => 'Yorumlar & Puanlama',
     'auto_approve_reviews' => 'Yorumları Otomatik Onayla',
     'cookie_bar_enabled' => 'Çerez Çubuğu',
+    'cookie_consent_title' => 'Çerez Banner Başlığı',
+    'cookie_consent_message' => 'Çerez Aydınlatma Metni',
+    'two_factor_auth_enabled' => 'Admin İki Faktörlü Doğrulama (2FA)',
 
     'maintenance_mode' => 'Maintenance Mode',
 
@@ -107,10 +110,17 @@ return [
     'review_request_email_promo' => 'Email Promo',
 
     'abandoned_cart_reminder_enabled' => 'Oto Hatırlatma Durumu',
+    'abandoned_cart_reminder_1_enabled' => '1. Hatırlatıcı Aktif',
+    'abandoned_cart_reminder_2_enabled' => '2. Hatırlatıcı Aktif',
+    'abandoned_cart_reminder_3_enabled' => '3. Hatırlatıcı Aktif',
     'abandoned_cart_reminder_delay_hours' => 'Hatırlatma Gecikmesi (Saat)',
     'abandoned_cart_coupon_enabled' => 'Kupon Oluşturulsun mu?',
     'abandoned_cart_coupon_discount_percent' => 'Kupon İndirim Yüzdesi (%)',
     'abandoned_cart_coupon_valid_days' => 'Kupon Geçerlilik Süresi (Gün)',
+    'abandoned_cart_reminder_2_delay_hours' => '2. Hatırlatma Gecikmesi (Saat)',
+    'abandoned_cart_coupon_2_discount_percent' => '2. Kupon İndirim Yüzdesi (%)',
+    'abandoned_cart_reminder_3_delay_hours' => '3. Hatırlatma Gecikmesi (Saat)',
+    'abandoned_cart_coupon_3_discount_percent' => '3. Kupon İndirim Yüzdesi (%)',
     'abandoned_cart_email_title' => 'Email Başlığı',
     'abandoned_cart_email_intro' => 'Email Giriş Metni',
     'abandoned_cart_sms_enabled' => 'SMS Hatırlatma Durumu',
@@ -262,7 +272,7 @@ return [
     'bank_transfer_enabled' => 'Status',
     'translatable.bank_transfer_label' => 'Label',
     'translatable.bank_transfer_description' => 'Description',
-    'translatable.bank_transfer_instructions' => 'Instructions',
+    'translatable.bank_transfer_instructions' => 'Ödeme Talimatları',
 
     'check_payment_enabled' => 'Status',
     'translatable.check_payment_label' => 'Label',
@@ -272,4 +282,3 @@ return [
     'supported_countries.*' => 'Supported Countries',
     'supported_currencies.*' => 'Supported Currencies',
 ];
-

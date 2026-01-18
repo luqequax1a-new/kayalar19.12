@@ -6,5 +6,7 @@
         {{ Form::select('exclude_products', trans('coupon::attributes.exclude_products'), $errors, $excludeProducts, $coupon, ['class' => 'selectize prevent-creation', 'data-url' => route('admin.products.index'), 'multiple' => true]) }}
         {{ Form::select('categories', trans('coupon::attributes.categories'), $errors, $categories, $coupon, ['class' => 'selectize prevent-creation', 'multiple' => true]) }}
         {{ Form::select('exclude_categories', trans('coupon::attributes.exclude_categories'), $errors, $categories, $coupon, ['class' => 'selectize prevent-creation', 'multiple' => true]) }}
+        {{ Form::select('customer_id', trans('coupon::attributes.customer_id'), $errors, $customer, $coupon, ['class' => 'selectize prevent-creation', 'data-url' => route('admin.users.index')]) }}
+        {{ Form::checkbox('exclude_sale_items', trans('coupon::attributes.exclude_sale_items'), trans('coupon::coupons.form.exclude_sale_items'), $errors, $coupon) }}
     </div>
 </div>

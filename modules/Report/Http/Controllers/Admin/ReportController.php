@@ -17,6 +17,8 @@ use Modules\Report\TaggedProductsReport;
 use Modules\Report\BrandedProductsReport;
 use Modules\Report\ProductsPurchaseReport;
 use Modules\Report\CategorizedProductsReport;
+use Modules\Report\UnitsReport;
+use Modules\Report\PaymentReport;
 
 class ReportController
 {
@@ -31,6 +33,8 @@ class ReportController
         'products_purchase_report' => ProductsPurchaseReport::class,
         'products_stock_report' => ProductsStockReport::class,
         'products_view_report' => ProductsViewReport::class,
+        'units_report' => UnitsReport::class,
+        'payment_report' => PaymentReport::class,
         'branded_products_report' => BrandedProductsReport::class,
         'categorized_products_report' => CategorizedProductsReport::class,
         'taxed_products_report' => TaxedProductsReport::class,

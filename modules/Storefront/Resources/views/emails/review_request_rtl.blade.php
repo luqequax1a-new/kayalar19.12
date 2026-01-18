@@ -1,156 +1,279 @@
 <!DOCTYPE html>
-<html lang="{{ locale() }}">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link href="https://fonts.googleapis.com/css?family=Open+Sans:400" rel="stylesheet">
-        <style>
-            @media screen and (max-width: 600px) {
-                .product-list .product-item { display: block !important; }
-                .product-list .product-item img { margin-bottom: 8px; }
+<html lang="{{ locale() }}" dir="rtl">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ $title ?? trans('storefront::product.add_a_review') }}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8fafc;
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+            direction: rtl;
+        }
+        .wrapper {
+            width: 100%;
+            table-layout: fixed;
+            background-color: #f8fafc;
+            padding: 20px 0 40px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .header {
+            background: linear-gradient(135deg, {{ mail_theme_color() }}, #0ea5e9);
+            padding: 40px 20px;
+            text-align: center;
+            color: #ffffff;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+        .logo-wrapper {
+            display: flex;
+            height: 50px;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+        .logo-wrapper img {
+            max-height: 100%;
+            max-width: 180px;
+        }
+        .content {
+            padding: 40px 30px;
+            color: #334155;
+            line-height: 1.6;
+        }
+        .content p {
+            margin: 0 0 16px;
+            font-size: 15px;
+        }
+        .greeting {
+            font-size: 20px;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 20px;
+        }
+        .highlight-text {
+            font-weight: 600;
+            color: #0f172a;
+            font-size: 16px;
+        }
+        .product-list-block { 
+            background: #f8fafc; 
+            border-radius: 16px; 
+            padding: 20px; 
+            border: 1px solid #e2e8f0; 
+            margin: 25px 0;
+        }
+        .product-item { 
+            padding: 12px; 
+            border: 1px solid #e5e7eb; 
+            border-radius: 12px; 
+            background: #ffffff;
+            margin-bottom: 12px;
+        }
+        .product-item:last-child {
+            margin-bottom: 0;
+        }
+        .product-image { 
+            width: 70px; 
+            height: 70px; 
+            border-radius: 10px; 
+            object-fit: cover; 
+            border: 1px solid #e5e7eb; 
+            display: block; 
+        }
+        .product-name { 
+            font-weight: 700; 
+            color: #0f172a; 
+            font-size: 14px; 
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+        .product-sku { 
+            font-size: 12px; 
+            color: #64748b; 
+            margin-top: 4px;
+        }
+        .info-box {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+        .info-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 12px;
+        }
+        .info-item {
+            margin: 8px 0;
+            color: #334155;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .btn {
+            display: inline-block;
+            background-color: {{ mail_theme_color() }};
+            color: #ffffff !important;
+            padding: 14px 28px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 15px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            padding: 25px 20px;
+            font-size: 13px;
+            color: #94a3b8;
+            background: #0f172a;
+        }
+        .footer a {
+            color: #ffffff;
+            text-decoration: none;
+        }
+        .footer-divider {
+            margin: 0 8px;
+            opacity: 0.5;
+        }
+        @media screen and (max-width: 600px) {
+            .container {
+                margin: 0;
+                border-radius: 0;
             }
-        </style>
-    </head>
+            .content {
+                padding: 30px 20px;
+            }
+            .header h1 {
+                font-size: 22px;
+            }
+            .product-image {
+                width: 60px;
+                height: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="container">
+            <div class="header">
+                @if (!is_null($logo))
+                    <div class="logo-wrapper">
+                        <img src="{{ $logo }}" alt="{{ setting('store_name') }}">
+                    </div>
+                @endif
+                <h1>{{ $title ?? trans('storefront::product.add_a_review') }}</h1>
+            </div>
+            
+            <div class="content">
+                <div class="greeting">
+                    {{ trans('storefront::mail.hello', ['name' => $order->customer_first_name]) }}
+                </div>
+                
+                <p>
+                    {{ $intro ?? 'هل ترغب في تقييم المنتجات التي اشتريتها؟ شارك تجربتك معنا.' }}
+                </p>
+                
+                <p class="highlight-text">
+                    {{ $promo ?? 'اترك مراجعتك لطلبك، ونمنحك قسيمة خصم لعملية الشراء التالية.' }}
+                </p>
 
-    <body dir="rtl" style="font-family: 'Open Sans', sans-serif; font-size: 15px; min-width: 320px; margin: 0;">
-        <table style="border-collapse: collapse; width: 100%;">
-            <tbody>
-                <tr>
-                    <td style="padding: 0;">
-                        <table style="border-collapse: collapse; width: 100%;">
-                            <tbody>
+                <div class="product-list-block">
+                    @foreach ($order->products as $product)
+                        @php
+                            $imagePath = $product->product_variant?->base_image?->path
+                                ?? $product->product?->base_image?->path
+                                ?? $product->product_image_path;
+                        @endphp
+                        <div class="product-item">
+                            <table width="100%" cellpadding="0" cellspacing="0">
                                 <tr>
-                                    <td style="background: {{ mail_theme_color() }}; text-align: center;">
-                                        @if (is_null($logo))
-                                            <h5 style="font-size: 30px; line-height: 36px; margin: 0; padding: 30px 15px; text-align: center;">
-                                                <a href="{{ route('home') }}" style="font-family: 'Open Sans', sans-serif; font-weight: 400; color: #ffffff; text-decoration: none;">
-                                                    {{ setting('store_name') }}
-                                                </a>
-                                            </h5>
-                                        @else
-                                            <div style="display: flex; height: 64px; width: 200px; align-items: center; justify-content: center; margin: auto; padding: 16px 15px;">
-                                                <img src="{{ $logo }}" style="max-height: 100%; max-width: 100%;" alt="Logo">
-                                            </div>
+                                    <td width="80" valign="top">
+                                        @if ($imagePath)
+                                            <img src="{{ $imagePath }}" alt="{{ $product->name }}" class="product-image">
+                                        @endif
+                                    </td>
+                                    <td valign="top" style="padding-right: 12px;">
+                                        <div class="product-name">{{ $product->name }}</div>
+                                        @if ($product->sku)
+                                            <div class="product-sku">كود: {{ $product->sku }}</div>
                                         @endif
                                     </td>
                                 </tr>
-                            </tbody>
-                        </table>
-                    </td>
-                </tr>
-
-                <tr>
-                    <td style="padding: 40px 15px;">
-                        <table style="border-collapse: collapse; min-width: 320px; max-width: 700px; width: 100%; margin: auto;">
-                            <tr>
-                                <td style="padding: 0;">
-                                    <h4 style="font-family: 'Open Sans', sans-serif; font-weight: 400; font-size: 21px; line-height: 26px; margin: 0 0 10px; color: #555555;">
-                                        {{ trans('storefront::mail.hello', ['name' => $order->customer_first_name]) }}
-                                    </h4>
-                                    <h5 style="font-family: 'Open Sans', sans-serif; font-weight: 600; font-size: 18px; line-height: 24px; margin: 0 0 10px; color: #0f172a;">
-                                        {{ $title ?? trans('storefront::product.add_a_review') }}
-                                    </h5>
-                                    <p style="font-family: 'Open Sans', sans-serif; font-size: 15px; line-height: 24px; color: #334155; margin: 0 0 8px;">
-                                        {{ $intro ?? 'هل ترغب في تقييم المنتجات التي اشتريتها؟ شارك تجربتك معنا.' }}
-                                    </p>
-                                    <p style="font-family: 'Open Sans', sans-serif; font-size: 15px; line-height: 24px; color: #0f172a; margin: 0 0 12px; font-weight: 600;">
-                                        {{ $promo ?? 'اترك مراجعتك لطلبك، ونمنحك قسيمة خصم لعملية الشراء التالية.' }}
-                                    </p>
-                                </td>
-                            </tr>
-
-                            <tr>
-                                <td style="padding: 18px 0;">
-                                    <table class="product-list" role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; width: 100%;">
-                                        @foreach ($order->products as $product)
-                                            @php
-                                                $imagePath = $product->product_variant?->base_image?->path
-                                                    ?? $product->product?->base_image?->path
-                                                    ?? $product->product_image_path;
-                                            @endphp
-                                            <tr>
-                                                <td class="product-item" style="padding: 10px; border:1px solid #e5e7eb; border-radius:12px; background:#ffffff;">
-                                                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                                                        <tr>
-                                                            <td width="84" valign="top" style="padding-left: 10px;">
-                                                                @if ($imagePath)
-                                                                    <img src="{{ $imagePath }}" width="64" height="64" alt="{{ $product->name }}" style="display:block;border-radius:10px;border:1px solid #e5e7eb;object-fit:cover;">
-                                                                @endif
-                                                            </td>
-                                                            <td valign="top" style="padding-left: 10px;">
-                                                                <div style="font-size:14px;font-weight:800;color:#0f172a;line-height:1.3;">{{ $product->name }}</div>
-                                                                @if ($product->sku)
-                                                                    <div style="font-size:12px;color:#64748b;margin-top:2px;">كود: {{ $product->sku }}</div>
-                                                                @endif
-                                                            </td>
-                                                        </tr>
-                                                    </table>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </table>
-                                </td>
-                            </tr>
-
-                            <tr>
-                                <td style="padding: 0;">
-                                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; width: 100%; margin-top: 10px;">
-                                        <tr>
-                                            <td style="padding: 14px; border: 1px solid #e5e7eb; border-radius: 12px; background: #f9fafb;">
-                                                <div style="font-size: 14px; line-height: 22px; color: #374151;">
-                                                    <div style="margin-bottom:12px;color:#111827;font-weight:600;">لماذا رأيك مهم؟</div>
-                                                    <div style="margin:6px 0;color:#334155;">• تساعدنا في تحسين المنتجات.</div>
-                                                    <div style="margin:6px 0;color:#334155;">• ترشد العملاء الآخرين عند اتخاذ القرار.</div>
-                                                    <div style="margin:6px 0;color:#334155;">• تعزز موثوقية مجتمعنا.</div>
-                                                    <div style="margin-top:12px;color:#111827;font-weight:600;">ميزة القسيمة</div>
-                                                    <div style="margin:6px 0;color:#334155;">• نقدم خصمًا بنسبة %{{ setting('review_coupon_discount_percent', 10) }} لمن يترك مراجعة.</div>
-                                                    <div style="margin:6px 0;color:#334155;">• صلاحية القسيمة {{ setting('review_coupon_valid_days', 30) }} يومًا.</div>
-                                                    <div style="margin-top:12px;color:#111827;font-weight:600;">كيف أكتب مراجعة؟</div>
-                                                    <div style="margin:6px 0;color:#334155;">• يمكنك الكتابة من قسم "المراجعات" في صفحة المنتج.</div>
-                                                    <div style="margin:6px 0;color:#334155;">• اضغط الزر أدناه للانتقال إلى صفحة مراجعات حسابك.</div>
-
-                                                    @php
-                                                        $firstProduct = $order->products->first();
-                                                        $productUrl = $firstProduct ? $firstProduct->url() : null;
-                                                        $targetReviewUrl = ($productUrl && $productUrl !== '#')
-                                                            ? ($productUrl . '?order_id=' . $order->id . '#reviews')
-                                                            : route('home');
-                                                    @endphp
-                                                    <div style="margin:14px 0 20px;">
-                                                        <a href="{{ $targetReviewUrl }}" style="font-family: 'Open Sans', sans-serif; font-weight: 600; text-decoration: none; display: inline-block; background: {{ mail_theme_color() }}; color: #fafafa; padding: 10px 18px; border: none; border-radius: 4px; outline: 0;">
-                                                            مراجعاتي
-                                                        </a>
-                                                    </div>
-                                                    
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-
-                <tr>
-                    <td style="padding: 20px 15px; background: #0f172a; text-align: center;">
-                        <div style="font-family: 'Open Sans', sans-serif; font-size: 14px; color: #ffffff;">
-                            <div style="margin-bottom:8px;">
-                                <a target="_blank" href="{{ route('home') }}" style="text-decoration: none; color: #ffffff;">{{ setting('store_name') }}</a>
-                            </div>
-                            @if (setting('store_phone') && ! setting('store_phone_hide'))
-                                <div><a href="tel:{{ setting('store_phone') }}" style="text-decoration: none; color: #ffffff;">{{ setting('store_phone') }}</a></div>
-                            @endif
-                            @if (setting('store_email') && ! setting('store_email_hide'))
-                                <div><a href="mailto:{{ setting('store_email') }}" style="text-decoration: none; color: #ffffff;">{{ setting('store_email') }}</a></div>
-                            @endif
-                            <div style="margin-top:10px; opacity:0.8;">
-                                &copy; {{ date('Y') }} {{ trans('storefront::mail.all_rights_reserved') }}
-                            </div>
+                            </table>
                         </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </body>
+                    @endforeach
+                </div>
+
+                <div class="info-box">
+                    <div class="info-title">💡 لماذا رأيك مهم؟</div>
+                    <div class="info-item">• تساعدنا في تحسين المنتجات</div>
+                    <div class="info-item">• ترشد العملاء الآخرين عند اتخاذ القرار</div>
+                    <div class="info-item">• تعزز موثوقية مجتمعنا</div>
+                    
+                    <div style="margin-top: 24px; padding: 20px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; border: 2px dashed #f59e0b;">
+                        <div style="text-align: center; margin-bottom: 12px; font-size: 32px;">🎁</div>
+                        <div class="info-title" style="text-align: center; color: #92400e; margin-bottom: 12px;">لدينا خبر سار لك!</div>
+                        <div style="font-size: 14px; color: #78350f; text-align: center; line-height: 1.6;">
+                            إذا قمت بكتابة مراجعة، ستحصل على <strong>قسيمة خصم %{{ setting('review_coupon_discount_percent', 10) }}</strong>! 🎉<br>
+                            <span style="font-size: 13px; opacity: 0.9;">ستكون قسيمتك صالحة لمدة {{ setting('review_coupon_valid_days', 30) }} يومًا.</span>
+                        </div>
+                    </div>
+                </div>
+
+                @php
+                    $firstProduct = $order->products->first();
+                    $productUrl = $firstProduct ? $firstProduct->url() : null;
+                    $targetReviewUrl = ($productUrl && $productUrl !== '#')
+                        ? ($productUrl . '?order_id=' . $order->id . '#reviews')
+                        : route('home');
+                @endphp
+
+                <div style="text-align: center;">
+                    <a href="{{ $targetReviewUrl }}" class="btn">
+                        ⭐ مراجعاتي
+                    </a>
+                </div>
+            </div>
+            
+            <div class="footer">
+                <div style="margin-bottom: 10px; font-size: 14px; font-weight: 600;">
+                    <a href="{{ route('home') }}">{{ setting('store_name') }}</a>
+                </div>
+                @if (setting('store_phone') && !setting('store_phone_hide'))
+                    <a href="tel:{{ setting('store_phone') }}">{{ setting('store_phone') }}</a>
+                @endif
+                @if (setting('store_phone') && !setting('store_phone_hide') && setting('store_email') && !setting('store_email_hide'))
+                    <span class="footer-divider">•</span>
+                @endif
+                @if (setting('store_email') && !setting('store_email_hide'))
+                    <a href="mailto:{{ setting('store_email') }}">{{ setting('store_email') }}</a>
+                @endif
+                <div style="margin-top: 12px; opacity: 0.7; font-size: 12px;">
+                    &copy; {{ date('Y') }} {{ trans('storefront::mail.all_rights_reserved') }}
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
 </html>

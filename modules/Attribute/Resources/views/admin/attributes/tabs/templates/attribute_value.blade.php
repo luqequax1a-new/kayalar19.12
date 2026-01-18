@@ -15,6 +15,12 @@
             </div>
         </td>
 
+        <td class="attribute-color-column">
+            <div class="form-group">
+                <input type="color" name="values[<%- valueId %>][color]" value="<%- value.color || '#000000' %>" class="form-control" style="width: 50px; padding: 2px;">
+            </div>
+        </td>
+
         <td class="text-center">
             <button type="button" class="btn btn-default delete-row" data-toggle="tooltip" data-title="{{ trans('attribute::admin.form.delete_value') }}">
                 <i class="fa fa-trash"></i>

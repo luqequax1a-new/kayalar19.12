@@ -1,21 +1,118 @@
 @extends('storefront::public.layout')
 
-@section('title', trans('storefront::brands.brands'))
+@if ($page)
+    @section('title', $page->name)
+
+    @push('meta')
+        <meta name="title" content="{{ $page->meta->meta_title }}">
+        <meta name="description" content="{{ $page->meta->meta_description }}">
+        <meta property="og:title" content="{{ $page->meta->meta_title }}">
+        <meta property="og:description" content="{{ $page->meta->meta_description }}">
+    @endpush
+@else
+    @section('title', trans('storefront::brands.brands'))
+@endif
+
 
 @section('content')
+    <style>
+        /* Global Brand Card Styles */
+        .all-brands .brand-card {
+            width: 100% !important;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 1px solid #e2e8f0; /* Garanti olsun diye */
+            border-radius: 8px;
+            overflow: hidden;
+            background: #fff;
+        }
+        .all-brands .brand-image {
+            height: 120px !important; /* Masaüstü yüksekliği */
+            padding: 15px !important;
+            width: 100% !important;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .all-brands .brand-image img {
+            object-fit: contain !important;
+            width: 100% !important;
+            height: 100% !important;
+        }
+        .all-brands .brand-info {
+            padding: 10px;
+            text-align: center;
+            width: 100%;
+        }
+
+        /* Mobile Overrides */
+        @media (max-width: 576px) {
+            .all-brands-wrap > .container {
+                padding-left: 5px !important;
+                padding-right: 5px !important;
+            }
+            .all-brands .brand-image {
+                height: 100px !important;
+                padding: 8px !important;
+                margin-bottom: 5px !important;
+            }
+            .all-brands .brand-name {
+                font-size: 13px !important;
+                margin-top: 5px !important;
+            }
+            .all-brands .col-6 {
+                flex: 0 0 50% !important;
+                max-width: 50% !important;
+                width: 50% !important;
+            }
+        }
+
+        .brands-page-content {
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            margin-bottom: 40px;
+            line-height: 1.8;
+            color: #4a5568;
+        }
+        .brands-page-content h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 15px;
+        }
+    </style>
     <section class="all-brands-wrap">
         <div class="container">
+            <h1 class="text-2xl font-bold mb-4" style="margin-bottom: 20px;">
+                {{ $page ? $page->name : (trans('storefront::brands.brands') ?? 'Markalar') }}
+            </h1>
+            
             <div class="all-brands">
                 @if ($brands->isNotEmpty())
-                    <div class="all-brands-inner">
+                    <div class="row g-3">
                         @foreach ($brands as $brand)
-                            <div class="col-lg-3 col-md-6 col-9">
-                                <a href="{{ $brand->url() }}" class="brand-image">
-                                    @if ($brand->logo->exists)
-                                        <img src="{{ $brand->logo->path }}" alt="Brand image">
-                                    @else
-                                        <img src="{{ asset('build/assets/image-placeholder.png') }}" class="image-placeholder" alt="Brand image">
-                                    @endif
+                            <div class="col-6 col-md-4 col-lg-3">
+                                <a href="{{ $brand->url() }}" class="brand-card" style="width: 100% !important; display: flex; flex-direction: column; height: 100%; text-decoration: none;">
+                                    <div class="brand-image">
+                                        @if ($brand->logo->exists)
+                                            <img src="{{ $brand->logo->path }}" alt="{{ $brand->name }}">
+                                        @else
+                                            <img src="{{ asset('build/assets/image-placeholder.png') }}" class="image-placeholder" alt="{{ $brand->name }}">
+                                        @endif
+                                    </div>
+                                    
+                                    <div class="brand-info">
+                                        <div class="brand-name">
+                                            {{ $brand->name }}
+                                        </div>
+                                        <div class="brand-products-count">
+                                            {{ $brand->products_count }} {{ trans('storefront::layouts.product') }}
+                                        </div>
+                                    </div>
                                 </a>
                             </div>
                         @endforeach
@@ -35,6 +132,12 @@
                     </div>
                 @endif
             </div>
+
+            @if ($page)
+                <div class="brands-page-content mt-5">
+                    {!! $page->body !!}
+                </div>
+            @endif
         </div>
     </section>
 @endsection

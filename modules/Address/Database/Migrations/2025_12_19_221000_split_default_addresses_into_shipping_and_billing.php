@@ -14,11 +14,11 @@ return new class extends Migration {
 
         Schema::table('default_addresses', function (Blueprint $table) {
             if (! Schema::hasColumn('default_addresses', 'default_shipping_address_id')) {
-                $table->unsignedInteger('default_shipping_address_id')->nullable()->after('customer_id');
+                $table->unsignedInteger('default_shipping_address_id')->nullable();
             }
 
             if (! Schema::hasColumn('default_addresses', 'default_billing_address_id')) {
-                $table->unsignedInteger('default_billing_address_id')->nullable()->after('default_shipping_address_id');
+                $table->unsignedInteger('default_billing_address_id')->nullable();
             }
         });
 
@@ -72,7 +72,7 @@ return new class extends Migration {
 
         Schema::table('default_addresses', function (Blueprint $table) {
             if (! Schema::hasColumn('default_addresses', 'address_id')) {
-                $table->unsignedInteger('address_id')->nullable()->after('customer_id');
+                $table->unsignedInteger('address_id')->nullable();
             }
         });
 

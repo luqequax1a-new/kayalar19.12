@@ -43,17 +43,60 @@ class Cart extends Model
         'is_recovered',
         'recovered_at',
         'order_id',
+        'is_clicked',
+        'clicked_at',
+        'last_notified_at',
+        'reminder_count',
+        'superseded_at',
+        'recovered_by_email',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'is_recovered' => 'boolean',
+        'is_clicked' => 'boolean',
+        'recovered_at' => 'datetime',
+        'clicked_at' => 'datetime',
+        'last_notified_at' => 'datetime',
+        'superseded_at' => 'datetime',
+        'reminder_count' => 'integer',
     ];
 
 
     public function getDataAttribute($value)
     {
-        return unserialize($value);
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        try {
+            $data = @unserialize($value, ['allowed_classes' => true]);
+
+            if ($data === false && $value !== 'b:0;') {
+                return [];
+            }
+
+            return $data;
+        } catch (\Throwable $e) {
+            return [];
+        }
     }
 
 
     public function setDataAttribute($value)
     {
         $this->attributes['data'] = serialize($value);
+    }
+
+    /**
+     * Get the order associated with this cart.
+     */
+    public function order()
+    {
+        return $this->belongsTo(\Modules\Order\Entities\Order::class, 'order_id');
     }
 }

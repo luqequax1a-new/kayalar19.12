@@ -1,6 +1,7 @@
 {
     "Account": true,
     "Admin": true,
+    "Analytics": true,
     "Attribute": true,
     "Brand": true,
     "Blog": true,
@@ -22,7 +23,7 @@
     "Page": true,
     "Payment": true,
     "Product": true,
-    "Popup": true,
+    "Popup": false,
     "Report": true,
     "Review": true,
     "Setting": true,
@@ -38,13 +39,14 @@
     "User": true,
     "Variation": true,
     "Importer": true,
-        "Unit": true,
-        "Address": true,
+    "Unit": true,
+    "Address": true,
     "Ticket": true,
     "SeoBulk": true,
     "Geliver": true,
     "BulkProductEdit": false,
     "DynamicCategory": true,
     "ProductFeeds": true,
-    "SizeChart": true
+    "SizeChart": true,
+    "Question": true
 }

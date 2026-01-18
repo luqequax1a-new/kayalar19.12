@@ -34,6 +34,12 @@ Route::post('robots/reset', [
 ]);
 
 
+Route::get('slugs/check', [
+    'as' => 'admin.slugs.check',
+    'uses' => 'SlugController@check',
+]);
+
+
 Route::get('clear-cache', function () {
     try {
         Artisan::call('optimize:clear');

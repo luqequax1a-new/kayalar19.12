@@ -14,7 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('menu_items', function (Blueprint $table) {
-            $table->string('icon')->nullable()->after('url');
+            $table->string('icon')->nullable();
         });
     }
 

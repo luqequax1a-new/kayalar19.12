@@ -114,7 +114,8 @@
         @elseif ($section === 'flash_sale_and_vertical_products')
             @if (setting('storefront_flash_sale_and_vertical_products_section_enabled'))
                 @include('storefront::public.home.sections.flash_sale', [
-                    'flashSaleEnabled' => setting('storefront_active_flash_sale_campaign')
+                    'flashSaleEnabled' => setting('storefront_active_flash_sale_campaign'),
+                    'flashSale' => $flashSale
                 ])
             @endif
         @elseif ($section === 'two_column_banners')

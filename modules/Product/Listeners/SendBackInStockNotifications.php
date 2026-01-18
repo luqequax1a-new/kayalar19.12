@@ -118,7 +118,7 @@ class SendBackInStockNotifications
                     'request_ids' => $requests->pluck('id')->all(),
                 ]);
 
-                Mail::to($email)->send(new BackInStockMail($product));
+                Mail::to($email)->send(new BackInStockMail($product, $variant));
 
                 StockNotifyRequest::query()
                     ->whereIn('id', $requests->pluck('id')->all())

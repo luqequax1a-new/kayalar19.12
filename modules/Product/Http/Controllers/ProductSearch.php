@@ -13,6 +13,8 @@ use Modules\Attribute\Entities\Attribute;
 use Modules\Product\Filters\ProductFilter;
 use Modules\Product\Events\ShowingProductList;
 use Modules\Tag\Entities\TagBadge;
+use Modules\DynamicCategory\Entities\DynamicCategory;
+use Modules\DynamicCategory\Services\DynamicCategoryProductService;
 
 trait ProductSearch
 {
@@ -50,6 +52,59 @@ trait ProductSearch
     {
         $payload = $this->buildListingPayload($model, $productFilter);
 
+        if (request()->filled('fragment')) {
+            $products = $payload['products'];
+            $productsCollection = method_exists($products, 'getCollection') ? $products->getCollection() : $products;
+            
+            $productsHtml = '';
+            $paginationHtml = '';
+            $showingText = '';
+            
+            try {
+                if ($productsCollection && count($productsCollection) > 0) {
+                    $productsHtml = view('storefront::public.partials.products.grid', [
+                        'products' => $productsCollection,
+                        'productsPaginator' => $products ?? null,
+                    ])->render();
+                }
+            } catch (\Throwable $e) {
+                $productsHtml = '';
+            }
+            
+            try {
+                if (isset($products) && method_exists($products, 'total')) {
+                    $total = (int) $products->total();
+                    $perPage = (int) request('perPage', 20);
+                    
+                    if ($total > $perPage) {
+                        $paginationHtml = view('storefront::public.partials.pagination')->render();
+                    }
+                    
+                    if ($total > 0) {
+                        $showingText = trans('storefront::products.showing_results', [
+                            'from' => $products->firstItem(),
+                            'to' => $products->lastItem(),
+                            'total' => $total,
+                        ]);
+                    }
+                }
+            } catch (\Throwable $e) {
+                $paginationHtml = '';
+                $showingText = '';
+            }
+            
+            return response()->json([
+                'products' => $payload['products'],
+                'attributes' => $payload['attributes'],
+                'brands' => $payload['brands'] ?? collect(),
+                'category' => $payload['category'],
+                'products_html' => $productsHtml,
+                'pagination_html' => $paginationHtml,
+                'showing_text' => $showingText,
+                'total' => (int) ($payload['total'] ?? 0),
+            ]);
+        }
+
         return response()->json($payload);
     }
 
@@ -65,29 +120,84 @@ trait ProductSearch
             if ($productIds->isEmpty()) {
                 $query = $productFilter->apply(
                     $model->newQuery()->whereTranslationLike('name', '%' . request('query') . '%')
-                )->forCard();
+                );
             } else {
-                $query = $search->filter($productFilter)->forCard();
+                $query = $search->filter($productFilter);
+            }
+        } elseif (request()->filled('category')) {
+            $slug = request('category');
+            $category = $this->resolvedCategory();
+
+            // prioritized: if standard category exists, use standard filter logic handled by ProductFilter
+            if ($category && $category->exists) {
+                $query = $model->filter($productFilter);
+            } else {
+                // Check Dynamic Category
+                $dynamicCategory = DynamicCategory::where('slug', $slug)->first();
+                if ($dynamicCategory) {
+                    $query = app(DynamicCategoryProductService::class)->buildQuery($dynamicCategory);
+                    
+                    // Temporarily remove 'category' from request parameters 
+                    // to prevent QueryStringFilter from applying a failing standard category constraint
+                    $originalCategory = request()->query('category');
+                    request()->query->remove('category');
+                    
+                    $query = $productFilter->apply($query);
+                    
+                    // Restore 'category' for subsequent logic/view
+                    request()->query->set('category', $originalCategory);
+                    
+                    // Update category display data for dynamic category
+                    $category = (object)[
+                        'exists' => true,
+                        'name' => $dynamicCategory->name,
+                        'slug' => $dynamicCategory->slug,
+                        'description' => $dynamicCategory->description,
+                        'meta_title' => $dynamicCategory->meta_title,
+                        'meta_description' => $dynamicCategory->meta_description,
+                        'faq_items' => [],
+                        'isRoot' => false,
+                    ];
+                    // Cache it so resolvedCategory() might use it if called, though resolvedCategory() expects Category model
+                    // We can't easily cache mismatch types, but we handled the query building manually here.
+                } else {
+                    $query = $model->filter($productFilter);
+                }
             }
         } else {
-            $query = $model->filter($productFilter)->forCard();
+            $query = $model->filter($productFilter);
         }
 
-        if (request()->filled('category')) {
-            $productIds = (clone $query)->select('products.id')->resetOrders();
+        $productIds = (clone $query)->select('products.id')->resetOrders();
+
+        // Check if category_position is in the select
+        // If yes, include it in GROUP BY to satisfy MySQL strict mode
+        $selectColumns = $query->getQuery()->columns ?? [];
+        $hasCategoryPosition = false;
+        
+        if (!empty($selectColumns)) {
+            foreach ($selectColumns as $column) {
+                if (is_string($column) && strpos($column, 'category_position') !== false) {
+                    $hasCategoryPosition = true;
+                    break;
+                }
+            }
+        }
+        
+        if ($hasCategoryPosition) {
+            $query->groupBy('products.id', 'category_position');
+        } else {
+            $query->groupBy('products.id');
         }
 
-        $perPage = (int) request('perPage', 12);
+        $perPage = (int) request('perPage', 20);
         $page = max(1, (int) request('page', 1));
 
         $listingQuery = clone $query;
 
-        $eagerLoads = method_exists($listingQuery, 'getEagerLoads') ? $listingQuery->getEagerLoads() : [];
-        unset($eagerLoads['reviews']);
-        $listingQuery->setEagerLoads($eagerLoads);
-
-        $listingQuery->withAvg('reviews', 'rating');
-
+        // Optimization: Reset and re-apply only necessary eager loads
+        $listingQuery->setEagerLoads([]);
+        
         $listingQuery->with([
             'files' => function ($q) {
                 $q->wherePivotIn('zone', ['base_image', 'additional_images']);
@@ -102,12 +212,11 @@ trait ProductSearch
             'variants' => function ($q) {
                 $q->where('is_active', true)
                     ->orderBy('position')
-                    ->addSelect([
+                    ->select([
                         'id',
                         'product_id',
                         'uid',
                         'name',
-                        'position',
                         'price',
                         'special_price',
                         'special_price_type',
@@ -137,7 +246,6 @@ trait ProductSearch
         ]);
 
         $paginator = $listingQuery->paginate($perPage, ['*'], 'page', $page);
-
         $products = $paginator->getCollection();
 
         try {
@@ -214,15 +322,14 @@ trait ProductSearch
                             $image = $variantImage ?: ($productImage ?: $product->base_image);
 
                             $p = $product->clean();
+                            $p['list_variants_separately'] = true;
                             $p['variant_attribute_label'] = $variantLabel;
                             $p['name'] = $product->name;
                             $p['listing_key'] = 'p' . (int) $product->id . '-v' . (int) $variant->id;
-                            $p['variant'] = $variant->toArray();
-                            $slug = (string) ($product->slug ?? '');
-                            $uid = (string) ($variant->uid ?? '');
-                            $p['url'] = $slug !== ''
-                                ? url('/products/' . $slug) . ($uid !== '' ? ('?variant=' . $uid) : '')
-                                : $product->url();
+                            $p['variant'] = $variant->clean();
+                            
+                            $p['url'] = $variant->url() ?? $product->url();
+                            
                             $p['base_image'] = $image;
                             $p['base_image_thumb'] = [
                                 'path' => media_variant_url(
@@ -242,14 +349,24 @@ trait ProductSearch
                             $p['videos'] = $this->mapListingVideos($product);
                             $p['tag_badges'] = $tagBadges;
                             $p['rating_percent'] = $ratingPercent;
+                            $p['variants'] = [];
+                            $p['variations'] = $product->variations->map(function ($v) {
+                                return [
+                                    'name' => $v->name,
+                                    'uid' => $v->uid,
+                                ];
+                            });
                             return $p;
                         });
                     }
                 }
 
                 $base = $product->clean();
+                $defaultVariant = $product->variant;
                 $base['variant_attribute_label'] = $variantLabel;
                 $base['listing_key'] = 'p' . (int) $product->id;
+                $base['formatted_price'] = $defaultVariant ? $defaultVariant->formatted_price : $product->formatted_price;
+                $base['url'] = $defaultVariant ? ($defaultVariant->url() ?? $product->url()) : $product->url();
                 $base['base_image_thumb'] = [
                     'path' => media_variant_url(
                         $product->base_image,
@@ -260,6 +377,24 @@ trait ProductSearch
                 $base['videos'] = $this->mapListingVideos($product);
                 $base['tag_badges'] = $tagBadges;
                 $base['rating_percent'] = $ratingPercent;
+                $base['reviews_count'] = $product->reviews_count ?? ($product->relationLoaded('reviews') ? $product->reviews->count() : 0);
+                
+                $base['variant'] = $defaultVariant ? $defaultVariant->clean() : null;
+
+                $base['variants'] = $product->variants->map(function ($v) {
+                    $vArr = $v->clean();
+                    $vArr['base_image_thumb'] = [
+                        'path' => media_variant_url($v->base_image, 80)
+                    ];
+                    return $vArr;
+                });
+
+                $base['variations'] = $product->variations->map(function ($v) {
+                    return [
+                        'name' => $v->name,
+                        'uid' => $v->uid,
+                    ];
+                });
 
                 return collect([$base]);
             })
@@ -271,6 +406,8 @@ trait ProductSearch
             'name' => null,
             'slug' => null,
             'description_html' => '',
+            'meta_title' => '',
+            'meta_description' => '',
             'faq_items' => [],
         ];
 
@@ -283,15 +420,88 @@ trait ProductSearch
                 $categoryData['name'] = $category->name;
                 $categoryData['slug'] = $category->slug;
                 $categoryData['description_html'] = $category->description ?? '';
+                $categoryData['meta_title'] = $category->meta_title ?? '';
+                $categoryData['meta_description'] = $category->meta_description ?? '';
                 $categoryData['faq_items'] = $faqItems;
+            } elseif (isset($dynamicCategory) && $dynamicCategory) {
+                $categoryData['name'] = $dynamicCategory->name;
+                $categoryData['slug'] = $dynamicCategory->slug;
+                $categoryData['description_html'] = $dynamicCategory->description ?? '';
+                $categoryData['meta_title'] = $dynamicCategory->meta_title ?? '';
+                $categoryData['meta_description'] = $dynamicCategory->meta_description ?? '';
+                $categoryData['faq_items'] = [];
             }
+        } elseif (request()->filled('query')) {
+             // Leave empty for search results, or populate "Search Result" title if desired.
+             // Usually search handles its own title in frontend or different view.
+        } else {
+            // Main category for /products page - fallback for ANY filter combination 
+            // if not explicit category or search query
+            $categoryData['name'] = setting('products_page_name', trans('storefront::products.shop'));
+            $categoryData['slug'] = setting('products_page_slug', 'products');
+            $categoryData['description_html'] = setting('products_page_description', '');
+            $categoryData['meta_title'] = setting('products_page_meta_title', '');
+            $categoryData['meta_description'] = setting('products_page_meta_description', '');
+            $categoryData['faq_items'] = json_decode(setting('products_page_faq_items', '[]'), true) ?: [];
+        }
+
+        $baseFacetProductIds = $this->getBaseFacetProductIds($model);
+
+        $collection = $paginator->getCollection();
+        
+        // If we are on the first page and the total is small, 
+        // the collection count is the most accurate total.
+        if ($paginator->currentPage() === 1 && $paginator->total() <= $paginator->perPage()) {
+            $total = $collection->count();
+        } else {
+            // Otherwise, we use the paginator's total (product count).
+            $total = (int) $paginator->total();
         }
 
         return [
             'products' => $paginator,
-            'attributes' => $this->getAttributes($productIds),
+            'attributes' => $this->getAttributes($baseFacetProductIds),
+            'brands' => $this->getBrands($baseFacetProductIds),
             'category' => $categoryData,
+            'total' => $total,
         ];
+    }
+
+
+    /**
+     * Get product IDs for facets (filters) based only on core context (category/search/tag).
+     * This ensures filters don't disappear when one is selected.
+     */
+    protected function getBaseFacetProductIds(Product $model)
+    {
+        $categorySlug = request('category');
+        
+        // If it's a dynamic category, use its specific builder for facets
+        if ($categorySlug) {
+            $dynamicCategory = \Modules\DynamicCategory\Entities\DynamicCategory::where('slug', $categorySlug)->first();
+            if ($dynamicCategory) {
+                return app(\Modules\DynamicCategory\Services\DynamicCategoryProductService::class)
+                    ->buildQuery($dynamicCategory)
+                    ->select('products.id');
+            }
+        }
+
+        // Use forCard() to ensure proper joins and selects
+        $query = $model->forCard();
+
+        if (request()->filled('query')) {
+            $query->whereTranslationLike('name', '%' . request('query') . '%');
+        }
+
+        if ($categorySlug) {
+            app(\Modules\Product\Filters\QueryStringFilter::class)->category($query, $categorySlug);
+        }
+
+        if (request()->filled('tag')) {
+            app(\Modules\Product\Filters\QueryStringFilter::class)->tag($query, request('tag'));
+        }
+
+        return $query->select('products.id');
     }
 
 
@@ -323,16 +533,58 @@ trait ProductSearch
 
     private function getAttributes($productIds)
     {
-        if (!request()->filled('category') || $this->filteringViaRootCategory()) {
+        if (!$productIds) {
             return collect();
         }
 
-        return Attribute::with('values')
-            ->where('is_filterable', true)
-            ->whereHas('categories', function ($query) use ($productIds) {
-                $query->whereIn('id', $this->getProductsCategoryIds($productIds));
-            })
-            ->get();
+        try {
+            $attributeIds = DB::table('product_attributes')
+                ->distinct()
+                ->whereIn('product_id', $productIds)
+                ->pluck('attribute_id')
+                ->all();
+
+            if (empty($attributeIds)) {
+                return collect();
+            }
+
+            $attributes = Attribute::with(['values' => function ($query) use ($productIds) {
+                $query->whereExists(function ($q) use ($productIds) {
+                    $q->select(DB::raw(1))
+                        ->from('product_attribute_values')
+                        ->join('product_attributes', 'product_attribute_values.product_attribute_id', '=', 'product_attributes.id')
+                        ->whereRaw('product_attribute_values.attribute_value_id = attribute_values.id')
+                        ->whereIn('product_attributes.product_id', $productIds);
+                })->orderBy('position');
+            }])
+                ->where('is_filterable', true)
+                ->whereIn('id', $attributeIds)
+                ->get();
+
+            return $attributes->map(function ($attribute) use ($productIds) {
+                if ($attribute->filterable_type === 'range') {
+                    $minMax = DB::table('product_attribute_values')
+                        ->join('product_attributes', 'product_attribute_values.product_attribute_id', '=', 'product_attributes.id')
+                        ->join('attribute_values', 'product_attribute_values.attribute_value_id', '=', 'attribute_values.id')
+                        ->join('attribute_value_translations', 'attribute_values.id', '=', 'attribute_value_translations.attribute_value_id')
+                        ->where('product_attributes.attribute_id', $attribute->id)
+                        ->whereIn('product_attributes.product_id', $productIds)
+                        ->selectRaw('MIN(CAST(attribute_value_translations.value AS DECIMAL(10,2))) as min')
+                        ->selectRaw('MAX(CAST(attribute_value_translations.value AS DECIMAL(10,2))) as max')
+                        ->first();
+
+                    $attribute->min = (int) ($minMax->min ?? 0);
+                    $attribute->max = (int) ($minMax->max ?? 0);
+                }
+
+                $attribute->setRelation('values', $attribute->values->values());
+
+                return $attribute;
+            });
+        } catch (\Throwable $e) {
+            \Log::error('getAttributes error: ' . $e->getMessage());
+            return collect();
+        }
     }
 
 
@@ -348,12 +600,52 @@ trait ProductSearch
 
     private function getProductsCategoryIds($productIds)
     {
-        // $productIds can be an array/collection OR a subquery builder.
-        // DB::table()->whereIn supports subquery builders.
         return DB::table('product_categories')
             ->whereIn('product_id', $productIds)
-            ->distinct()
-            ->pluck('category_id');
+            ->select('category_id')
+            ->distinct();
+    }
+
+
+    private function getBrands($productIds)
+    {
+        if (!$productIds) {
+            return collect();
+        }
+
+        try {
+            // Direct approach: get brand IDs from products table
+            $query = DB::table('products')
+                ->whereNotNull('brand_id')
+                ->distinct()
+                ->select('brand_id');
+
+            $query->whereIn('id', $productIds);
+
+            $brandIds = $query->pluck('brand_id')->all();
+
+            if (empty($brandIds)) {
+                return collect();
+            }
+
+            $brands = \Modules\Brand\Entities\Brand::withoutGlobalScope('active')
+                ->with('translations')
+                ->whereIn('id', $brandIds)
+                ->where('is_active', true)
+                ->get()
+                ->sortBy('name'); // Sort in memory after translations are loaded
+
+            return $brands->map(function ($brand) {
+                return [
+                    'id' => $brand->id,
+                    'slug' => $brand->slug,
+                    'name' => $brand->name,
+                ];
+            })->values();
+        } catch (\Throwable $e) {
+            \Log::error('getBrands error: ' . $e->getMessage());
+            return collect();
+        }
     }
 
 

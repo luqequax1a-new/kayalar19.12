@@ -8,13 +8,13 @@
         padding: 0;
         background: var(--color-white);
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        z-index: 180;
+        z-index: $z-index-sticky;
 
         opacity: 1;
         color: var(--color-black);
 
-        .header-column-right .icon-wrap > svg circle,
-        .header-column-right .icon-wrap > svg path {
+        .header-column-right .icon-wrap>svg circle,
+        .header-column-right .icon-wrap>svg path {
             stroke: var(--color-black) !important;
             opacity: 1;
         }
@@ -24,7 +24,7 @@
             opacity: 1;
         }
 
-        > .container {
+        >.container {
             padding-top: 4px;
             padding-bottom: 4px;
         }
@@ -89,7 +89,7 @@
             padding: 0;
             border: none;
 
-            > .container {
+            >.container {
                 padding-top: 4px;
                 padding-bottom: 4px;
             }

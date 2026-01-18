@@ -5,6 +5,10 @@ use Spatie\Honeypot\ProtectAgainstSpam;
 
 Route::get('login', 'AuthController@getLogin')->name('login');
 Route::post('login', 'AuthController@postLogin')->name('login.post');
+Route::get('login/verify', 'AuthController@getVerify')->name('login.verify');
+Route::post('login/verify', 'AuthController@postVerify')->name('login.verify.post');
+Route::post('login/verify/resend', 'AuthController@postResendCode')->name('login.verify.resend');
+Route::post('login/verify/resend/sms', 'AuthController@postResendCodeSms')->name('login.verify.resend.sms');
 
 Route::get('login/{provider}', 'AuthController@redirectToProvider')->name('login.redirect');
 Route::get('login/{provider}/callback', 'AuthController@handleProviderCallback')->name('login.callback');

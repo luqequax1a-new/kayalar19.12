@@ -114,7 +114,13 @@ class CoreServiceProvider extends ServiceProvider
      */
     private function setupAppLocale()
     {
-        $this->app['config']->set('app.locale', $defaultLocale = Setting::get('default_locale'));
+        try {
+            $defaultLocale = Setting::get('default_locale') ?: config('app.locale');
+        } catch (Exception $e) {
+            $defaultLocale = config('app.locale');
+        }
+        
+        $this->app['config']->set('app.locale', $defaultLocale);
         $this->app['config']->set('app.fallback_locale', $defaultLocale);
 
         $locale = is_null(LaravelLocalization::setLocale()) ? $defaultLocale : null;
@@ -204,7 +210,9 @@ class CoreServiceProvider extends ServiceProvider
             return $this->app['inAdminPanel'] = false;
         }
 
-        $index = in_array($this->app['request']->segment(1), setting('supported_locales'))
+        $supportedLocales = setting('supported_locales') ?? [config('app.locale')];
+        
+        $index = in_array($this->app['request']->segment(1), $supportedLocales)
             ? 2
             : 1;
 

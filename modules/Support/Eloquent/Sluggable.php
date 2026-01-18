@@ -29,7 +29,7 @@ trait Sluggable
     public function setSlug($value = null)
     {
         if (is_null($value)) {
-            $value = $this->getAttribute($this->slugAttribute);
+            $value = $this->getAttribute('slug') ?: $this->getAttribute($this->slugAttribute);
         }
 
         $this->attributes['slug'] = $this->generateSlug($value);

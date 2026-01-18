@@ -240,6 +240,9 @@
         <div class="brief-description">
             {!! $product->short_description !!}
         </div>
+
+        @include('storefront::public.partials.cart.upsell_box')
+
     <div class="details-info-middle" style="min-height: 260px;">
         <form
             @input="errors.clear($event.target.name)"
@@ -260,14 +263,14 @@
             @endif
 
             <div class="details-info-middle-actions">
-                <template x-if="product.unit_decimal">
+                <template x-if="product.unit_decimal && isInStock">
                     <div class="decimal-quantity-card">
                         <div class="decimal-quantity-header">
                             <div>
                                 <div class="decimal-quantity-title">
-                                    Uzunluk (<span x-text="product.unit_suffix"></span>)
+                                    <span x-text="product.unit_label || 'Uzunluk'"></span> (<span x-text="product.unit_suffix"></span>)
                                 </div>
-                                <div class="decimal-quantity-desc" x-text="product.unit_info_top || 'Bu ürün metre bazında satılır. İstediğiniz ölçüyü girerek sepete ekleyebilirsiniz.'"></div>
+                                <div class="decimal-quantity-desc" x-text="product.unit_info_top"></div>
                             </div>
                         </div>
 
@@ -325,11 +328,11 @@
                             <button type="button" class="chip" :disabled="doesManageStock && item.qty < 10" @click="updateQuantity(10)">10<span x-text="product.unit_suffix"></span></button>
                         </div>
 
-                        <div class="decimal-quantity-info" x-text="product.unit_info_bottom || `Minimum kesim: ${new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(product.unit_min)} ${product.unit_suffix}`"></div>
+                        <div class="decimal-quantity-info" x-text="product.unit_info_bottom"></div>
                     </div>
                 </template>
 
-                <template x-if="!product.unit_decimal">
+                <template x-if="!product.unit_decimal && isInStock">
                     <div class="number-picker-lg">
                         <label for="qty">{{ trans('storefront::product.quantity') }}</label>
 
@@ -388,46 +391,50 @@
                 </template>
 
                 <template x-if="!isInStock">
-                    <div x-data="{ open: false, requested: false, email: '{{ auth()->check() ? auth()->user()->email : '' }}', submitting: false, notice: '', noticeType: '' }">
-                        <button
-                            type="button"
-                            class="btn btn-primary btn-add-to-cart"
-                            :disabled="requested"
-                            @click="if (!requested) { open = !open }"
-                        >
-                            <span x-show="!requested">Stoğa geldiğinde haber ver</span>
-                            <span x-show="requested" x-cloak>Talebiniz alındı</span>
-                        </button>
+                    <div x-data="{ open: true, email: '{{ auth()->check() ? auth()->user()->email : '' }}', submitting: false, notice: '', noticeType: '' }">
+                        <div class="stock-notify-container" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;">
+                            <h4 style="font-size: 15px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                Bu Ürün Şu An Stokta Yok
+                            </h4>
+                            <p style="font-size: 13px; color: #64748b; margin-bottom: 15px;">E-posta adresinizi bırakın, ürün tekrar stoklara girdiğinde size haber verelim.</p>
+                            
+                            <div x-show="!isRequested(item.id)" x-cloak>
+                                <div class="input-group">
+                                    <input
+                                        type="email"
+                                        name="stock_notify_email"
+                                        class="form-control"
+                                        required
+                                        x-model="email"
+                                        placeholder="E-posta adresiniz"
+                                        :disabled="submitting"
+                                        style="height: 48px; border-radius: 8px 0 0 8px;"
+                                    >
 
-                        <div class="mt-3" x-show="open && !requested" x-cloak>
-                            <div class="input-group">
-                                <input
-                                    type="email"
-                                    name="stock_notify_email"
-                                    class="form-control"
-                                    required
-                                    x-model="email"
-                                    placeholder="E-posta adresiniz"
-                                    :disabled="submitting"
-                                >
+                                    <button
+                                        type="button"
+                                        class="btn btn-warning"
+                                        :disabled="submitting"
+                                        @click="if (isRequested(item.id)) return; submitting = true; notice = ''; noticeType = ''; const params = new URLSearchParams({ product_id: '{{ $product->id }}', email }); if (hasAnyVariant && isActiveItem && item && item.id && item.id != {{ $product->id }}) { params.append('variant_id', item.id); } fetch('{{ route('stock.notify') }}', { method: 'POST', credentials: 'same-origin', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body: params }).then(async (res) => { let data = null; try { data = await res.json(); } catch (e) {} if (res.ok) { noticeType = 'success'; notice = (data && data.message) ? data.message : 'Talebiniz alındı.'; requestedStockNotifications.push(item.id); } else { noticeType = 'error'; notice = (data && data.message) ? data.message : 'İşlem başarısız.'; } submitting = false; }).catch(() => { noticeType = 'error'; notice = 'İşlem başarısız.'; submitting = false; });"
+                                        style="background-color: #f59e0b; border-color: #f59e0b; color: #fff; font-weight: 600; padding: 0 25px; height: 48px; border-radius: 0 8px 8px 0;"
+                                    >
+                                        <span x-show="!submitting">Haber Ver</span>
+                                        <span x-show="submitting" class="spinner-border spinner-border-sm"></span>
+                                    </button>
+                                </div>
 
-                                <button
-                                    type="button"
-                                    class="btn btn-primary"
-                                    :disabled="submitting"
-                                    @click="if (requested) return; submitting = true; notice = ''; noticeType = ''; const params = new URLSearchParams({ product_id: '{{ $product->id }}', email }); if (product.variant && isActiveItem && item && item.id) { params.append('variant_id', item.id); } fetch('{{ route('stock.notify') }}', { method: 'POST', credentials: 'same-origin', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body: params }).then(async (res) => { let data = null; try { data = await res.json(); } catch (e) {} if (res.ok) { noticeType = 'success'; notice = (data && data.message) ? data.message : 'Talebiniz alındı.'; requested = true; open = false; } else { noticeType = 'error'; notice = (data && data.message) ? data.message : 'İşlem başarısız.'; } submitting = false; }).catch(() => { noticeType = 'error'; notice = 'İşlem başarısız.'; submitting = false; });"
-                                >
-                                    Gönder
-                                </button>
+                                <div class="mt-2" x-show="notice && noticeType === 'error'" x-cloak>
+                                    <div class="alert alert-danger" style="font-size: 13px; padding: 8px 12px;" x-text="notice"></div>
+                                </div>
                             </div>
 
-                            <div class="mt-2" x-show="notice && noticeType === 'error'" x-cloak>
-                                <div class="alert alert-danger" x-text="notice"></div>
+                            <div x-show="isRequested(item.id)" x-cloak>
+                                <div class="alert alert-success" style="background: #ecfdf5; border: 1px solid #10b981; color: #065f46; font-size: 14px; border-radius: 8px; margin: 0; display: flex; align-items: center; gap: 8px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    <span x-text="notice || 'Talebiniz alındı. Ürün stok açıldığında size haber vereceğiz.'"></span>
+                                </div>
                             </div>
-                        </div>
-
-                        <div class="mt-3" x-show="requested" x-cloak>
-                            <div class="alert alert-success" x-text="notice || 'Talebiniz alındı. Ürün tekrar stok açıldığında size haber vereceğiz.'"></div>
                         </div>
                     </div>
                 </template>

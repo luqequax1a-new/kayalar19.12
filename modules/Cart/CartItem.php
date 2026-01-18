@@ -26,6 +26,28 @@ class CartItem implements JsonSerializable
     }
 
     /**
+     * Clear stock cache for specific product or variant
+     */
+    public static function clearProductStockCache(int $id): void
+    {
+        unset(self::$productStockCache[$id]);
+    }
+
+    public static function clearVariantStockCache(int $id): void
+    {
+        unset(self::$variantStockCache[$id]);
+    }
+
+    /**
+     * Clear all stock caches
+     */
+    public static function clearAllStockCache(): void
+    {
+        self::$productStockCache = [];
+        self::$variantStockCache = [];
+    }
+
+    /**
      * The ID of the cart item.
      *
      * @var int
@@ -90,12 +112,12 @@ class CartItem implements JsonSerializable
     public function __construct($item)
     {
         $this->id = $item->id;
-        $this->qty = $item->quantity;
-        $this->product = $item->attributes['product'];
-        $this->variant = $item->attributes['variant'];
-        $this->item = $item->attributes['item'];
-        $this->variations = $item->attributes['variations'];
-        $this->options = $item->attributes['options'];
+        $this->qty = (float) ($item->quantity ?? 0);
+        $this->product = $item->attributes['product'] ?? null;
+        $this->variant = $item->attributes['variant'] ?? null;
+        $this->item = $item->attributes['item'] ?? null;
+        $this->variations = $item->attributes['variations'] ?? collect([]);
+        $this->options = $item->attributes['options'] ?? collect([]);
         $this->upsell = $item->attributes['upsell'] ?? null;
         $this->manual_unit_price = $item->attributes['manual_unit_price'] ?? null;
     }

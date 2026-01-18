@@ -8,44 +8,62 @@
 @endsection
 
 @section('panel')
-    <div class="panel order-details-panel">
-        <div class="panel-header">
-            <div class="d-flex align-items-center justify-content-between flex-wrap order-details-header">
-                <div class="d-flex flex-column">
-                    <h4 class="m-b-0">{{ trans('storefront::account.view_order.view_order') }}</h4>
-                    <div class="order-details-subtitle">
-                        <span class="order-no">#{{ $order->displayOrderNumber() }}</span>
-                        <span class="order-date">{{ $order->created_at->format('d.m.Y') }}</span>
-                        <span class="order-status badge-status badge-status-{{ \Illuminate\Support\Str::slug($order->status) }}">{{ $order->status() }}</span>
-                    </div>
+    @php
+        $statusSlug = \Illuminate\Support\Str::slug($order->status);
+        $steps = [
+            'pending_payment' => 1,
+            'pending' => 1,
+            'processing' => 2,
+            'on_hold' => 2,
+            'shipped' => 3,
+            'on_the_way' => 3,
+            'out_for_delivery' => 3,
+            'completed' => 4,
+            'canceled' => 0,
+            'refunded' => 0,
+        ];
+        $currentStep = $steps[$statusSlug] ?? 1;
+    @endphp
+
+    <div class="back-to-account-wrapper">
+        <a href="{{ route('account.dashboard.index') }}" class="btn-back-to-account">
+            <i class="las la-arrow-left"></i>
+            <span>Hesabıma Geri Dön</span>
+        </a>
+    </div>
+
+    <div class="order-details-container">
+        <div class="order-content-full">
+            <!-- Info Section -->
+            <div class="order-info-grid-unified">
+                <div class="info-block">
+                    @include('storefront::public.account.orders.show.order_information')
+                </div>
+                <div class="info-block">
+                    @include('storefront::public.account.orders.show.shipping_address')
+                </div>
+                <div class="info-block">
+                    @include('storefront::public.account.orders.show.billing_address')
                 </div>
             </div>
-        </div>
 
-        <div class="panel-body">
-            <div class="order-details-wrap">
-                <div class="order-details-layout">
-                    <div class="order-details-top-full">
-                        <div class="order-details-top">
-                            <div class="order-details-info-grid">
-                                @include('storefront::public.account.orders.show.order_information')
-                                @include('storefront::public.account.orders.show.shipping_address')
-                                @include('storefront::public.account.orders.show.billing_address')
-                            </div>
-                        </div>
-                    </div>
+            <!-- Products Section -->
+            <div class="order-section-item">
+                <div class="order-products-unified">
+                    @include('storefront::public.account.orders.show.items_ordered')
+                </div>
+            </div>
 
-                    <div class="order-details-main">
-                        @include('storefront::public.account.orders.show.items_ordered')
-                    </div>
-
-                    <aside class="order-details-sidebar">
-                        @include('storefront::public.account.orders.show.order_totals')
-                    </aside>
+            <!-- Totals Section -->
+            <div class="order-section-item">
+                <div class="order-totals-unified-full">
+                    <h5 class="section-subtitle">{{ trans('storefront::account.view_order.order_totals') }}</h5>
+                    @include('storefront::public.account.orders.show.order_totals')
                 </div>
             </div>
         </div>
     </div>
+
 @endsection
 
 @push('globals')
@@ -53,3 +71,4 @@
         'modules/Storefront/Resources/assets/public/sass/pages/account/orders/show/main.scss',
     ])
 @endpush
+

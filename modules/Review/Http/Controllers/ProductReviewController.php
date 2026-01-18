@@ -103,6 +103,13 @@ class ProductReviewController
 
         event(new \Modules\Review\Events\ReviewCreated($review));
 
+        // Notify admin
+        try {
+            \FleetCart\Services\NotificationService::productReview($review);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+
         // Handle image uploads (max 4) and attach to review via media module
         if ($request->hasFile('images')) {
             $files = $request->file('images');

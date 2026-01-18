@@ -9,10 +9,10 @@ return new class extends Migration {
     {
         Schema::table('units', function (Blueprint $table) {
             if (!Schema::hasColumn('units', 'info_top')) {
-                $table->text('info_top')->nullable()->after('info');
+                $table->text('info_top')->nullable();
             }
             if (!Schema::hasColumn('units', 'info_bottom')) {
-                $table->text('info_bottom')->nullable()->after('info_top');
+                $table->text('info_bottom')->nullable();
             }
         });
 

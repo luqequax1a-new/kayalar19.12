@@ -1,0 +1,18 @@
+{
+    "name": "fleetcart/question",
+    "description": "Product Question and Answer module.",
+    "type": "fleetcart-module",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Envay Soft",
+            "email": "envaysoft@gmail.com"
+        }
+    ],
+    "require": {},
+    "autoload": {
+        "psr-4": {
+            "Modules\\Question\\": ""
+        }
+    }
+}

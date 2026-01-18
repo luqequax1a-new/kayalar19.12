@@ -15,23 +15,23 @@ return new class extends Migration
     {
         Schema::table('orders', function (Blueprint $table) {
             if (!Schema::hasColumn('orders', 'billing_phone')) {
-                $table->string('billing_phone')->nullable()->after('billing_country');
+                $table->string('billing_phone')->nullable();
             }
 
             if (!Schema::hasColumn('orders', 'shipping_phone')) {
-                $table->string('shipping_phone')->nullable()->after('shipping_country');
+                $table->string('shipping_phone')->nullable();
             }
 
             if (!Schema::hasColumn('orders', 'invoice_title')) {
-                $table->string('invoice_title')->nullable()->after('billing_phone');
+                $table->string('invoice_title')->nullable();
             }
 
             if (!Schema::hasColumn('orders', 'invoice_tax_number')) {
-                $table->string('invoice_tax_number')->nullable()->after('invoice_title');
+                $table->string('invoice_tax_number')->nullable();
             }
 
             if (!Schema::hasColumn('orders', 'invoice_tax_office')) {
-                $table->string('invoice_tax_office')->nullable()->after('invoice_tax_number');
+                $table->string('invoice_tax_office')->nullable();
             }
         });
     }

@@ -28,27 +28,10 @@
                         @include('storefront::public.checkout.create.form.shipping_details')
                         @include('storefront::public.checkout.create.form.order_note')
 
-                        <div class="row">
-                            <div class="col-md-18">
-                                <div class="form-group ship-to-different-address-label">
-                                    <div class="ship-toggle-card d-flex align-items-center justify-content-between">
-                                        <label for="ship-to-different-address" class="form-check-label">
-                                            {{ trans('storefront::checkout.ship_to_different_address') }}
-                                        </label>
+                        @auth
 
-                                        <label class="toggle-switch">
-                                            <input
-                                                type="checkbox"
-                                                name="has_different_billing"
-                                                id="ship-to-different-address"
-                                                x-model="form.ship_to_a_different_address"
-                                            >
-                                            <span class="toggle-slider"></span>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        @endauth
+
 
                         @include('storefront::public.checkout.create.form.billing_details')
                     </div>
@@ -91,10 +74,12 @@
                     </template>
                 </form>
             @endif
+            
+            @include('storefront::public.checkout.create.coupons_modal')
         </div>
-
-        
     </section>
+    
+    @include('storefront::public.partials.cart.upsell_offers', ['upsellData' => $upsellData ?? null])
 @endsection
 
 @push('pre-scripts')
@@ -131,7 +116,7 @@
     @endif
 @endpush
 
-@push('globals')
+@push('scripts')
     <script>
         FleetCart.stripePublishableKey = '{{ setting("stripe_publishable_key") }}',
         FleetCart.stripeEnabled = {{ setting("stripe_enabled") ? 'true' : 'false' }},
@@ -147,118 +132,3 @@
     ])
 @endpush
 
-@push('globals')
-    <script>
-        window.checkoutDebugLog = window.checkoutDebugLog || [];
-        function logCheckout(type, payload) {
-            payload = payload || {};
-            var entry = {
-                t: new Date().toISOString(),
-                type: type,
-                url: window.location.pathname + window.location.search
-            };
-            for (var k in payload) { if (Object.prototype.hasOwnProperty.call(payload, k)) { entry[k] = payload[k]; } }
-            window.checkoutDebugLog.push(entry);
-            try { console.log('[CHECKOUT]', entry); } catch (e) {}
-        }
-        logCheckout('page_load', {
-            user_id: "{{ auth()->id() ?? null }}",
-            cart_id: "{{ $cart->id ?? null }}"
-        });
-        window.addEventListener('error', function (e) {
-            logCheckout('js_error', {
-                message: e.message,
-                filename: e.filename,
-                lineno: e.lineno,
-                colno: e.colno
-            });
-        });
-        window.addEventListener('unhandledrejection', function (e) {
-            var r = e.reason;
-            logCheckout('js_unhandled_promise', {
-                reason: r ? (r.message || String(r)) : null
-            });
-        });
-        function redirectTo(url, reason) { logCheckout('redirect', { to: url, reason: reason || null }); window.location.href = url; }
-        (function(){
-            function onChange(selector, handler){
-                document.addEventListener('change', function(e){
-                    var t = e.target; if (!t) return; if (t.matches(selector)) { handler(t); }
-                });
-            }
-            if (window.$ && $.ajaxSetup) {
-                var lastAjaxId = 0;
-                $.ajaxSetup({
-                    beforeSend: function (xhr, settings) {
-                        this.__ajaxId = ++lastAjaxId;
-                        this.__startedAt = Date.now();
-                        logCheckout('ajax_start', { id: this.__ajaxId, method: settings.type, url: settings.url, data: settings.data });
-                    },
-                    complete: function (xhr, status) {
-                        var dur = this.__startedAt ? (Date.now() - this.__startedAt) : undefined;
-                        logCheckout('ajax_end', { id: this.__ajaxId, status: status, http_status: xhr.status, url: this.url, duration_ms: dur, response_sample: (xhr.responseText || '').slice(0, 300) });
-                    },
-                    error: function (xhr, status, error) {
-                        logCheckout('ajax_error', { id: this.__ajaxId, status: status, http_status: xhr.status, error: error, url: this.url });
-                    }
-                });
-            }
-            if (window.fetch) {
-                var _origFetch = window.fetch;
-                window.fetch = function(){
-                    var args = arguments;
-                    var url = args[0];
-                    var options = args[1] || {};
-                    var startedAt = Date.now();
-                    logCheckout('fetch_start', { url: url, method: options.method || 'GET' });
-                    return _origFetch.apply(this, args).then(function(res){
-                        logCheckout('fetch_end', { url: url, status: res.status, ms: Date.now() - startedAt });
-                        return res;
-                    }).catch(function(err){
-                        logCheckout('fetch_error', { url: url, error: (err && (err.message || String(err))) || 'unknown', ms: Date.now() - startedAt });
-                        throw err;
-                    });
-                };
-            }
-            if (window.axios && axios.interceptors) {
-                var lastAxiosId = 0;
-                axios.interceptors.request.use(function(config){
-                    config.__ajaxId = ++lastAxiosId;
-                    config.__startedAt = Date.now();
-                    logCheckout('axios_start', { id: config.__ajaxId, method: (config.method || 'GET').toUpperCase(), url: config.url, data: config.data });
-                    return config;
-                }, function(error){
-                    var cfg = error.config || {};
-                    logCheckout('axios_request_error', { id: cfg.__ajaxId, http_status: (error.response && error.response.status) || 0, error: String(error.message || error), url: cfg.url });
-                    return Promise.reject(error);
-                });
-                axios.interceptors.response.use(function(response){
-                    var cfg = response.config || {};
-                    var dur = cfg.__startedAt ? (Date.now() - cfg.__startedAt) : undefined;
-                    var sample;
-                    try { sample = typeof response.data === 'string' ? response.data : JSON.stringify(response.data); } catch (_e) { sample = ''; }
-                    logCheckout('axios_end', { id: cfg.__ajaxId, http_status: response.status, url: cfg.url, ms: dur, response_sample: (sample || '').slice(0,300) });
-                    try {
-                        var redirectUrl = response.data && response.data.redirectUrl;
-                        if (redirectUrl) { logCheckout('redirect', { to: redirectUrl, reason: 'purchase_response' }); }
-                        else if (cfg.url && /\/checkout\/\d+\/complete/.test(String(cfg.url))) { logCheckout('redirect', { to: '/checkout/complete', reason: 'order_placed' }); }
-                    } catch(_e) {}
-                    return response;
-                }, function(error){
-                    var cfg = error.config || {};
-                    var msg = (error.response && error.response.data && error.response.data.message) || error.message || '';
-                    logCheckout('axios_response_error', { id: cfg.__ajaxId, http_status: (error.response && error.response.status) || 0, error: String(msg), url: cfg.url, ms: cfg.__startedAt ? (Date.now() - cfg.__startedAt) : undefined });
-                    return Promise.reject(error);
-                });
-            }
-            onChange('input[name="shipping_method"]', function(el){ logCheckout('shipping_change', { shipping_method: el.value }); });
-            onChange('input[name="payment_method"]', function(el){ logCheckout('payment_change', { payment_method: el.value }); });
-            document.addEventListener('click', function(e){
-                var btn = e.target && e.target.closest ? e.target.closest('#place-order-button') : null;
-                if (!btn) return;
-                var text = (btn.innerText || btn.textContent || '').trim();
-                logCheckout('place_order_click', { disabled: !!btn.disabled, text: text });
-            });
-        })();
-    </script>
-@endpush

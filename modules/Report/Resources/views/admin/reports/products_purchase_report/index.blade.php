@@ -39,7 +39,7 @@
                 <tbody>
                     @forelse ($report as $product)
                         <tr>
-                            <td>{{ $product->start_date->toFormattedDateString() }} - {{ $product->end_date->toFormattedDateString() }}</td>
+                            <td>{{ $product->start_date->translatedFormat('j F Y') }} - {{ $product->end_date->translatedFormat('j F Y') }}</td>
 
                             <td>
                                 <a href="{{ route('admin.products.edit', $product) }}">{{ $product->name }}</a>

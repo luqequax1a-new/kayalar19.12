@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::table('orders', function (Blueprint $table) {
             if (! Schema::hasColumn('orders', 'review_request_second_sent_at')) {
-                $table->timestamp('review_request_second_sent_at')->nullable()->after('review_request_sent_at');
+                $table->timestamp('review_request_second_sent_at')->nullable();
             }
         });
     }

@@ -11,6 +11,7 @@ use Modules\Address\Entities\Address;
 use Modules\Product\Entities\Product;
 use Modules\User\Repositories\Permission;
 use Cartalyst\Sentinel\Users\EloquentUser;
+use Modules\Support\Search\Searchable;
 use Modules\Address\Entities\DefaultAddress;
 use Illuminate\Database\Eloquent\Collection;
 use Cartalyst\Sentinel\Laravel\Facades\Activation;
@@ -20,7 +21,7 @@ use Illuminate\Contracts\Auth\Authenticatable as AuthenticatableContract;
 
 class User extends EloquentUser implements AuthenticatableContract
 {
-    use Authenticatable;
+    use Authenticatable, Searchable;
 
     /**
      * The attributes that are mass assignable.
@@ -34,7 +35,11 @@ class User extends EloquentUser implements AuthenticatableContract
         'last_name',
         'first_name',
         'permissions',
+        'two_factor_code',
+        'two_factor_expires_at',
     ];
+    
+    protected $appends = ['name'];
 
     /**
      * The attributes that should be cast to native types.
@@ -44,6 +49,7 @@ class User extends EloquentUser implements AuthenticatableContract
     protected $casts = [
         'permissions' => 'json',
         'last_login' => 'datetime',
+        'two_factor_expires_at' => 'datetime',
     ];
 
 
@@ -197,6 +203,28 @@ class User extends EloquentUser implements AuthenticatableContract
 
 
     /**
+     * Get the sent emails of the user.
+     *
+     * @return HasMany
+     */
+    public function emails()
+    {
+        return $this->hasMany(UserEmail::class, 'user_id');
+    }
+
+
+    /**
+     * Get the coupons of the user.
+     *
+     * @return HasMany
+     */
+    public function coupons()
+    {
+        return $this->hasMany(\Modules\Coupon\Entities\Coupon::class, 'customer_id');
+    }
+
+
+    /**
      * Get the full name of the user.
      *
      * @return string
@@ -204,6 +232,12 @@ class User extends EloquentUser implements AuthenticatableContract
     public function getFullNameAttribute()
     {
         return "{$this->first_name} {$this->last_name}";
+    }
+
+
+    public function getNameAttribute()
+    {
+        return $this->full_name;
     }
 
 
@@ -275,5 +309,33 @@ class User extends EloquentUser implements AuthenticatableContract
     public function table()
     {
         return new UserTable($this->newQuery());
+    }
+
+
+    /**
+     * Get the indexable data array for the user.
+     *
+     * @return array
+     */
+    public function toSearchableArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'first_name' => $this->first_name,
+            'last_name' => $this->last_name,
+            'email' => $this->email,
+        ];
+    }
+
+
+    public function searchKey(): string
+    {
+        return 'id';
+    }
+
+
+    public function searchColumns(): array
+    {
+        return ['first_name', 'last_name', 'email'];
     }
 }

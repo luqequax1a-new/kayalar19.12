@@ -67,6 +67,7 @@ class CartItemController extends Controller
             'rule_id' => ['required', 'integer'],
             'product_id' => ['required', 'integer'],
             'variant_id' => ['nullable', 'integer'],
+            'placement' => ['nullable', 'string'],
             'qty' => ['nullable'], // metre/adet desteği için numeric serbest bırakıyoruz
             'options' => ['nullable', 'array'],
         ]);
@@ -75,7 +76,41 @@ class CartItemController extends Controller
 
         $cart->storeUpsell($data);
 
+        // Track upsell usage
+        $this->trackUpsellUsage($data['rule_id'], $data['product_id'], $data['qty'] ?? 1);
+
         return $cart;
+    }
+
+    /**
+     * Track upsell rule usage when added to cart
+     */
+    protected function trackUpsellUsage($ruleId, $productId, $qty)
+    {
+        try {
+            $rule = \Modules\Cart\Entities\CartUpsellRule::find($ruleId);
+            if ($rule) {
+                $rule->increment('times_added_to_cart', 1);
+                
+                // Calculate revenue based on discount
+                $product = \Modules\Product\Entities\Product::find($productId);
+                if ($product) {
+                    $price = $product->selling_price->amount();
+                    $discount = 0;
+                    
+                    if ($rule->discount_type === 'percent') {
+                        $discount = $price * ($rule->discount_value / 100);
+                    } elseif ($rule->discount_type === 'fixed') {
+                        $discount = $rule->discount_value;
+                    }
+                    
+                    $revenue = $discount * $qty;
+                    $rule->increment('total_revenue', $revenue);
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::error('Upsell tracking error: ' . $e->getMessage());
+        }
     }
 
 

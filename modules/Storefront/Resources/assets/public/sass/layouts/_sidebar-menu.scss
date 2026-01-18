@@ -7,8 +7,10 @@
     opacity: 0;
     visibility: hidden;
     transform: translateX(0);
-    z-index: 200;
+    z-index: $z-index-sidebar;
     transition: var(--transition-200);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 
     &.active {
         opacity: 1;
@@ -31,12 +33,12 @@
         top: 21px;
 
         &:hover {
-            > i {
+            >i {
                 color: var(--color-primary);
             }
         }
 
-        > i {
+        >i {
             font-size: 18px;
             color: #00316c;
             transition: var(--transition-150);
@@ -51,7 +53,7 @@
 
         background: var(--color-primary);
 
-        > h4 {
+        >h4 {
             font-weight: var(--font-normal);
             color: var(--color-white);
         }
@@ -122,7 +124,7 @@
         }
     }
 
-    > .tab-content {
+    >.tab-content {
         position: absolute;
         background: var(--color-white);
         left: 0;
@@ -140,7 +142,7 @@
     }
 }
 
-.sidebar-more-menu-items {
+.sidebar-menu-wrap .sidebar-more-menu-items {
     width: 100%;
     display: flex;
     flex-wrap: wrap;
@@ -205,19 +207,19 @@
 .sidebar-menu {
     margin: 5px 0;
 
-    > li {
+    >li {
         cursor: pointer;
 
         &:hover {
-            > .menu-item {
+            >.menu-item {
                 color: var(--color-primary);
 
-                > .menu-item-icon {
+                >.menu-item-icon {
                     color: var(--color-primary);
                 }
             }
 
-            > i {
+            >i {
                 color: var(--color-primary);
             }
         }
@@ -231,17 +233,17 @@
                     visibility: visible;
                 }
 
-                > .menu-item-icon {
+                >.menu-item-icon {
                     color: var(--color-primary);
                 }
             }
 
-            > i {
+            >i {
                 transform: rotate(90deg);
             }
         }
 
-        > .menu-item {
+        >.menu-item {
             &:after {
                 position: absolute;
                 content: "";
@@ -258,7 +260,7 @@
                 transition: var(--transition-150);
             }
 
-            > .menu-item-icon {
+            >.menu-item-icon {
                 font-size: 16px;
                 color: var(--color-gray);
                 margin: 1px 10px 0 0;
@@ -266,15 +268,15 @@
             }
         }
 
-        > ul {
-            > li {
-                > a {
+        >ul {
+            >li {
+                >a {
                     max-width: 160px;
                 }
 
-                > ul {
-                    > li {
-                        > a {
+                >ul {
+                    >li {
+                        >a {
                             max-width: 155px;
                         }
                     }
@@ -285,8 +287,9 @@
 
     li {
         &:hover {
-            > a,
-            > i {
+
+            >a,
+            >i {
                 color: var(--color-primary);
             }
         }
@@ -303,7 +306,7 @@
             vertical-align: middle;
         }
 
-        > i {
+        >i {
             font-size: 12px;
             position: absolute;
             top: 18px;
@@ -322,11 +325,11 @@
         position: relative;
 
         &.active {
-            > a {
+            >a {
                 color: var(--color-primary);
             }
 
-            > i {
+            >i {
                 color: var(--color-primary);
                 transform: rotate(90deg);
             }

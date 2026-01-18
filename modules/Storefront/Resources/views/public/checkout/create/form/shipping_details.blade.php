@@ -213,6 +213,22 @@
                             
                         </div>
                     </div>
+                    <div class="ship-to-different-address-label">
+                        <div class="ship-toggle-card d-flex align-items-center justify-content-between">
+                            <label for="ship-to-different-address" class="mb-0 cursor-pointer">
+                                {{ trans('storefront::checkout.ship_to_different_address') }}
+                            </label>
+                            
+                            <label class="toggle-switch">
+                                <input 
+                                    type="checkbox" 
+                                    id="ship-to-different-address" 
+                                    x-model="form.ship_to_a_different_address"
+                                >
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

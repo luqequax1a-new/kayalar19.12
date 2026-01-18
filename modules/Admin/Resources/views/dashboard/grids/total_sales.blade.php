@@ -2,8 +2,19 @@
     <div class="single-grid total-sales">
         <div>
             <span class="count" title="{{$totalSales->format()}}">{{ $totalSales->KMBTFormat() }}</span>
-
             <span class="title">{{ trans('admin::dashboard.total_sales') }}</span>
+            @php
+                $currentSales = $currentPeriodStats['sales'] ?? 0;
+                $previousSales = $previousPeriodStats['sales'] ?? 0;
+                $changePercent = $previousSales > 0 ? (($currentSales - $previousSales) / $previousSales) * 100 : 0;
+                $isPositive = $changePercent >= 0;
+            @endphp
+            @if($changePercent != 0)
+                <span class="trend {{ $isPositive ? 'trend-up' : 'trend-down' }}">
+                    <i class="fa fa-arrow-{{ $isPositive ? 'up' : 'down' }}"></i>
+                    {{ number_format(abs($changePercent), 1) }}%
+                </span>
+            @endif
         </div>
         <div class="single-grid-icon">
             <svg xmlns="http://www.w3.org/2000/svg" id="Outline" viewBox="0 0 512 512" width="512" height="512">

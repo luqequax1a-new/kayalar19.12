@@ -4,21 +4,22 @@
         border-radius: var(--radius-default);
     }
 
-// Büyük ekranlarda mobil layout tamamen gizli olsun.
-@media (min-width: 769px) {
-    .cart-mobile-list,
-    .cart-mobile-top {
-        display: none !important;
-    }
+    // Büyük ekranlarda mobil layout tamamen gizli olsun.
+    @media (min-width: 769px) {
 
-    // Üst başlık satırındaki toplu silme çöp kutusunu gizle; yalnızca satır içi
-    // silme butonları (tbody içindeki .btn-remove) görünsün.
-    thead {
-        .btn-remove {
-            display: none;
+        .cart-mobile-list,
+        .cart-mobile-top {
+            display: none !important;
+        }
+
+        // Üst başlık satırındaki toplu silme çöp kutusunu gizle; yalnızca satır içi
+        // silme butonları (tbody içindeki .btn-remove) görünsün.
+        thead {
+            .btn-remove {
+                display: none;
+            }
         }
     }
-}
 }
 
 // Varsayılan olarak mobil listeyi gizle; sadece küçük ekranlarda gösterilir.
@@ -87,6 +88,7 @@
     .product-name {
         display: inline-block;
         color: var(--color-black);
+        font-size: 17px; // Adjusted for better balance (Golden Ratio feel)
         font-weight: var(--font-medium);
         text-decoration-line: underline;
         text-decoration-color: transparent;
@@ -119,6 +121,7 @@
 
     .product-options {
         margin: 4px 0 1px;
+        font-size: 13px; // Decreased by 1px (was default ~14px)
 
         label {
             margin-bottom: 0;
@@ -145,16 +148,21 @@
     }
 }
 
-.ltr .btn-remove-item { right: 1px; }
+.ltr .btn-remove-item {
+    right: 1px;
+}
 
 button:not(:disabled),
 [type=button]:not(:disabled),
 [type=reset]:not(:disabled),
-[type=submit]:not(:disabled) { cursor: pointer; }
+[type=submit]:not(:disabled) {
+    cursor: pointer;
+}
 
 @media screen and (min-width: 1281px) {
     .cart-table {
         &.cart-table-skeleton {
+
             thead th,
             tbody td {
                 &:nth-child(2) {
@@ -171,7 +179,7 @@ button:not(:disabled),
         }
 
         td {
-            > label {
+            >label {
                 display: none;
             }
         }
@@ -183,6 +191,7 @@ button:not(:disabled),
         &.cart-table-skeleton {
             tr {
                 td {
+
                     &:nth-child(3),
                     &:nth-child(4),
                     &:nth-child(5) {
@@ -207,6 +216,7 @@ button:not(:disabled),
         tr {
             &:first-child {
                 td {
+
                     &:nth-child(3),
                     &:nth-child(4),
                     &:nth-child(5) {
@@ -258,7 +268,7 @@ button:not(:disabled),
         }
 
         td {
-            > label {
+            >label {
                 width: 90px;
                 min-width: 90px;
                 margin-bottom: 0;
@@ -302,6 +312,7 @@ button:not(:disabled),
             tr {
                 td {
                     &:not(:first-child):not(:last-child) {
+
                         input,
                         span,
                         label {
@@ -332,7 +343,7 @@ button:not(:disabled),
                     width: 50px;
                 }
 
-                > label {
+                >label {
                     width: 80px;
                     min-width: 80px;
                 }
@@ -390,7 +401,7 @@ button:not(:disabled),
     }
 
     .cart-mobile-name {
-        font-size: .75rem;
+        font-size: 14px; // Adjusted for better balance
         font-weight: 600;
         color: #000;
         text-decoration: none;
@@ -406,7 +417,7 @@ button:not(:disabled),
         display: flex;
         flex-wrap: wrap;
         gap: 4px 12px;
-        font-size: .8rem;
+        font-size: 12px; // Decreased by ~1px (was .8rem ~13px)
         color: #000;
         justify-content: flex-start;
     }
@@ -458,43 +469,50 @@ button:not(:disabled),
         padding-top: 10px;
     }
 
-    .cart-mobile-summary { margin-top: 0; }
-    .cart-mobile-summary .cart-summary { color: #111827; font-weight: 500; font-size: .75rem; }
+    .cart-mobile-summary {
+        margin-top: 0;
+    }
+
+    .cart-mobile-summary .cart-summary {
+        color: #111827;
+        font-weight: 500;
+        font-size: .75rem;
+    }
 }
 
-    .cart-mobile-total {
-        border-top: 1px dashed #e5e7eb;
-        padding-top: 8px;
-    }
+.cart-mobile-total {
+    border-top: 1px dashed #e5e7eb;
+    padding-top: 8px;
+}
 
-    .cart-mobile-total .cart-price {
-        color: #ef4444;
-        font-weight: 700;
-    }
+.cart-mobile-total .cart-price {
+    color: #ef4444;
+    font-weight: 700;
+}
 
-    .cart-cell-label {
-        font-size: 0.78rem;
-        font-weight: 700;
-        letter-spacing: .03em;
-        color: #111827;
-        text-transform: uppercase;
-    }
+.cart-cell-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: .03em;
+    color: #111827;
+    text-transform: uppercase;
+}
 
-    .btn-remove-item {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        border: none;
-        background: transparent;
-        cursor: pointer;
-        color: #9ca3af;
-        padding: 2px;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 0.78rem;
-        text-transform: uppercase;
-        letter-spacing: .05em;
-    }
+.btn-remove-item {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: #9ca3af;
+    padding: 2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
 
-    /* duplicate .btn-remove-item styles removed */
+/* duplicate .btn-remove-item styles removed */

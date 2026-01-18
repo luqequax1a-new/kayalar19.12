@@ -17,29 +17,22 @@ trait HasStock
         if (FlashSale::contains($this)) {
             return FlashSale::remainingQty($this) > 0;
         }
+
         if ($this->hasAnyVariants()) {
-            $variantWithStock = $this->variants
-                ->where('in_stock', true)
-                ->first(function ($variant) {
-                    try {
-                        if (! (bool) $variant->manage_stock) {
-                            return true;
-                        }
-
-                        return (float) ($variant->qty ?? 0) > 0;
-                    } catch (\Throwable $e) {
-                        return false;
-                    }
-                });
-
-            return (bool) $variantWithStock;
-        } else {
-            if ($this->manage_stock && (float) $this->qty <= 0) {
-                return false;
-            }
-
-            return (bool) $this->in_stock;
+            return $this->variants->contains(function ($variant) {
+                try {
+                    return $variant->isInStock();
+                } catch (\Throwable $e) {
+                    return false;
+                }
+            });
         }
+
+        if ($this->manage_stock) {
+            return (float) ($this->qty ?? 0) > 0;
+        }
+
+        return true;
     }
 
 

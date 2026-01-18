@@ -34,7 +34,25 @@ class OrderProduct extends Model
 
     protected $casts = [
         'qty' => 'decimal:2',
+        'is_upsell' => 'boolean',
+        'upsell_data' => 'array',
     ];
+
+
+    public function getIsUpsellAttribute($value)
+    {
+        return (bool) $value;
+    }
+
+
+    public function getOriginalPriceAttribute()
+    {
+        if ($this->upsell_data && isset($this->upsell_data['original_price'])) {
+            return Money::inDefaultCurrency($this->upsell_data['original_price']);
+        }
+
+        return null;
+    }
 
 
     public function url()
@@ -151,6 +169,12 @@ class OrderProduct extends Model
         return $this->belongsTo(ProductVariant::class)
             ->withoutGlobalScope('active')
             ->withTrashed();
+    }
+
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
     }
 
 

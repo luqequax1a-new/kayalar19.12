@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::table('categories', function (Blueprint $table) {
             if (!Schema::hasColumn('categories', 'faq_items')) {
-                $table->longText('faq_items')->nullable()->after('faq');
+                $table->longText('faq_items')->nullable();
             }
         });
     }

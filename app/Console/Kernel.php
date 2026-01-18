@@ -18,6 +18,13 @@ class Kernel extends ConsoleKernel
         Commands\ManualInstallCommand::class,
         Commands\NormalizeMediaPathsCommand::class,
         Commands\TruncatePageViews::class,
+        Commands\CleanAbandonedCartData::class,
+        Commands\AnalyzeAbandonedCarts::class,
+        Commands\DebugCartData::class,
+        Commands\DebugAbandonedCartStats::class,
+        Commands\ResetAbandonedCartData::class,
+        Commands\CheckNotifications::class,
+        Commands\ClearNotifications::class,
         \Modules\Order\Console\BackfillOrderProductsSnapshots::class,
         \Modules\ProductFeeds\Console\RefreshFeedCommand::class,
     ];
@@ -33,5 +40,12 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $schedule->command('order:send-second-review-requests')->dailyAt('09:00');
+        
+        // Abandoned cart reminders - every 15 minutes for better responsiveness
+        // This allows catching carts at optimal times (1h, 3h, 24h, 48h, 72h)
+        $schedule->command('cart:send-abandoned-reminders')
+            ->everyFifteenMinutes()
+            ->withoutOverlapping()
+            ->runInBackground();
     }
 }

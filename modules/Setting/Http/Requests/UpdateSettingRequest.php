@@ -24,7 +24,23 @@ class UpdateSettingRequest extends Request
      *
      * @var array
      */
-    private $shouldCheck = ['sms_order_statuses', 'email_order_statuses'];
+    private $shouldCheck = [
+        'sms_order_statuses',
+        'email_order_statuses',
+        'storefront_recent_searches_enabled',
+        'storefront_search_show_out_of_stock_products',
+        'storefront_popular_categories_enabled',
+        'storefront_popular_searches_enabled',
+        'storefront_popular_products_enabled',
+        'storefront_best_sellers_enabled',
+        'storefront_popular_categories_selection_type',
+        'storefront_popular_searches_selection_type',
+        'storefront_popular_products_selection_type',
+        'storefront_best_sellers_selection_type',
+        'storefront_popular_categories_custom',
+        'storefront_popular_products_custom',
+        'storefront_best_sellers_custom',
+    ];
 
 
     /**
@@ -40,6 +56,25 @@ class UpdateSettingRequest extends Request
             ];
         }
 
+        if ($this->get('context') === 'search') {
+            return [
+                'storefront_recent_searches_enabled' => 'nullable|boolean',
+                'storefront_search_show_out_of_stock_products' => 'nullable|boolean',
+                'storefront_popular_categories_enabled' => 'nullable|boolean',
+                'storefront_popular_searches_enabled' => 'nullable|boolean',
+                'storefront_popular_products_enabled' => 'nullable|boolean',
+                'storefront_best_sellers_enabled' => 'nullable|boolean',
+                'storefront_popular_categories_selection_type' => 'nullable',
+                'storefront_popular_searches_selection_type' => 'nullable',
+                'storefront_popular_products_selection_type' => 'nullable',
+                'storefront_best_sellers_selection_type' => 'nullable',
+                'storefront_popular_categories_custom' => 'nullable|array',
+                'storefront_popular_searches_custom' => 'nullable|string',
+                'storefront_popular_products_custom' => 'nullable|array',
+                'storefront_best_sellers_custom' => 'nullable|array',
+            ];
+        }
+
         if ($this->get('context') === 'whatsapp_module') {
             return [
                 'phone_number' => ['required', 'regex:/^[0-9]{10,15}$/'],
@@ -49,6 +84,25 @@ class UpdateSettingRequest extends Request
                 'cart_button_enabled' => 'nullable|boolean',
                 'cart_button_text' => 'required|string|max:191',
                 'cart_message_template' => 'nullable|string|max:2000',
+            ];
+        }
+
+        if ($this->get('context') === 'abandoned_cart') {
+            return [
+                'abandoned_cart_reminder_enabled' => 'nullable|boolean',
+                'abandoned_cart_reminder_1_enabled' => 'nullable|boolean',
+                'abandoned_cart_reminder_2_enabled' => 'nullable|boolean',
+                'abandoned_cart_reminder_3_enabled' => 'nullable|boolean',
+                'abandoned_cart_reminder_delay_hours' => 'nullable|integer|min:1',
+                'abandoned_cart_reminder_2_delay_hours' => 'nullable|integer|min:1',
+                'abandoned_cart_reminder_3_delay_hours' => 'nullable|integer|min:1',
+                'abandoned_cart_coupon_enabled' => 'nullable|boolean',
+                'abandoned_cart_coupon_discount_percent' => 'nullable|integer|min:0|max:100',
+                'abandoned_cart_coupon_2_discount_percent' => 'nullable|integer|min:0|max:100',
+                'abandoned_cart_coupon_3_discount_percent' => 'nullable|integer|min:0|max:100',
+                'abandoned_cart_coupon_valid_days' => 'nullable|integer|min:1',
+                'abandoned_cart_sms_enabled' => 'nullable|boolean',
+                'abandoned_cart_sms_message' => 'nullable|string|max:500',
             ];
         }
 
@@ -78,6 +132,9 @@ class UpdateSettingRequest extends Request
             'store_phone' => ['required'],
             'store_email' => 'required|email',
             'store_country' => ['required', Rule::in(Country::codes())],
+            'store_state' => 'nullable|string',
+            'store_city' => 'nullable|string',
+            'store_zip' => 'nullable|string',
 
             'pwa_enabled' => 'required',
             'pwa_icon' => 'required_if:pwa_enabled,1',
@@ -85,9 +142,9 @@ class UpdateSettingRequest extends Request
             'pwa_background_color' => ['regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
             'pwa_status_bar' => ['regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/'],
 
-            'fixer_access_key' => 'required_if:currency_rate_exchange_service,fixer',
-            'forge_api_key' => 'required_if:currency_rate_exchange_service,forge',
-            'currency_data_feed_api_key' => 'required_if:currency_rate_exchange_service,currency_data_feed',
+            'fixer_access_key' => 'nullable',
+            'forge_api_key' => 'nullable',
+            'currency_data_feed_api_key' => 'nullable',
             'auto_refresh_currency_rates' => 'required|boolean',
             'auto_refresh_currency_rate_frequency' => [
                 'required_if:auto_refresh_currency_rates,1',
@@ -275,6 +332,16 @@ class UpdateSettingRequest extends Request
             'review_request_email_title' => 'nullable|string|max:191',
             'review_request_email_intro' => 'nullable|string|max:2000',
             'review_request_email_promo' => 'nullable|string|max:2000',
+
+            'storefront_recent_searches_enabled' => 'nullable|boolean',
+            'storefront_popular_categories_enabled' => 'nullable|boolean',
+            'storefront_popular_searches_enabled' => 'nullable|boolean',
+            'storefront_popular_categories_selection_type' => 'nullable',
+            'storefront_popular_searches_selection_type' => 'nullable',
+            'storefront_popular_categories_custom' => 'nullable|array',
+            'storefront_popular_searches_custom' => 'nullable|string',
+            'storefront_popular_products_selection_type' => 'nullable',
+            'storefront_popular_products_custom' => 'nullable|array',
         ];
     }
 
@@ -288,9 +355,30 @@ class UpdateSettingRequest extends Request
     {
         foreach ($this->shouldCheck as $attribute) {
             if (!$this->has($attribute)) {
-                $this->merge([$attribute => null]);
+                $value = strpos($attribute, 'custom') !== false ? [] : 0;
+                $this->merge([$attribute => $value]);
             }
         }
+
+        // Flatten nested arrays from multi-select fields
+        $data = $this->all();
+        $arrayFields = [
+            'storefront_popular_categories_custom', 
+            'storefront_popular_products_custom', 
+            'storefront_best_sellers_custom',
+            'supported_countries',
+            'supported_currencies',
+            'supported_locales'
+        ];
+        
+        foreach ($arrayFields as $field) {
+            if (isset($data[$field]) && is_array($data[$field])) {
+                // Flatten nested arrays: [["TR"],["US"]] => ["TR","US"]
+                $data[$field] = collect($data[$field])->flatten()->filter()->values()->toArray();
+            }
+        }
+
+        $this->replace($data);
 
         return $this->all();
     }
@@ -337,5 +425,11 @@ class UpdateSettingRequest extends Request
     private function mailEncryptionProtocols()
     {
         return array_keys(trans('setting::settings.form.mail_encryption_protocols'));
+    }
+
+    protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
+    {
+        \Log::error('Settings Validation Failed', $validator->errors()->toArray());
+        parent::failedValidation($validator);
     }
 }

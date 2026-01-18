@@ -53,6 +53,7 @@ class CouponTabs extends Tabs
                 'products' => $coupon->productList(),
                 'excludeProducts' => $coupon->excludeProductList(),
                 'categories' => Category::treeList(),
+                'customer' => $coupon->customer_id ? [$coupon->customer_id => "{$coupon->customer->full_name} ({$coupon->customer->email})"] : [],
             ]);
         });
     }

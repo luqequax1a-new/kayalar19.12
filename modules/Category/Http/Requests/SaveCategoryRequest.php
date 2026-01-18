@@ -39,10 +39,21 @@ class SaveCategoryRequest extends Request
         $rules = $this->route()->getName() === 'admin.categories.update'
             ? ['required']
             : ['nullable'];
-
-        $slug = Category::withoutGlobalScope('active')->where('id', $this->id)->value('slug');
-
-        $rules[] = Rule::unique('categories', 'slug')->ignore($slug, 'slug');
+        
+        $rules[] = 'regex:/^[a-z0-9-]+$/';
+        
+        // Global slug uniqueness check
+        $rules[] = function ($attribute, $value, $fail) {
+            if (\Modules\Support\Entities\UrlSlug::isReserved($value)) {
+                $fail('Bu URL rezerve edilmiştir ve kullanılamaz.');
+                return;
+            }
+            
+            $categoryId = $this->id;
+            if (!\Modules\Support\Entities\UrlSlug::isAvailable($value, 'category', $categoryId)) {
+                $fail('Bu URL başka bir ürün, kategori veya sayfa tarafından kullanılmaktadır.');
+            }
+        };
 
         return $rules;
     }

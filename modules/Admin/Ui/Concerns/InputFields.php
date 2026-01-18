@@ -14,11 +14,12 @@ trait InputFields
     {
         $readonly = array_pull($options, 'readonly', false);
         $disabled = array_get($options, 'disabled', false);
+        $id = array_get($options, 'id', $name);
 
         return "<input
             name='{$name}'
             class='form-control {$class}'
-            id='{$name}'
+            id='{$id}'
             value='{$value}'
             {$attributes}"
             . ($disabled ? 'disabled' : '')
@@ -31,11 +32,12 @@ trait InputFields
     {
         $readonly = array_pull($options, 'readonly', false);
         $disabled = array_get($options, 'disabled', false);
+        $id = array_get($options, 'id', $name);
 
         return "<textarea
             name='{$name}'
             class='form-control {$class}'
-            id='{$name}'
+            id='{$id}'
             {$attributes}"
             . ($disabled ? 'disabled' : '')
             . ($readonly ? 'readonly ' : '') .
@@ -47,6 +49,7 @@ trait InputFields
     {
         $checked = array_pull($options, 'checked', false);
         $disabled = array_get($options, 'disabled', false);
+        $id = array_get($options, 'id', $name);
 
         if (!is_null($value)) {
             $checked = $value;
@@ -62,14 +65,14 @@ trait InputFields
                     type='checkbox'
                     name='{$name}'
                     class='{$class}'
-                    id='{$name}'
+                    id='{$id}'
                     {$attributes}
                     value='1'"
             . ($checked ? 'checked ' : '')
             . ($disabled ? 'disabled' : '') .
             '>';
 
-        $html .= "<label for='{$name}'>{$label}</label>";
+        $html .= "<label for='{$id}'>{$label}</label>";
         $html .= '</div>';
 
         return $html;
@@ -81,11 +84,12 @@ trait InputFields
         $multiple = array_get($options, 'multiple', false);
         $disabled = array_get($options, 'disabled', false);
         $readonly = array_pull($options, 'readonly', false);
+        $id = array_get($options, 'id', $name);
 
         $html = "<select
             name='{$name}'
             class='form-control custom-select-black {$class}'
-            id='{$name}'
+            id='{$id}'
             {$attributes}"
             . ($disabled ? 'disabled' : '')
             . ($readonly ? 'readonly ' : '') .

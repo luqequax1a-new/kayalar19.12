@@ -58,6 +58,13 @@
                                         </td>
                                         <td valign="top" style="padding:10px 6px 10px 0; width:100%;">
                                             <div style="font-size:14px;font-weight:800;color:#0f172a;line-height:1.3;">
+                                                @if ($product->is_upsell)
+                                                    <div style="margin-bottom: 4px;">
+                                                        <span style="background-color: #fef3c7; color: #92400e; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                                            {{ trans('storefront::upsell.offer_badge') }}
+                                                        </span>
+                                                    </div>
+                                                @endif
                                                 {{ $product->name }}
                                             </div>
                                             @if ($product->sku)
@@ -70,9 +77,17 @@
                                             @endif
                                             @if ($product->unit_price)
                                                 <div style="font-size:12px;color:#475569;margin-top:8px;">
+                                                    @if ($product->is_upsell && $product->original_price)
+                                                        <span style="color: #94a3b8; font-size: 11px; text-decoration: line-through; margin-right: 4px;">{{ $product->original_price->convert($order->currency, $order->currency_rate)->format($order->currency) }}</span>
+                                                    @endif
                                                     {{ $product->unit_price->convert($order->currency, $order->currency_rate)->format($order->currency) }}
                                                     × {{ $product->getFormattedQuantityWithUnit() }}
-                                                    = <span style="font-weight:800; color:#16a34a;">{{ $product->line_total->convert($order->currency, $order->currency_rate)->format($order->currency) }}</span>
+                                                    = <span style="font-weight:800; color:#16a34a;">
+                                                        @if ($product->is_upsell && $product->original_price)
+                                                            <span style="color: #94a3b8; font-size: 11px; text-decoration: line-through; margin-right: 4px;">{{ $product->original_price->multiply($product->qty)->convert($order->currency, $order->currency_rate)->format($order->currency) }}</span>
+                                                        @endif
+                                                        {{ $product->line_total->convert($order->currency, $order->currency_rate)->format($order->currency) }}
+                                                    </span>
                                                 </div>
                                             @endif
                                         </td>

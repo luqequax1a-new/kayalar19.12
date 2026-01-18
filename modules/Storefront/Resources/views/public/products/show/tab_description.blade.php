@@ -1,27 +1,22 @@
 <div id="description" class="tab-pane description custom-page-content active">
-    <div
-        x-ref="descriptionContent" 
-        class="content"
-        style="min-height: 260px;"
-        :class="{ 
-            active: showDescriptionContent,
-            'less-content': !showMore }
-        "
+    <div 
+        x-data="ShowMore(450)" 
+        class="show-more-wrapper"
+        :class="{ 'is-expanded': expanded, 'has-overflow': showButton }"
     >
-        {!! $product->description !!}
+        <div class="show-more-content custom-page-content" x-ref="content">
+            {!! $product->description !!}
+        </div>
+        
+        <div class="show-more-footer" x-show="showButton">
+            <button 
+                type="button" 
+                class="btn-show-more" 
+                @click="toggle"
+                x-text="expanded ? '{{ trans('storefront::product.show_less') }}' : '{{ trans('storefront::product.show_more') }}'"
+            >
+                {{ trans('storefront::product.show_more') }}
+            </button>
+        </div>
     </div>
-
-    <button
-        x-cloak
-        type="button"
-        class="btn btn-default btn-show-more"
-        :class="{ 'show': showMore }"
-        @click="toggleDescriptionContent"
-        x-text="
-            showDescriptionContent ?
-            '{{ trans('storefront::product.show_less') }}' :
-            '{{ trans('storefront::product.show_more') }}'
-        "
-    >
-    </button>
 </div>

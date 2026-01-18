@@ -3,14 +3,30 @@
 @section('title')
     @if (request()->has('query'))
         {{ trans('storefront::products.search_results_for') }}: "{{ request('query') }}"
+    @elseif (isset($categoryMetaTitle) && $categoryMetaTitle)
+        {{ $categoryMetaTitle }}
+    @elseif (isset($categoryName))
+        {{ $categoryName }}
+    @elseif (setting('products_page_meta_title'))
+        {{ setting('products_page_meta_title') }}
     @else
-        {{ isset($categoryMetaTitle) && $categoryMetaTitle ? $categoryMetaTitle : (isset($categoryName) ? $categoryName : trans('storefront::products.shop')) }}
+        {{ trans('storefront::products.shop') }}
     @endif
 @endsection
 
 @push('meta')
     @php
         $listBaseDescription = setting('store_tagline') ?: setting('store_name');
+        
+        // Base canonical: standardized clean URL
+        $canonical = url()->current();
+        if (request()->filled('query')) {
+             $canonical = url()->full(); // Search results should use full URL
+        } elseif (request()->filled('category')) {
+             $canonical = url('/' . request('category'));
+        } elseif (request()->filled('brand')) {
+             $canonical = url('/' . request('brand'));
+        }
 
         $hasQuery = request()->filled('query');
         $hasCategory = request()->filled('category');
@@ -24,20 +40,23 @@
         $isPaginated = (int) request('page', 1) > 1;
 
         $hasFacets = $hasAttribute || $hasPrice || $hasSort || $hasViewMode || $hasPerPage || $isPaginated;
+        $canonical = \Illuminate\Support\Str::before($canonical, '?');
     @endphp
 
     @if (isset($categoryName))
         @php
             $listTitle = $categoryMetaTitle ?: $categoryName;
 
-            $listDescription = $categoryMetaDescription ?: $listBaseDescription;
+            $listDescription = $categoryMetaDescription;
+            if (empty($listDescription) || mb_strlen($listDescription) < 15) {
+                $listDescription = "En kaliteli " . $categoryName . " ürünlerini uygun fiyatlarla Kayalar Manifatura'da keşfedin. Güvenli alışveriş ve hızlı kargo seçenekleriyle hemen satın alın.";
+            }
 
             $listLogo = ($categoryBanner ?? $brandBanner ?? null)
                 ?: setting('store_logo')
                 ?: asset('build/assets/image-placeholder.png');
         @endphp
 
-        <meta name="title" content="{{ $listTitle }}">
         <meta name="description" content="{{ $listDescription }}">
 
         @if ($hasFacets)
@@ -50,67 +69,129 @@
 
         <meta property="og:title" content="{{ $listTitle }}">
         <meta property="og:description" content="{{ $listDescription }}">
-        <meta property="og:url" content="{{ route('categories.products.index', ['category' => request('category')]) }}">
+        <meta property="og:url" content="{{ $canonical }}">
         <meta property="og:image" content="{{ $listLogo }}">
         <meta property="og:locale" content="{{ locale() }}">
         @foreach (supported_locale_keys() as $code)
-            <meta property="og:locale:alternate" content="{{ $code }}">
+            @if($code !== locale())
+                <meta property="og:locale:alternate" content="{{ $code }}">
+            @endif
         @endforeach
 
         <meta name="twitter:image" content="{{ $listLogo }}">
 
-        @php
-            $faqEntities = [];
-
-            if (isset($category) && is_array($category->faq_items)) {
-                foreach ($category->faq_items as $faq) {
-                    $q = isset($faq['question']) ? trim(strip_tags($faq['question'])) : '';
-                    $a = isset($faq['answer']) ? trim(strip_tags($faq['answer'])) : '';
-
-                    if ($q === '' || $a === '') {
-                        continue;
-                    }
-
-                    $faqEntities[] = [
-                        '@type' => 'Question',
-                        'name' => $q,
-                        'acceptedAnswer' => [
-                            '@type' => 'Answer',
-                            'text' => $a,
-                        ],
-                    ];
+        {{-- Category Breadcrumb Schema --}}
+        @if (isset($category) && $category && $category->id)
+            <script type="application/ld+json">
+            {
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "{{ trans('storefront::layouts.home') }}",
+                  "item": "{{ route('home') }}"
                 }
+                @php
+                    $trail = [];
+                    $curr = $category;
+                    while($curr) {
+                        $trail[] = $curr;
+                        $curr = $curr->parent; // Assumes relationship 'parent' exists
+                    }
+                    $trail = array_reverse($trail);
+                    $pos = 2;
+                @endphp
+                @foreach($trail as $t)
+                ,{
+                  "@type": "ListItem",
+                  "position": {{ $pos++ }},
+                  "name": "{{ addslashes($t->name) }}",
+                  "item": "{{ $t->url() }}"
+                }
+                @endforeach
+              ]
+            }
+            </script>
+        @endif
 
-                // İstersen burada ilk 5 kayıtla sınırlayabilirsin
-                // $faqEntities = array_slice($faqEntities, 0, 5);
+    @elseif (isset($brandName))
+        @php
+            $listTitle = $brandName;
+            $listDescription = '';
+            
+            if (isset($brand)) {
+                 $listTitle = $brand->meta->meta_title ?: $brandName;
+                 $listDescription = $brand->meta->meta_description;
             }
 
-            if (! empty($faqEntities)) {
-                echo '<script type="application/ld+json">' . PHP_EOL;
-                echo json_encode([
-                    '@context'   => 'https://schema.org',
-                    '@type'      => 'FAQPage',
-                    'mainEntity' => $faqEntities,
-                ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-                echo PHP_EOL . '</script>' . PHP_EOL;
+            if (empty($listDescription) || mb_strlen($listDescription) < 15) {
+                $listDescription = $brandName . " ürünlerini uygun fiyatlarla Kayalar Manifatura'da keşfedin. Güvenli alışveriş ve hızlı kargo seçenekleriyle hemen satın alın.";
             }
+
+            $listLogo = ($brandBanner ?? null)
+                ?: setting('store_logo')
+                ?: asset('build/assets/image-placeholder.png');
         @endphp
+
+        <meta name="description" content="{{ $listDescription }}">
+
+        @if ($hasFacets)
+            <meta name="robots" content="noindex,follow">
+        @endif
+
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="{{ $listTitle }}">
+        <meta name="twitter:description" content="{{ $listDescription }}">
+
+        <meta property="og:title" content="{{ $listTitle }}">
+        <meta property="og:description" content="{{ $listDescription }}">
+        <meta property="og:url" content="{{ $canonical }}">
+        <meta property="og:image" content="{{ $listLogo }}">
+        <meta property="og:locale" content="{{ locale() }}">
+        @foreach (supported_locale_keys() as $code)
+            @if($code !== locale())
+                <meta property="og:locale:alternate" content="{{ $code }}">
+            @endif
+        @endforeach
+
+        <meta name="twitter:image" content="{{ $listLogo }}">
+        
+        {{-- Brand Breadcrumb Schema --}}
+        <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "{{ trans('storefront::layouts.home') }}",
+              "item": "{{ route('home') }}"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "{{ addslashes($brandName) }}",
+              "item": "{{ $canonical }}"
+            }
+          ]
+        }
+        </script>
     @endif
 
     @if (request()->has('query'))
         @php
             $searchQuery = request('query');
-
             $searchTitle = trans('storefront::products.search_results_for') . ': "' . $searchQuery . '"';
-
             $searchDescription = ($listBaseDescription ?: setting('store_name'))
                 . ' '
                 . trans('storefront::products.search_results_for')
                 . ' "'
                 . $searchQuery
                 . '"';
-
-            $searchLogo = setting('store_logo') ?: asset('build/assets/image-placeholder.png');
+            $searchLogo = logo_url() ?: asset('build/assets/image-placeholder.png');
         @endphp
 
         <meta name="description" content="{{ $searchDescription }}">
@@ -124,11 +205,38 @@
         <meta property="og:type" content="website">
         <meta property="og:title" content="{{ $searchTitle }}">
         <meta property="og:description" content="{{ $searchDescription }}">
-        <meta property="og:url" content="{{ $hasCategory ? route('categories.products.index', ['category' => request('category')]) : url()->current() }}">
+        <meta property="og:url" content="{{ request()->filled('category') ? route('categories.products.index', ['category' => request('category')]) : url()->current() }}">
         <meta property="og:image" content="{{ $searchLogo }}">
         <meta property="og:locale" content="{{ locale() }}">
         @foreach (supported_locale_keys() as $code)
             <meta property="og:locale:alternate" content="{{ $code }}">
+        @endforeach
+    @endif
+
+    @if (!request()->has('query') && !isset($categoryName) && !isset($brandName) && !isset($tagName))
+        @php
+            $productsPageTitle = setting('products_page_meta_title') ?: trans('storefront::products.shop');
+            $productsPageDescription = setting('products_page_meta_description') ?: (setting('store_tagline') ?: setting('store_name'));
+            $productsPageLogo = logo_url() ?: asset('build/assets/image-placeholder.png');
+        @endphp
+
+        <meta name="description" content="{{ $productsPageDescription }}">
+
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:title" content="{{ $productsPageTitle }}">
+        <meta name="twitter:description" content="{{ $productsPageDescription }}">
+        <meta name="twitter:image" content="{{ $productsPageLogo }}">
+
+        <meta property="og:type" content="website">
+        <meta property="og:title" content="{{ $productsPageTitle }}">
+        <meta property="og:description" content="{{ $productsPageDescription }}">
+        <meta property="og:url" content="{{ $canonical }}">
+        <meta property="og:image" content="{{ $productsPageLogo }}">
+        <meta property="og:locale" content="{{ locale() }}">
+        @foreach (supported_locale_keys() as $code)
+            @if($code !== locale())
+                <meta property="og:locale:alternate" content="{{ $code }}">
+            @endif
         @endforeach
     @endif
 @endpush
@@ -139,7 +247,9 @@
             .product-search-wrap .grid-view-products {
                 display: grid;
                 grid-template-columns: repeat(2, minmax(0, 1fr));
-                gap: 12px;
+                gap: 16px;
+                padding-left: 12px;
+                padding-right: 12px;
             }
 
             .product-search-wrap .grid-view-products-item {
@@ -151,41 +261,72 @@
             .product-search-wrap .product-image-shell {
                 width: 100%;
             }
+
+            .product-search-wrap .product-card-middle a.product-name {
+                padding-top: 4px;
+                padding-bottom: 6px;
+            }
         }
     </style>
 @endpush
 
 @section('canonical')
-    @php
-        $baseUrl = url()->current();
-
-        if ($hasCategory) {
-            $baseUrl = route('categories.products.index', ['category' => request('category')]);
-        } elseif ($hasBrand) {
-            try {
-                $baseUrl = route('brands.products.index', ['brand' => request('brand')]);
-            } catch (\InvalidArgumentException $e) {
-                $baseUrl = url()->current();
-            }
-        } elseif ($hasTag) {
-            try {
-                $baseUrl = route('tags.products.index', ['tag' => request('tag')]);
-            } catch (\InvalidArgumentException $e) {
-                $baseUrl = url()->current();
-            }
-        } elseif ($hasQuery) {
-            $baseUrl = request()->url();
-        }
-
-        $canonicalUrl = \Illuminate\Support\Str::before($baseUrl, '?');
-    @endphp
-
-    <link rel="canonical" href="{{ $canonicalUrl }}">
+    <link rel="canonical" href="{{ $canonical }}">
 @endsection
 
 @section('content')
+    {{-- SEO: Server Side Rendered FAQ & Description for Bot Crawlers --}}
+    @php
+        $validFaqs = collect($initialCategoryData['faq_items'] ?? [])->map(function($f) {
+             return [
+                 'q' => trim($f['question'] ?? $f['q'] ?? ''),
+                 'a' => trim($f['answer'] ?? $f['a'] ?? ''),
+             ];
+        })->filter(function($f) {
+            $q = $f['q'];
+            $a = $f['a'];
+            return mb_strlen($q) > 8 && mb_strlen($a) > 10 && !preg_match('/(denem|test|asdf)/i', $q);
+        });
+    @endphp
+
+    @if($validFaqs->isNotEmpty())
+        <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "mainEntity": [
+            @foreach($validFaqs as $index => $faq)
+            {
+              "@type": "Question",
+              "name": "{{ addslashes($faq['q']) }}",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "{{ addslashes(strip_tags($faq['a'])) }}"
+              }
+            }{{ $loop->last ? '' : ',' }}
+            @endforeach
+          ]
+        }
+        </script>
+    @endif
+
+    <div class="sr-only" aria-hidden="true" style="display: none !important;">
+        @if(isset($initialCategoryData['description_html']))
+            {!! $initialCategoryData['description_html'] !!}
+        @endif
+        
+        @if(isset($validFaqs) && $validFaqs->isNotEmpty())
+            @foreach($validFaqs as $faq)
+                <h3>{{ $faq['q'] }}</h3>
+                <div>{!! $faq['a'] !!}</div>
+            @endforeach
+        @endif
+    </div>
+
     <section
         x-data="ProductIndex"
+        @filter-sort-changed.window="changeSort($event.detail)"
+        @filter-per-page-changed.window="changePerPage($event.detail)"
         class="product-search-wrap"
     >
         <div class="container">
@@ -193,29 +334,37 @@
                 <div class="product-search-left">
                     <div class="product-filter-wrap" :class="{ active: $store.layout.isOpenSidebarFilter }">
                         <div class="product-filter-header d-lg-none">
-                            <h4>
-                                {{ trans('storefront::products.filters') }}
-                            </h4>
+                                <h4 class="ikas-title">
+                                    Filtrele
+                                </h4>
 
-                            <svg @click="$store.layout.closeSidebarFilter()" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20" fill="none">
-                                <path d="M15.8338 4.16663L4.16705 15.8333M4.16705 4.16663L15.8338 15.8333" stroke="#0E1E3E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                            </svg>
+                                <div class="header-actions">
+                                    <button @click="$store.layout.closeSidebarFilter()" class="btn-close-filter">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                    </button>
+                                </div>
                         </div>
 
                         <div class="product-filter-content custom-scrollbar">
-                            @if ($categories->isNotEmpty())
-                                <div class="browse-categories-wrap">
-                                    <h4 class="section-title">
-                                        {{ trans('storefront::products.browse_categories') }}
-                                    </h4>
-
-                                    <h6 class="d-block d-lg-none">{{ trans('storefront::products.categories') }}</h6>
-
-                                    @include('storefront::public.products.index.browse_categories')
-                                </div>
-                            @endif
-                            
                             @include('storefront::public.products.index.filter')
+                        </div>
+
+                        <div class="filter-apply-footer">
+                            <button 
+                                type="button" 
+                                class="btn btn-primary btn-apply-filters" 
+                                @click="applyFilters"
+                                :disabled="isSubmitting"
+                            >
+                                <span x-show="!isSubmitting">
+                                    <span x-text="total > 0 ? total + ' ÜRÜNÜ GÖR' : 'ÜRÜNLERİ GÖR'"></span>
+                                    <template x-if="isSubmittingCount">
+                                        <span class="ms-1 small opacity-50">...</span>
+                                    </template>
+                                </span>
+                                <span x-show="isSubmitting" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                <span x-show="isSubmitting" x-text="'YÜKLENİYOR...'"></span>
+                            </button>
                         </div>
                     </div>
 
@@ -226,13 +375,13 @@
                 <div class="product-search-right">
                     <template x-if="brandBanner">
                         <div class="d-none d-lg-block categories-banner">
-                            <img :src="brandBanner" alt="Brand banner">
+                            <img :src="brandBanner" :alt="brandName">
                         </div>
                     </template>
                     
                     <template x-if="!brandBanner && categoryBanner">
                         <div class="d-none d-lg-block categories-banner">
-                            <img :src="categoryBanner" alt="Category banner">
+                            <img :src="categoryBanner" :alt="categoryName">
                         </div>
                     </template>
 
@@ -317,26 +466,27 @@
     <script>
         window.FleetCart = window.FleetCart || { data: {}, langs: {} };
 
+        FleetCart.data['productsPageSlug'] = '{{ setting('products_page_slug', 'products') }}';
         FleetCart.data['initialQuery'] = '{{ addslashes((string) request('query', '')) }}';
         FleetCart.data['initialBrandName'] = '{{ addslashes((string) ($brandName ?? '')) }}';
         FleetCart.data['initialBrandBanner'] = '{{ addslashes((string) ($brandBanner ?? '')) }}';
         FleetCart.data['initialBrandSlug'] = '{{ addslashes((string) request('brand', '')) }}';
-        FleetCart.data['initialCategoryName'] = '{{ addslashes((string) ($categoryName ?? '')) }}';
+        FleetCart.data['initialCategoryName'] = '{{ addslashes((string) ($initialCategoryData['name'] ?? '')) }}';
         FleetCart.data['initialCategoryBanner'] = '{{ addslashes((string) ($categoryBanner ?? '')) }}';
-        FleetCart.data['initialCategorySlug'] = '{{ addslashes((string) request('category', '')) }}';
-        FleetCart.data['initialCategoryDescriptionHtml'] = @json(isset($category) ? ($category->description ?? '') : '');
-        FleetCart.data['initialCategoryFaqItems'] = @json(isset($category) && is_array($category->faq_items) ? $category->faq_items : []);
+        FleetCart.data['initialCategorySlug'] = '{{ addslashes((string) ($initialCategoryData['slug'] ?? '')) }}';
+        FleetCart.data['initialCategoryDescriptionHtml'] = @json($initialCategoryData['description_html'] ?? '');
+        FleetCart.data['initialCategoryFaqItems'] = @json($initialCategoryData['faq_items'] ?? []);
         FleetCart.data['initialTagName'] = '{{ addslashes((string) ($tagName ?? '')) }}';
         FleetCart.data['initialTagSlug'] = '{{ addslashes((string) request('tag', '')) }}';
         FleetCart.data['initialAttribute'] = @json((object) request('attribute', []));
         FleetCart.data['minPrice'] = {{ $minPrice }};
         FleetCart.data['maxPrice'] = {{ $maxPrice }};
-        FleetCart.data['initialSort'] = '{{ addslashes((string) request('sort', 'latest')) }}';
+        FleetCart.data['initialSort'] = '{{ addslashes((string) request('sort', '')) }}';
         FleetCart.data['initialPage'] = {{ (int) request('page', 1) }};
         FleetCart.data['initialPerPage'] = {{ (int) request('perPage', 20) }};
-        FleetCart.data['initialViewMode'] = '{{ addslashes((string) request('viewMode', 'grid')) }}';
         FleetCart.data['initialProducts'] = @json($initialProducts ?? null);
         FleetCart.data['initialAttributes'] = @json($initialAttributes ?? null);
+        FleetCart.data['initialBrands'] = @json($initialBrands ?? null);
         FleetCart.data['initialCategoryData'] = @json($initialCategoryData ?? null);
         FleetCart.data['initialTotal'] = {{ (int) ($initialTotal ?? 0) }};
         FleetCart.data['initialShowingText'] = @json($initialShowingText ?? '');

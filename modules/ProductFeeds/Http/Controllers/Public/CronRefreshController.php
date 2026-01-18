@@ -13,7 +13,7 @@ class CronRefreshController
 
     public function handle(string $channel): Response
     {
-        $validChannels = ['google', 'meta'];
+        $validChannels = ['google', 'meta', 'trendyol', 'hepsiburada', 'pinterest', 'tiktok'];
 
         if (! in_array($channel, $validChannels, true)) {
             abort(404);
@@ -34,6 +34,22 @@ class CronRefreshController
                 break;
             case 'meta':
                 $controller = app(MetaFeedController::class);
+                $controller->regenerateCache();
+                break;
+            case 'trendyol':
+                $controller = app(TrendyolFeedController::class);
+                $controller->regenerateCache();
+                break;
+            case 'hepsiburada':
+                $controller = app(HepsiburadaFeedController::class);
+                $controller->regenerateCache();
+                break;
+            case 'pinterest':
+                $controller = app(PinterestFeedController::class);
+                $controller->regenerateCache();
+                break;
+            case 'tiktok':
+                $controller = app(TikTokFeedController::class);
                 $controller->regenerateCache();
                 break;
         }

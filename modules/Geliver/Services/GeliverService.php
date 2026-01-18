@@ -220,6 +220,29 @@ class GeliverService
         $order->geliver_shipment_payload = json_encode($shipment);
         $order->geliver_last_status = $this->extractShipmentStatus($shipment);
         $order->geliver_last_status_at = now();
+
+        // Extract and save generic tracking information if available
+        $trackingNumber = $this->extractTrackingNumber($shipment);
+        $carrierName = $this->extractCarrierName($shipment);
+        $trackingUrl = $this->extractTrackingUrl($shipment);
+
+        if ($trackingNumber) {
+            $order->shipping_tracking_number = (string) $trackingNumber;
+        }
+
+        if ($carrierName) {
+            $order->shipping_carrier_name = is_array($carrierName) ? ($carrierName['name'] ?? json_encode($carrierName)) : (string) $carrierName;
+        }
+
+        if ($trackingUrl && filter_var($trackingUrl, FILTER_VALIDATE_URL)) {
+            $order->shipping_tracking_url = (string) $trackingUrl;
+            $order->tracking_reference = (string) $trackingUrl;
+        }
+
+        if (empty($order->tracking_reference) && $trackingNumber) {
+            $order->tracking_reference = (string) $trackingNumber;
+        }
+
         $order->save();
 
         return $shipment;
@@ -369,73 +392,144 @@ class GeliverService
 
     public function extractTrackingNumber($payload): ?string
     {
-        if (is_array($payload)) {
-            $v = data_get($payload, 'tracking_number')
-                ?? data_get($payload, 'trackingNo')
-                ?? data_get($payload, 'trackingNumber')
-                ?? data_get($payload, 'shipment.tracking_number')
-                ?? data_get($payload, 'shipment.trackingNo')
-                ?? data_get($payload, 'data.tracking_number')
-                ?? data_get($payload, 'data.trackingNo')
-                ?? data_get($payload, 'awb')
-                ?? data_get($payload, 'waybillNo');
-            return $v ? (string) $v : null;
+        if (!is_array($payload)) return null;
+
+        $v = data_get($payload, 'trackingNo')
+            ?? data_get($payload, 'tracking_no')
+            ?? data_get($payload, 'tracking_number')
+            ?? data_get($payload, 'trackingNumber')
+            ?? data_get($payload, 'trackingId')
+            ?? data_get($payload, 'tracking_id')
+            ?? data_get($payload, 'tracking_code')
+            ?? data_get($payload, 'trackingCode')
+            ?? data_get($payload, 'shipment.trackingNo')
+            ?? data_get($payload, 'shipment.tracking_no')
+            ?? data_get($payload, 'shipment.tracking_number')
+            ?? data_get($payload, 'shipment.trackingNumber')
+            ?? data_get($payload, 'data.trackingNo')
+            ?? data_get($payload, 'data.tracking_no')
+            ?? data_get($payload, 'data.tracking_number')
+            ?? data_get($payload, 'data.trackingNumber')
+            ?? data_get($payload, 'trackingStatus.trackingNo')
+            ?? data_get($payload, 'trackingStatus.tracking_no')
+            ?? data_get($payload, 'trackingStatus.tracking_number')
+            ?? data_get($payload, 'trackingStatus.trackingNumber')
+            ?? data_get($payload, 'data.trackingStatus.trackingNo')
+            ?? data_get($payload, 'data.trackingStatus.tracking_no')
+            ?? data_get($payload, 'data.trackingStatus.tracking_number')
+            ?? data_get($payload, 'data.trackingStatus.trackingNumber')
+            ?? data_get($payload, 'shipment.trackingStatus.trackingNo')
+            ?? data_get($payload, 'shipment.trackingStatus.tracking_no')
+            ?? data_get($payload, 'shipment.trackingStatus.tracking_number')
+            ?? data_get($payload, 'shipment.trackingStatus.trackingNumber')
+            ?? data_get($payload, 'trackingHeader.trackingNo')
+            ?? data_get($payload, 'tracking_info.tracking_no')
+            ?? data_get($payload, 'tracking_info.tracking_number')
+            ?? data_get($payload, 'shipment_tracking_number')
+            ?? data_get($payload, 'awb')
+            ?? data_get($payload, 'awb_number')
+            ?? data_get($payload, 'awbNo')
+            ?? data_get($payload, 'waybillNo')
+            ?? data_get($payload, 'waybill_no')
+            ?? data_get($payload, 'waybill_number')
+            ?? data_get($payload, 'waybillNumber');
+
+        if (!$v) {
+            $link = $this->extractTrackingUrl($payload);
+            if ($link) {
+                $q = parse_url($link, PHP_URL_QUERY);
+                if ($q) {
+                    parse_str($q, $qp);
+                    $v = $qp['code'] ?? ($qp['tracking_no'] ?? ($qp['trackingNo'] ?? ($qp['id'] ?? ($qp['t'] ?? null))));
+                }
+            }
         }
-        return null;
+
+        return $v ? (string) $v : null;
     }
 
     public function extractCarrierName($payload): ?string
     {
-        if (is_array($payload)) {
-            $v = data_get($payload, 'carrier')
-                ?? data_get($payload, 'carrierName')
-                ?? data_get($payload, 'carrier.name')
-                ?? data_get($payload, 'providerName')
-                ?? data_get($payload, 'providerCode')
-                ?? data_get($payload, 'trackingStatus.carrier')
-                ?? data_get($payload, 'trackingStatus.carrierName')
-                ?? data_get($payload, 'trackingStatus.carrier.name')
-                ?? data_get($payload, 'trackingStatus.providerName')
-                ?? data_get($payload, 'trackingStatus.providerCode')
-                ?? data_get($payload, 'data.providerName')
-                ?? data_get($payload, 'data.providerCode')
-                ?? data_get($payload, 'data.trackingStatus.carrier')
-                ?? data_get($payload, 'data.trackingStatus.carrierName')
-                ?? data_get($payload, 'data.trackingStatus.carrier.name')
-                ?? data_get($payload, 'data.trackingStatus.providerName')
-                ?? data_get($payload, 'data.trackingStatus.providerCode')
-                ?? data_get($payload, 'shipment.providerName')
-                ?? data_get($payload, 'shipment.providerCode')
-                ?? data_get($payload, 'shipment.trackingStatus.carrier')
-                ?? data_get($payload, 'shipment.trackingStatus.carrierName')
-                ?? data_get($payload, 'shipment.trackingStatus.carrier.name')
-                ?? data_get($payload, 'shipment.trackingStatus.providerName')
-                ?? data_get($payload, 'shipment.trackingStatus.providerCode')
-                ?? data_get($payload, 'shipment.carrier')
-                ?? data_get($payload, 'shipment.carrierName')
-                ?? data_get($payload, 'shipment.carrier.name')
-                ?? data_get($payload, 'data.carrier')
-                ?? data_get($payload, 'data.carrierName')
-                ?? data_get($payload, 'data.carrier.name');
-            return is_array($v) ? ($v['name'] ?? json_encode($v)) : ($v ? (string) $v : null);
-        }
-        return null;
+        if (!is_array($payload)) return null;
+
+        $v = data_get($payload, 'carrier')
+            ?? data_get($payload, 'carrierName')
+            ?? data_get($payload, 'carrier.name')
+            ?? data_get($payload, 'providerName')
+            ?? data_get($payload, 'provider_name')
+            ?? data_get($payload, 'providerCode')
+            ?? data_get($payload, 'provider_code')
+            ?? data_get($payload, 'data.carrier')
+            ?? data_get($payload, 'data.carrierName')
+            ?? data_get($payload, 'data.carrier.name')
+            ?? data_get($payload, 'data.providerName')
+            ?? data_get($payload, 'data.provider_name')
+            ?? data_get($payload, 'data.providerCode')
+            ?? data_get($payload, 'data.provider_code')
+            ?? data_get($payload, 'trackingStatus.carrier')
+            ?? data_get($payload, 'trackingStatus.carrierName')
+            ?? data_get($payload, 'trackingStatus.carrier.name')
+            ?? data_get($payload, 'trackingStatus.providerName')
+            ?? data_get($payload, 'trackingStatus.provider_name')
+            ?? data_get($payload, 'trackingStatus.providerCode')
+            ?? data_get($payload, 'trackingStatus.provider_code')
+            ?? data_get($payload, 'data.trackingStatus.carrier')
+            ?? data_get($payload, 'data.trackingStatus.carrierName')
+            ?? data_get($payload, 'data.trackingStatus.carrier.name')
+            ?? data_get($payload, 'data.trackingStatus.providerName')
+            ?? data_get($payload, 'data.trackingStatus.provider_name')
+            ?? data_get($payload, 'data.trackingStatus.providerCode')
+            ?? data_get($payload, 'data.trackingStatus.provider_code')
+            ?? data_get($payload, 'shipment.trackingStatus.carrier')
+            ?? data_get($payload, 'shipment.trackingStatus.carrierName')
+            ?? data_get($payload, 'shipment.trackingStatus.carrier.name')
+            ?? data_get($payload, 'shipment.trackingStatus.providerName')
+            ?? data_get($payload, 'shipment.trackingStatus.provider_name')
+            ?? data_get($payload, 'shipment.trackingStatus.providerCode')
+            ?? data_get($payload, 'shipment.trackingStatus.provider_code')
+            ?? data_get($payload, 'shipment.providerName')
+            ?? data_get($payload, 'shipment.provider_name')
+            ?? data_get($payload, 'shipment.providerCode')
+            ?? data_get($payload, 'shipment.provider_code')
+            ?? data_get($payload, 'shipment.carrier')
+            ?? data_get($payload, 'shipment.carrierName')
+            ?? data_get($payload, 'shipment.carrier.name');
+
+        return is_array($v) ? ($v['name'] ?? json_encode($v)) : ($v ? (string) $v : null);
     }
 
     public function extractTrackingUrl($payload): ?string
     {
-        if (is_array($payload)) {
-            $v = data_get($payload, 'tracking_url')
-                ?? data_get($payload, 'trackingUrl')
-                ?? data_get($payload, 'shipment.tracking_url')
-                ?? data_get($payload, 'shipment.trackingUrl')
-                ?? data_get($payload, 'data.tracking_url')
-                ?? data_get($payload, 'data.trackingUrl')
-                ?? data_get($payload, 'tracking.link')
-                ?? data_get($payload, 'shipment.tracking.link')
-                ?? data_get($payload, 'data.tracking.link');
-            return $v ? (string) $v : null;
-        }
-        return null;
+        if (!is_array($payload)) return null;
+
+        $v = data_get($payload, 'tracking_url')
+            ?? data_get($payload, 'tracking_link')
+            ?? data_get($payload, 'trackingUrl')
+            ?? data_get($payload, 'trackingLink')
+            ?? data_get($payload, 'trackingStatus.tracking_url')
+            ?? data_get($payload, 'trackingStatus.tracking_link')
+            ?? data_get($payload, 'trackingStatus.trackingUrl')
+            ?? data_get($payload, 'trackingStatus.trackingLink')
+            ?? data_get($payload, 'data.tracking_url')
+            ?? data_get($payload, 'data.tracking_link')
+            ?? data_get($payload, 'data.trackingUrl')
+            ?? data_get($payload, 'data.trackingLink')
+            ?? data_get($payload, 'data.trackingStatus.tracking_url')
+            ?? data_get($payload, 'data.trackingStatus.tracking_link')
+            ?? data_get($payload, 'data.trackingStatus.trackingUrl')
+            ?? data_get($payload, 'data.trackingStatus.trackingLink')
+            ?? data_get($payload, 'shipment.trackingStatus.tracking_url')
+            ?? data_get($payload, 'shipment.trackingStatus.tracking_link')
+            ?? data_get($payload, 'shipment.trackingStatus.trackingUrl')
+            ?? data_get($payload, 'shipment.trackingStatus.trackingLink')
+            ?? data_get($payload, 'shipment.tracking_url')
+            ?? data_get($payload, 'shipment.tracking_link')
+            ?? data_get($payload, 'shipment.trackingUrl')
+            ?? data_get($payload, 'shipment.trackingLink')
+            ?? data_get($payload, 'tracking.link')
+            ?? data_get($payload, 'shipment.tracking.link')
+            ?? data_get($payload, 'data.tracking.link');
+
+        return $v ? (string) $v : null;
     }
 }

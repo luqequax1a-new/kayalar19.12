@@ -27,7 +27,7 @@ class TicketController
     public function show($id)
     {
         $ticket = Ticket::where('user_id', auth()->id())
-            ->with(['messages.attachments'])
+            ->with(['messages.attachments', 'order'])
             ->findOrFail($id);
 
         return view('ticket::public.account.messages.show', compact('ticket'));
@@ -37,15 +37,18 @@ class TicketController
     {
         $data = $request->validate([
             'subject' => ['required', 'string', 'max:255'],
+            'category' => ['nullable', 'string', 'max:100'],
             'order_id' => ['nullable', 'integer'],
             'body' => ['required', 'string'],
-            'images.*' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'images' => ['nullable', 'array'],
+            'images.*' => ['nullable', 'file', 'max:5120'], // 5MB max
         ]);
 
         $ticket = Ticket::create([
             'user_id' => auth()->id(),
             'order_id' => $data['order_id'] ?? null,
             'subject' => $data['subject'],
+            'category' => $data['category'] ?? null,
             'status' => 'waiting_admin',
             'last_message_at' => now(),
         ]);
@@ -57,18 +60,44 @@ class TicketController
             'body' => $data['body'],
         ]);
 
-        foreach ($request->file('images', []) as $file) {
-            $path = Storage::disk('public')->putFile('tickets', $file);
-            TicketAttachment::create([
-                'message_id' => $message->id,
-                'path' => $path,
-                'original_name' => substr($file->getClientOriginalName(), 0, 255),
-                'mime_type' => $file->getClientMimeType(),
-                'size' => $file->getSize(),
-            ]);
+        // Upload attachments
+        try {
+            foreach ($request->file('images', []) as $file) {
+                $path = Storage::disk('public')->putFile('tickets', $file);
+                TicketAttachment::create([
+                    'message_id' => $message->id,
+                    'path' => $path,
+                    'original_name' => substr($file->getClientOriginalName(), 0, 255),
+                    'mime_type' => $file->getClientMimeType(),
+                    'size' => $file->getSize(),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            \Log::error('[TICKET] File upload failed', ['error' => $e->getMessage()]);
         }
 
-        return redirect()->route('account.tickets.show', $ticket->id);
+        // Create admin notification
+        try {
+            \FleetCart\Services\NotificationService::newTicket($ticket);
+        } catch (\Throwable $e) {
+            \Log::error('[TICKET] Notification failed', ['error' => $e->getMessage()]);
+        }
+
+        // Send email to admin
+        try {
+            $ticketWithMessages = $ticket->load('messages');
+            \Illuminate\Support\Facades\Mail::to(setting('store_email'))
+                ->send(new \Modules\Ticket\Mail\NewTicketAdminMail($ticketWithMessages));
+        } catch (\Throwable $e) {
+            \Log::error('[TICKET] Email failed', ['error' => $e->getMessage()]);
+        }
+
+        return redirect()
+            ->route('account.tickets.index')
+            ->with('toast', [
+                'type' => 'success',
+                'message' => 'Destek talebiniz başarıyla oluşturuldu. En kısa sürede size dönüş yapacağız.'
+            ]);
     }
 
     public function storeMessage($id, Request $request)

@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'index' => 'Index Reviews',
-    'edit' => 'Edit Reviews',
-    'destroy' => 'Delete Reviews',
+    'index' => 'Değerlendirmeleri Listele',
+    'edit' => 'Değerlendirmeleri Düzenle',
+    'destroy' => 'Değerlendirmeleri Sil',
 ];

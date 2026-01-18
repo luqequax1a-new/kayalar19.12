@@ -11,7 +11,7 @@
         background: var(--color-white);
         width: 100%;
         min-width: 320px;
-        z-index: 7;
+        z-index: $z-index-bottom-nav;
         border-top: 1px solid #e2e8f0;
 
         .bottom-navigation-items {

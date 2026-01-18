@@ -14,16 +14,16 @@ return new class extends Migration
 
         Schema::table('orders', function (Blueprint $table) {
             if (!Schema::hasColumn('orders', 'geliver_shipment_id')) {
-                $table->string('geliver_shipment_id')->nullable()->after('status');
+                $table->string('geliver_shipment_id')->nullable();
             }
             if (!Schema::hasColumn('orders', 'geliver_shipment_payload')) {
-                $table->text('geliver_shipment_payload')->nullable()->after('geliver_shipment_id');
+                $table->text('geliver_shipment_payload')->nullable();
             }
             if (!Schema::hasColumn('orders', 'geliver_last_status')) {
-                $table->string('geliver_last_status')->nullable()->after('geliver_shipment_payload');
+                $table->string('geliver_last_status')->nullable();
             }
             if (!Schema::hasColumn('orders', 'geliver_last_status_at')) {
-                $table->dateTime('geliver_last_status_at')->nullable()->after('geliver_last_status');
+                $table->dateTime('geliver_last_status_at')->nullable();
             }
         });
     }

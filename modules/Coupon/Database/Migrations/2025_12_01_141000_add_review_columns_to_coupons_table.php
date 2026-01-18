@@ -10,16 +10,16 @@ return new class extends Migration
     {
         Schema::table('coupons', function (Blueprint $table) {
             if (!Schema::hasColumn('coupons', 'is_review_coupon')) {
-                $table->boolean('is_review_coupon')->default(false)->after('is_active');
+                $table->boolean('is_review_coupon')->default(false);
             }
             if (!Schema::hasColumn('coupons', 'review_id')) {
-                $table->unsignedInteger('review_id')->nullable()->after('is_review_coupon');
+                $table->unsignedInteger('review_id')->nullable();
             }
             if (!Schema::hasColumn('coupons', 'order_id')) {
-                $table->unsignedInteger('order_id')->nullable()->after('review_id');
+                $table->unsignedInteger('order_id')->nullable();
             }
             if (!Schema::hasColumn('coupons', 'customer_id')) {
-                $table->unsignedInteger('customer_id')->nullable()->after('order_id');
+                $table->unsignedInteger('customer_id')->nullable();
             }
         });
     }

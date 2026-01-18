@@ -8,7 +8,7 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->unsignedBigInteger('sale_unit_id')->nullable()->after('tax_class_id');
+            $table->unsignedBigInteger('sale_unit_id')->nullable();
             $table->foreign('sale_unit_id')->references('id')->on('units')->onDelete('set null');
             $table->index('sale_unit_id');
         });

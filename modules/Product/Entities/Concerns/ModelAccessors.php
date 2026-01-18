@@ -217,10 +217,18 @@ trait ModelAccessors
 
     public function getRatingPercentAttribute()
     {
+        // First check if we have the avg rating from withAvg('reviews', 'rating')
+        if (isset($this->reviews_avg_rating)) {
+            $avg = (float) $this->reviews_avg_rating;
+            return $avg > 0 ? ($avg / 5) * 100 : 0;
+        }
+        
+        // Fallback to calculating from loaded reviews collection
         if ($this->relationLoaded('reviews')) {
             $avg = $this->reviews->avg('rating');
             return $avg ? ($avg / 5) * 100 : 0;
         }
+        
         return 0;
     }
 }

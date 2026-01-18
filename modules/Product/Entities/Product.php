@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Spatie\Sitemap\Tags\Url;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 use Modules\Support\Eloquent\Model;
 use Modules\Media\Eloquent\HasMedia;
 use Modules\Meta\Eloquent\HasMetaData;
@@ -77,6 +78,9 @@ class Product extends Model implements Sitemapable
         'new_from',
         'new_to',
         'list_variants_separately',
+        'redirect_type',
+        'redirect_target_id',
+        'main_page_position',
     ];
 
     /**
@@ -120,6 +124,7 @@ class Product extends Model implements Sitemapable
         'unit_min',
         'unit_step',
         'unit_suffix',
+        'unit_label',
         'unit_decimal',
         'deleted_at',
         'unit_info_top',
@@ -227,14 +232,38 @@ class Product extends Model implements Sitemapable
      */
     public function table(Request $request): ProductTable
     {
+        $pvAgg = DB::table('product_variants as pv')
+            ->selectRaw("pv.product_id,
+                COUNT(*) as active_variants,
+                SUM(CASE WHEN pv.manage_stock = 1 THEN 1 ELSE 0 END) as active_manage_variants,
+                SUM(CASE WHEN pv.manage_stock = 0 OR pv.qty > 0 THEN 1 ELSE 0 END) as in_stock_variants,
+                SUM(pv.qty) as sum_qty")
+            ->whereNull('pv.deleted_at')
+            ->where('pv.is_active', 1)
+            ->groupBy('pv.product_id');
+
         $query = $this->newQuery()
             ->withoutGlobalScope('active')
             ->withName()
             ->withBaseImage()
             ->withPrice()
             ->with(['saleUnit','variants','primaryCategory','brand'])
+            ->leftJoinSub($pvAgg, 'pv_stats', function ($join) {
+                $join->on('products.id', '=', 'pv_stats.product_id');
+            })
             ->addSelect(['id', 'slug', 'brand_id', 'primary_category_id', 'is_active', 'in_stock', 'manage_stock', 'qty', 'created_at', 'updated_at'])
             ->addSelect(['sale_unit_id'])
+            ->addSelect(DB::raw("CASE
+                WHEN COALESCE(pv_stats.active_variants,0) > 0 THEN
+                    CASE WHEN COALESCE(pv_stats.in_stock_variants,0) > 0 THEN 1 ELSE 0 END
+                ELSE
+                    CASE WHEN (products.manage_stock = 0 OR products.qty > 0) THEN 1 ELSE 0 END
+            END as stock_sort"))
+            ->addSelect(DB::raw("CASE
+                WHEN COALESCE(pv_stats.active_variants,0) > 0 THEN COALESCE(pv_stats.sum_qty,0)
+                ELSE
+                    CASE WHEN products.manage_stock = 1 THEN COALESCE(products.qty,0) ELSE 9999999 END
+            END as stock_qty_sort"))
             ->when($request->has('brand_id') && $request->brand_id !== null && $request->brand_id !== '', function ($q) use ($request) {
                 $q->where('brand_id', (int) $request->brand_id);
             })
@@ -247,6 +276,17 @@ class Product extends Model implements Sitemapable
                         });
                 });
             })
+            ->when($request->has('stock') && $request->stock !== null && $request->stock !== '', function ($q) use ($request) {
+                $stock = (string) $request->stock;
+
+                if ($stock === 'in') {
+                    $q->whereRaw('stock_sort = 1');
+                }
+
+                if ($stock === 'out') {
+                    $q->whereRaw('stock_sort = 0');
+                }
+            })
             ->when($request->has('except'), function ($query) use ($request) {
                 $query->whereNotIn('id', explode(',', $request->except));
             });
@@ -257,25 +297,124 @@ class Product extends Model implements Sitemapable
 
     public function clean(): array
     {
-        $cleanExceptAttributes = [
-            'description',
-            'short_description',
-            'translations',
-            'categories',
-            'files',
-            'brand_id',
-            'tax_class',
-            'tax_class_id',
-            'viewed',
-            'created_at',
-            'updated_at',
-            'deleted_at',
+        $data = [
+            'id' => $this->id,
+            'slug' => $this->slug,
+            'name' => $this->name,
+            'is_active' => (bool) ($this->is_active ?? true),
+            'in_stock' => (bool) ($this->in_stock ?? true),
+            'manage_stock' => (bool) ($this->manage_stock ?? false),
+            'qty' => $this->qty,
+            'is_new' => (bool) $this->is_new,
+            'is_in_stock' => (bool) $this->is_in_stock,
+            'is_out_of_stock' => (bool) $this->is_out_of_stock,
+            'options_count' => (int) $this->options_count,
+            'has_percentage_special_price' => (bool) $this->has_percentage_special_price,
+            'special_price_percent' => $this->special_price_percent,
+            'list_variants_separately' => (bool) ($this->list_variants_separately ?? false),
+            'rating_percent' => $this->rating_percent,
+            'reviews_count' => (int) ($this->reviews_count ?? 0),
+            'unit_min' => $this->unit_min,
+            'unit_step' => $this->unit_step,
+            'unit_suffix' => $this->unit_suffix,
+            'unit_label' => $this->unit_label,
+            'unit_decimal' => (bool) $this->unit_decimal,
+            'unit_info_top' => $this->unit_info_top,
+            'unit_info_bottom' => $this->unit_info_bottom,
+            'unit_default_qty' => $this->unit_default_qty,
+            'does_manage_stock' => (bool) $this->manage_stock,
+            'redirect_type' => $this->redirect_type ?? '404',
+            'redirect_target_id' => $this->redirect_target_id,
         ];
 
-        return array_except(
-            $this->toArray(),
-            $cleanExceptAttributes
-        );
+        $redirectTargetInfo = null;
+        if ($this->redirect_target_id) {
+            if (str_contains($this->redirect_type ?? '', 'product')) {
+                $targetProd = \Modules\Product\Entities\Product::withoutGlobalScope('active')->find($this->redirect_target_id);
+                if ($targetProd) {
+                    $redirectTargetInfo = ['id' => $targetProd->id, 'name' => $targetProd->name];
+                }
+            } elseif (str_contains($this->redirect_type ?? '', 'category')) {
+                $targetCat = \Modules\Category\Entities\Category::find($this->redirect_target_id);
+                if ($targetCat) {
+                    $redirectTargetInfo = ['id' => $targetCat->id, 'name' => $targetCat->name];
+                }
+            }
+        }
+        $data['redirect_target'] = $redirectTargetInfo;
+
+        foreach (['price', 'special_price', 'selling_price'] as $key) {
+            try {
+                $val = $this->$key;
+                if ($val instanceof \Modules\Support\Money) {
+                    $data[$key] = $val->jsonSerialize();
+                }
+            } catch (\Throwable $e) {}
+        }
+
+        $data['variants'] = $this->relationLoaded('variants')
+            ? $this->variants->map(fn($v) => $v->clean())->all()
+            : [];
+
+        $data['variant'] = $this->relationLoaded('variant') && $this->variant
+            ? $this->variant->clean()
+            : null;
+
+        $data['variations'] = $this->relationLoaded('variations')
+            ? $this->variations->map(fn($v) => [
+                'id' => $v->id,
+                'uid' => $v->uid,
+                'name' => $v->name,
+                'type' => $v->type,
+                'values' => $v->values->map(fn($val) => [
+                    'id' => $val->id,
+                    'uid' => $val->uid,
+                    'label' => $val->label,
+                    'price' => optional($val->price)->jsonSerialize(),
+                ])->all(),
+            ])->all()
+            : [];
+
+        if ($this->relationLoaded('options')) {
+            $data['options'] = $this->options->map(fn($o) => [
+                'id' => $o->id,
+                'name' => $o->name,
+                'type' => $o->type,
+                'is_required' => $o->is_required,
+                'values' => $o->values->map(fn($v) => [
+                    'id' => $v->id,
+                    'label' => $v->label,
+                    'price' => optional($v->price)->jsonSerialize(),
+                ])->all(),
+            ])->all();
+        } else {
+            $data['options'] = [];
+        }
+
+        if ($this->relationLoaded('files')) {
+            $data['base_image'] = $this->base_image;
+            $data['additional_images'] = $this->additional_images->all();
+        } else {
+            $data['base_image'] = null;
+            $data['additional_images'] = [];
+        }
+
+        // JS expects 'media' array for gallery
+        $data['media'] = $this->relationLoaded('files') ? $this->getMediaPayload() : [];
+
+        $data['base_image_thumb'] = [
+            'path' => media_variant_url($this->base_image, (int) config('image_optimization.variants.widths.thumb', 80))
+        ];
+
+        $data['formatted_price'] = $this->formatted_price;
+
+        return $data;
+    }
+
+
+    private function getMediaPayload()
+    {
+        return $this->media->values()->all();
     }
 
 
@@ -320,27 +459,43 @@ class Product extends Model implements Sitemapable
         // 2) Next: short_description (translated)
         $short = $this->cleanMetaText($this->short_description ?? null);
 
-        if ($short !== '') {
-            return $short;
+        if ($short !== '' && mb_strlen($short) > 20) {
+            return Str::limit($short, 160);
         }
 
         // 3) Fallback: description (translated), cleaned and limited
         $desc = $this->cleanMetaText($this->description ?? null);
 
-        if ($desc !== '') {
+        if ($desc !== '' && mb_strlen($desc) > 20) {
             return Str::limit($desc, 160, '...');
         }
 
-        // 4) Ultimate fallback: product name (translated) or null
-        $name = $this->cleanMetaText($this->name ?? null);
+        // 4) Ultimate fallback: Template-based description to avoid thin content
+        $name = $this->cleanMetaText($this->name ?? '');
+        $category = $this->categories()->first();
+        $brand = $this->brand()->first();
 
-        return $name !== '' ? $name : null;
+        if ($name === '') {
+            return null;
+        }
+
+        $template = $name;
+        if ($category) {
+            $template .= " En iyi {$category->name} modelleri";
+        }
+        if ($brand) {
+            $template .= " ({$brand->name})";
+        }
+        $template .= " en uygun fiyatlarla Kayalar Manifatura'da. Hemen keşfet ve satın al.";
+
+        return Str::limit($template, 160);
     }
 
 
     public function url(): string
     {
-        return route('products.show', ['slug' => $this->slug]);
+        // İkas-style clean URL
+        return url('/' . $this->slug);
     }
 
 
@@ -532,6 +687,11 @@ class Product extends Model implements Sitemapable
     public function getUnitSuffixAttribute(): string
     {
         return $this->saleUnit?->getDisplaySuffix() ?: '';
+    }
+
+    public function getUnitLabelAttribute(): string
+    {
+        return $this->saleUnit?->label ?: '';
     }
 
     public function getUnitDecimalAttribute(): bool

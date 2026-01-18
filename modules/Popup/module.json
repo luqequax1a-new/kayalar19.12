@@ -1,9 +1,0 @@
-{
-    "name": "Popup",
-    "alias": "popup",
-    "description": "Page-targeted marketing pop-up module.",
-    "priority": 120,
-    "providers": [
-        "Modules\\Popup\\Providers\\PopupServiceProvider"
-    ]
-}

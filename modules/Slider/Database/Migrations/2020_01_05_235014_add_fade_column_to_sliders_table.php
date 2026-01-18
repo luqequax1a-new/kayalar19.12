@@ -14,7 +14,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('sliders', function (Blueprint $table) {
-            $table->boolean('fade')->default(false)->after('autoplay_speed');
+            $table->boolean('fade')->default(false);
         });
     }
 

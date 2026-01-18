@@ -1,0 +1,1290 @@
+// İKAS FULL-HEIGHT SEAMLESS LAYOUT
+.has-products-page {
+    .content-wrapper {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+        padding: 0 !important;
+    }
+
+    .ikas-pagination-left {
+        #ikas-pagination-info {
+            order: 2;
+        }
+
+        .ikas-page-size-selector {
+            order: 1;
+        }
+    }
+
+    section.content {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 0;
+        margin: 0;
+    }
+
+    .ikas-products-page-wrapper {
+        flex: 1;
+        min-height: 0;
+        height: auto;
+    }
+
+    .products-page-top {
+        border-bottom: 0;
+        box-shadow: none;
+        background: #ffffff;
+        padding: 0;
+        margin: 0;
+    }
+
+    // Row 1: Title and Action Buttons
+    .ikas-header-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 25px 12px 25px;
+        background: #ffffff;
+        border-bottom: 1px solid #f3f4f6;
+        margin: 0;
+    }
+
+    .ikas-header-left {
+        flex: 0 0 auto;
+    }
+
+    .ikas-page-title {
+        font-size: 30px;
+        font-weight: 600;
+        line-height: 1.2;
+        color: #121926;
+        margin: 0;
+        font-family: "Twemoji Country Flags", Inter, sans-serif;
+    }
+
+    .ikas-title-count {
+        font-size: 18px;
+        font-weight: 500;
+        color: #697586;
+        margin-left: 6px;
+    }
+
+    .ikas-header-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 0 0 auto;
+    }
+
+    // Button styling in header
+    .ikas-header-right .btn-actions,
+    .ikas-header-right .btn-group > .btn {
+        height: 40px;
+        padding: 0 16px;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 14px;
+        border: 1px solid #e3e8ef;
+        background: #ffffff;
+        color: #121926;
+        font-family: "Twemoji Country Flags", Inter, sans-serif;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: none;
+        margin: 0 !important;
+    }
+
+    .ikas-header-right .btn-actions i,
+    .ikas-header-right .btn-group > .btn i {
+        font-size: 16px;
+        color: #697586;
+    }
+
+    .ikas-header-right .btn-group {
+        margin: 0 !important;
+    }
+
+    .ikas-products-toolbar {
+        border-bottom: 1px solid #f3f4f6;
+        box-shadow: none;
+        border: 0 !important;
+        border-bottom: 1px solid #f3f4f6 !important;
+        background: #ffffff !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        padding: 12px 0 12px 0 !important;
+    }
+
+    .ikas-table-container > .ikas-products-toolbar {
+        padding-left: 25px !important;
+        padding-right: 25px !important;
+        margin-bottom: 0;
+    }
+
+    .ikas-products-toolbar .ikas-toolbar-main {
+        padding: 0 !important;
+        margin: 0 !important;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .ikas-selection {
+        display: none;
+        align-items: center;
+        gap: 8px;
+        padding: 0 12px;
+        border-radius: 4px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        font-size: 14px;
+        font-weight: 500;
+        color: #111827;
+        height: 40px;
+        min-height: 40px;
+    }
+
+    .ikas-selection-chip {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 100%;
+    }
+
+    .ikas-selection .btn {
+        height: 32px;
+        padding: 0 12px;
+        font-size: 14px;
+        border-radius: 4px;
+        font-weight: 500;
+    }
+
+    .ikas-selection .btn-default {
+        border: 1px solid #e5e7eb;
+        background: #ffffff;
+        color: #0f172a;
+    }
+
+    .ikas-selection .btn-link {
+        color: #ef4444;
+    }
+
+    .ikas-selection .btn-link {
+        padding: 0 6px;
+    }
+
+    .ikas-selection-clear {
+        border: none;
+        background: transparent;
+        color: #64748b;
+        padding: 4px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: background 0.15s ease;
+
+        &:hover {
+            background: #e2e8f0;
+        }
+    }
+
+    .ikas-pagination-wrapper {
+        border-top: 0;
+        box-shadow: none;
+    }
+
+    .index-table-actions-row {
+        margin: 0;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        width: 100%;
+        gap: 8px;
+    }
+
+    .index-table-title {
+        display: none !important;
+    }
+
+    .products-page-title {
+        display: none !important;
+    }
+
+    .products-page-title-count {
+        display: none !important;
+    }
+
+    .index-table-actions {
+        float: none !important;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: auto;
+        margin: 0;
+        margin-left: auto;
+    }
+
+    .index-table-actions .btn-actions,
+    .index-table-actions .btn-group > .btn {
+        height: 40px;
+        padding: 0 16px;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 14px;
+        border: 1px solid #e3e8ef;
+        background: #ffffff;
+        color: #121926;
+        font-family: "Twemoji Country Flags", Inter, sans-serif;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: none;
+        margin: 0 !important;
+    }
+
+    .index-table-actions .btn-actions i,
+    .index-table-actions .btn-group > .btn i {
+        font-size: 16px;
+        color: #697586;
+    }
+
+    .index-table-actions .btn-actions.btn-primary,
+    .index-table-actions .btn-group > .btn.btn-primary {
+        background: #ffffff;
+        border-color: #e3e8ef;
+        color: #121926;
+    }
+
+    .index-table-actions .btn-actions.btn-primary i {
+        color: #697586;
+    }
+
+    .index-table-actions .btn-actions.btn-primary:hover,
+    .index-table-actions .btn-group > .btn.btn-primary:hover {
+        background: #ffffff;
+        border-color: #e3e8ef;
+    }
+
+    .ikas-table-container .table-responsive {
+        overflow-x: auto;
+        overflow-y: visible;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .ikas-table-container .table-responsive::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+    }
+
+    .ikas-table-container {
+        overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .ikas-table-container::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+    }
+
+    .ikas-table-wrapper {
+        overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .ikas-table-wrapper::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+    }
+
+    #products-table .table {
+        table-layout: fixed;
+    }
+
+    #products-table .box-body {
+        border: 0 !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    #products-table .box {
+        margin: 0 !important;
+        border: 0 !important;
+        box-shadow: none !important;
+    }
+
+    #products-table .box-header {
+        display: none !important;
+    }
+
+    // Remove any potential gaps
+    .table-responsive {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    #products-table th:first-child,
+    #products-table td:first-child {
+        width: 44px;
+    }
+
+    #products-table th.col-id,
+    #products-table td.col-id {
+        width: 70px;
+    }
+
+    #products-table th.col-thumbnail,
+    #products-table td.col-thumbnail {
+        width: 90px;
+    }
+
+    #products-table .thumbnail-holder {
+        width: 66px;
+        height: 66px;
+        border: none !important;
+        background: transparent;
+    }
+
+    #products-table th.col-name,
+    #products-table td.col-name {
+        width: 240px;
+    }
+
+    #products-table td.col-name {
+        vertical-align: middle;
+        padding-top: 0;
+    }
+
+    #products-table .product-name-cell {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+    }
+
+    #products-table .product-id-under-name {
+        font-size: 11px;
+        font-weight: 600;
+        color: #6b7280;
+        line-height: 1.1;
+    }
+
+    #products-table th.col-default-category,
+    #products-table td.col-default-category {
+        width: 190px;
+    }
+
+    #products-table th.col-brand,
+    #products-table td.col-brand {
+        width: 120px;
+    }
+
+    #products-table th.col-price,
+    #products-table td.col-price {
+        width: 120px;
+    }
+
+    #products-table th.col-stock,
+    #products-table td.col-stock {
+        width: 180px;
+    }
+
+    #products-table th.col-status,
+    #products-table td.col-status {
+        width: 90px;
+        text-align: center;
+    }
+
+    #products-table th.col-created-at,
+    #products-table td.col-created-at {
+        width: 150px;
+    }
+
+    #products-table th.col-actions,
+    #products-table td.col-actions {
+        width: 86px;
+        text-align: center;
+    }
+
+    #products-table .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 28px);
+        gap: 8px;
+        justify-content: center;
+    }
+
+    #products-table .actions-grid form {
+        margin: 0;
+        display: contents;
+    }
+
+    #products-table .actions-grid .btn-action-round {
+        width: 28px;
+        height: 28px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #products-table .table th,
+    #products-table .table td {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        text-align: center;
+        vertical-align: middle;
+        border-bottom: 0 !important;
+        border-top: 0 !important;
+        border-left: 0 !important;
+        border-right: 0 !important;
+    }
+
+    #products-table .table thead th {
+        border-right: 1px solid #e5e7eb !important;
+        border-top: 1px solid #e5e7eb !important;
+        border-bottom: 1px solid #e5e7eb !important;
+    }
+
+    #products-table .table thead th:first-child {
+        border-left: 1px solid #e5e7eb !important;
+        border-top-left-radius: 10px;
+        border-bottom-left-radius: 10px;
+    }
+
+    #products-table .table thead th:last-child {
+        border-top-right-radius: 10px;
+        border-bottom-right-radius: 10px;
+    }
+
+    #products-table .table tbody td {
+        border-right: 0 !important;
+    }
+
+    #products-table .table tbody td:last-child {
+        border-right: 0;
+    }
+
+    #products-table .table thead th.sorting,
+    #products-table .table thead th.sorting_asc,
+    #products-table .table thead th.sorting_desc,
+    #products-table .table thead th.sorting_asc_disabled,
+    #products-table .table thead th.sorting_desc_disabled {
+        background-image: none !important;
+        padding-left: 12px;
+        padding-right: 12px;
+        background-position: unset;
+    }
+
+    #products-table .table thead th.sorting:before,
+    #products-table .table thead th.sorting:after,
+    #products-table .table thead th.sorting_asc:before,
+    #products-table .table thead th.sorting_asc:after,
+    #products-table .table thead th.sorting_desc:before,
+    #products-table .table thead th.sorting_desc:after,
+    #products-table .table thead th.sorting_asc_disabled:before,
+    #products-table .table thead th.sorting_asc_disabled:after,
+    #products-table .table thead th.sorting_desc_disabled:before,
+    #products-table .table thead th.sorting_desc_disabled:after {
+        display: none !important;
+    }
+
+    #products-table .table thead th .dt-column-order {
+        display: none !important;
+    }
+
+    #products-table .table thead th .dt-column-header {
+        justify-content: center;
+    }
+
+    #products-table .table thead th .dt-column-title {
+        text-align: center;
+        width: 100%;
+    }
+
+    #products-table td.default-category-col {
+        white-space: normal;
+        line-height: 1.25;
+    }
+
+    .ikas-table-container {
+        padding-left: 25px;
+        padding-right: 25px;
+        padding-top: 0 !important;
+        margin-top: 0 !important;
+        border-top: 0;
+    }
+
+    // Ensure table starts immediately after toolbar
+    .ikas-table-wrapper {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+
+    // Remove any gap between toolbar and table
+    #products-table {
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+    }
+
+    /* Search + actions grouped in a single row inside the toolbar */
+    .ikas-products-toolbar .ikas-search {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        max-width: none;
+        flex: 0 0 auto;
+        min-width: 0;
+    }
+
+    .ikas-products-toolbar .ikas-search .ikas-search-field {
+        position: relative;
+        display: flex;
+        align-items: center;
+        flex: 0 0 auto;
+        width: 300px;
+        height: 40px;
+        min-height: 40px;
+        padding: 0 12px;
+        border-radius: 4px;
+        border: 1px solid #e3e8ef;
+        background: #ffffff;
+        gap: 8px;
+    }
+
+    .ikas-products-toolbar .ikas-search .ikas-search-field input {
+        border: 0;
+        background: transparent;
+        outline: none;
+        width: 100%;
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 20px;
+        color: #121926;
+    }
+
+    .ikas-products-toolbar .ikas-search .ikas-search-field input::placeholder {
+        color: #94a3b8;
+    }
+
+    .ikas-products-toolbar .ikas-search .ikas-search-field i,
+    .ikas-products-toolbar .ikas-search .ikas-search-field button {
+        color: #697586;
+    }
+
+    #btn-clear-search {
+        border: none;
+        background: transparent;
+        border-radius: 50%;
+        height: 16px;
+        width: 16px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        display: none;
+    }
+
+    #btn-clear-search i {
+        font-size: 16px;
+        color: #697586;
+    }
+
+    .ikas-products-toolbar .btn.btn-sm {
+        height: 40px;
+        min-height: 40px;
+        padding: 0 16px;
+        border-radius: 4px;
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 14px;
+        background: #ffffff;
+        border: 1px solid #e3e8ef;
+        color: #121926;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .ikas-products-toolbar .ikas-search .ikas-search-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 0 0 auto;
+    }
+
+    #products-table .created-at-cell {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        line-height: 1.15;
+        gap: 3px;
+    }
+
+    #products-table .created-at-date {
+        font-weight: 700;
+        color: #111827;
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    #products-table .created-at-time {
+        font-size: 11px;
+        color: #6b7280;
+        white-space: nowrap;
+    }
+
+    #products-table .inventory-click {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        text-decoration: none;
+        line-height: 1.15;
+    }
+
+    #products-table .inventory-click:hover,
+    #products-table .inventory-click:focus {
+        text-decoration: none;
+    }
+
+    #products-table .inventory-click .stock-total {
+        font-weight: 800;
+        font-size: 12px;
+        color: #111827;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    #products-table .inventory-click .stock-variants {
+        font-size: 12px;
+        font-weight: 600;
+        color: #4f46e5;
+        white-space: nowrap;
+    }
+
+    #products-table th:nth-child(9),
+    #products-table td:nth-child(9) {
+        width: 190px;
+    }
+
+    @media (max-width: 768px) {
+        .ikas-table-container {
+            padding-left: 16px;
+            padding-right: 16px;
+        }
+    }
+}
+
+.ikas-products-page-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+    background: #ffffff;
+    margin: 0;
+    padding: 0;
+}
+
+.ikas-products-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: visible;
+    background: #ffffff;
+    margin: 0;
+    padding: 0;
+}
+
+.ikas-table-container {
+    flex: 1;
+    overflow-x: auto;
+    position: relative;
+    background: #ffffff;
+    min-height: 0;
+    width: 100%;
+}
+
+.ikas-table-wrapper {
+    position: relative;
+    min-height: 100%;
+    width: 100%;
+    overflow-x: auto;
+}
+
+// IKAS Table Styling
+#products-table .table {
+    margin: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: #ffffff;
+    width: 100%;
+
+    thead {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: #f3f4f6;
+        box-shadow: none;
+        margin: 0;
+        padding: 0;
+
+        tr {
+            background: #f3f4f6;
+            margin: 0;
+            padding: 0;
+
+            th {
+                background: #f3f4f6;
+                border: none;
+                border-bottom: 1px solid #e5e7eb;
+                font-weight: 600;
+                color: #374151;
+                font-size: 12px;
+                padding: 12px;
+                white-space: nowrap;
+                vertical-align: middle;
+                margin: 0;
+            }
+        }
+    }
+
+    tbody {
+        background: #ffffff;
+        margin: 0;
+        padding: 0;
+
+        tr {
+            background: #ffffff;
+            border: none;
+            transition: background-color 0.15s ease;
+            margin: 0;
+            padding: 0;
+
+            &:hover {
+                background: #f9fafb;
+            }
+
+            td {
+                padding: 12px;
+                vertical-align: middle;
+                font-size: 12px;
+                color: #111827;
+                border: none;
+                margin: 0;
+            }
+        }
+    }
+}
+
+// IKAS Pagination - Sticky Bottom with Zero Margin
+.ikas-pagination-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 25px;
+    background: #ffffff;
+    border-top: 1px solid #eef2f7;
+    gap: 10px;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    margin: 0;
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 10;
+    box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.has-products-page {
+    .ikas-pagination-wrapper {
+        border-top: 1px solid #eef2f7;
+    }
+}
+
+.ikas-pagination-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.ikas-pagination-info {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 500;
+
+    strong {
+        color: #111827;
+        font-weight: 600;
+    }
+}
+
+.ikas-page-size-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    label {
+        font-size: 12px;
+        color: #6b7280;
+        margin: 0;
+        font-weight: 500;
+    }
+
+    select {
+        height: 30px;
+        padding: 6px 28px 6px 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #111827;
+        background: #ffffff;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L2 4h8z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 8px center;
+        appearance: none;
+        cursor: pointer;
+        transition: all 0.15s ease;
+
+        &:hover {
+            border-color: #9ca3af;
+        }
+
+        &:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+    }
+}
+
+.ikas-pagination-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ikas-pagination-pages {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+
+    .ikas-page-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 28px;
+        height: 28px;
+        padding: 0 8px;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        background: #ffffff;
+        color: #374151;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease;
+
+        &:hover:not(.active):not(:disabled) {
+            background: #f9fafb;
+            border-color: #d1d5db;
+        }
+
+        &.active {
+            background: #6366f1;
+            border-color: #6366f1;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        &.ikas-page-prev,
+        &.ikas-page-next {
+            gap: 8px;
+            padding: 0 12px;
+            min-width: auto;
+            height: 28px;
+            border-radius: 8px;
+            background: #f9fafb;
+            color: #374151;
+
+            span {
+                font-size: 12px;
+                font-weight: 600;
+            }
+
+            i {
+                font-size: 12px;
+            }
+        }
+    }
+
+    .ikas-page-ellipsis {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 34px;
+        height: 34px;
+        color: #9ca3af;
+        font-size: 13px;
+        font-weight: 600;
+    }
+}
+
+// Hide default DataTables controls
+.dataTables_wrapper {
+    .dataTables_length,
+    .dataTables_filter,
+    .dataTables_info,
+    .dataTables_paginate {
+        display: none !important;
+    }
+}
+
+// Mobile Responsive Design
+@media (max-width: 1024px) {
+    .ikas-products-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        padding: 12px 16px;
+        flex-wrap: nowrap;
+        background: #ffffff;
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    .ikas-products-toolbar .ikas-toolbar-main {
+        width: 100%;
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        flex: none;
+        flex-wrap: wrap;
+    }
+
+    .ikas-products-toolbar .ikas-search {
+        max-width: 100%;
+        width: 100%;
+        order: 1;
+        flex-basis: auto;
+        
+        input {
+            height: 40px;
+            border-radius: 8px;
+            font-size: 14px;
+            border-color: #e5e7eb;
+            
+            &:focus {
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+        }
+    }
+
+    .ikas-products-toolbar #selected-count-wrapper {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .ikas-products-toolbar .btn {
+        width: auto;
+        min-width: 40px;
+        height: 40px;
+        padding: 0;
+        justify-content: center;
+        border-radius: 8px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        
+        span:not(strong) {
+            display: none;
+        }
+        
+        i {
+            font-size: 16px;
+        }
+    }
+
+    #products-table .table {
+        thead th,
+        tbody td {
+            padding: 10px 12px;
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    .ikas-products-page-wrapper {
+        height: 100vh;
+    }
+
+    .products-page-top {
+        padding: 0;
+        background: #ffffff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    .products-page-topbar {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 16px;
+        border-bottom: none;
+    }
+
+    .products-page-title {
+        font-size: 17px;
+        font-weight: 600;
+        margin: 0;
+        color: #111827;
+    }
+
+    .products-stats-bar {
+        display: none !important;
+    }
+
+    .products-stat {
+        padding: 6px 8px !important;
+        min-width: 0 !important;
+    }
+
+    .products-stat-label {
+        font-size: 10px !important;
+    }
+
+    .products-stat-value {
+        font-size: 14px !important;
+    }
+
+    .ikas-pagination-wrapper {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 16px;
+        justify-content: space-between;
+        background: #ffffff;
+        border-top: 1px solid #f3f4f6;
+        box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .ikas-pagination-left,
+    .ikas-pagination-right {
+        justify-content: center;
+        flex-wrap: nowrap;
+        gap: 8px;
+    }
+    
+    .ikas-pagination-left {
+        flex: 1;
+    }
+
+    .ikas-pagination-pages {
+        flex-wrap: nowrap;
+        justify-content: center;
+        gap: 4px;
+    }
+
+    .ikas-pagination-info {
+        font-size: 12px;
+        font-weight: 500;
+        color: #6b7280;
+    }
+
+    .ikas-page-size-selector {
+        font-size: 12px;
+        
+        label {
+            display: none;
+        }
+        
+        select {
+            height: 36px;
+            font-size: 12px;
+            padding: 6px 28px 6px 10px;
+            border-radius: 8px;
+            border-color: #e5e7eb;
+            font-weight: 500;
+        }
+    }
+
+    #products-table .table {
+        font-size: 11px;
+        display: table;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        min-width: 800px;
+
+        thead th,
+        tbody td {
+            padding: 8px 10px;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+        
+        thead th {
+            position: sticky;
+            top: 0;
+            background: #ffffff;
+            z-index: 10;
+        }
+    }
+
+    .ikas-table-container {
+        overflow-x: auto;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .ikas-table-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .ikas-action-buttons {
+        flex-direction: row;
+        width: auto;
+        gap: 8px;
+        justify-content: flex-end;
+
+        .ikas-btn,
+        .ikas-dropdown {
+            width: auto;
+            min-width: 40px;
+            height: 40px;
+            padding: 0 !important;
+            justify-content: center;
+            align-items: center;
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .ikas-btn {
+            span {
+                display: none;
+            }
+            
+            i {
+                margin: 0;
+                font-size: 16px;
+            }
+        }
+        
+        .ikas-btn-primary {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            
+            &:active {
+                background: #2563eb;
+            }
+        }
+        
+        .ikas-btn-outline {
+            background: #ffffff;
+            border-color: #e5e7eb;
+            
+            &:active {
+                background: #f3f4f6;
+            }
+        }
+        
+        .ikas-dropdown-toggle {
+            span {
+                display: none;
+            }
+            
+            i {
+                font-size: 16px;
+            }
+        }
+    }
+    
+    .index-table-actions-row {
+        padding: 0 !important;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: none;
+        background: transparent;
+    }
+}
+
+@media (max-width: 480px) {
+    .products-stats-bar {
+        grid-template-columns: repeat(2, 1fr) !important;
+        padding: 8px 10px !important;
+        gap: 4px !important;
+    }
+    
+    .products-stat {
+        padding: 4px 6px !important;
+    }
+    
+    .products-stat-label {
+        font-size: 9px !important;
+    }
+    
+    .products-stat-value {
+        font-size: 13px !important;
+    }
+    
+    .products-page-title {
+        font-size: 14px;
+    }
+    
+    .products-page-topbar {
+        padding: 8px 10px;
+    }
+
+    .ikas-pagination-pages .ikas-page-btn {
+        min-width: 30px;
+        height: 30px;
+        padding: 4px 8px;
+        font-size: 12px;
+    }
+
+    #products-table .table {
+        thead th,
+        tbody td {
+            padding: 6px 8px;
+            font-size: 10px;
+        }
+    }
+    
+    .ikas-products-toolbar {
+        padding: 10px 12px;
+    }
+    
+    .ikas-btn {
+        padding: 6px 10px !important;
+        font-size: 12px !important;
+    }
+    
+    .ikas-search input {
+        font-size: 12px;
+        padding: 6px 30px 6px 30px !important;
+    }
+}

@@ -2,8 +2,19 @@
     <div class="single-grid total-orders">
         <div>
             <span class="count">{{ $totalOrders }}</span>
-
             <span class="title">{{ trans('admin::dashboard.total_orders') }}</span>
+            @php
+                $currentOrders = $currentPeriodStats['orders'] ?? 0;
+                $previousOrders = $previousPeriodStats['orders'] ?? 0;
+                $changePercent = $previousOrders > 0 ? (($currentOrders - $previousOrders) / $previousOrders) * 100 : 0;
+                $isPositive = $changePercent >= 0;
+            @endphp
+            @if($changePercent != 0)
+                <span class="trend {{ $isPositive ? 'trend-up' : 'trend-down' }}">
+                    <i class="fa fa-arrow-{{ $isPositive ? 'up' : 'down' }}"></i>
+                    {{ number_format(abs($changePercent), 1) }}%
+                </span>
+            @endif
         </div>
         <div class="single-grid-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 12.85 17.81">

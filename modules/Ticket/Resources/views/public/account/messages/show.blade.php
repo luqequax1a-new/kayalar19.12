@@ -14,160 +14,184 @@
         </div>
         <div class="panel-body" style="padding:0">
             <style>
-                .chat-wrapper{width:100%;margin:0;padding:12px}
-                .chat-card{background:#fff;border-radius:14px;box-shadow:0 10px 30px rgba(15,23,42,.10);overflow:hidden;border:1px solid #eef2f7}
-                .chat-container{display:flex;flex-direction:column;min-height:70vh;background:#f8fafc}
-                .chat-header{position:sticky;top:0;z-index:5;padding:14px 16px;border-bottom:1px solid #eef2f7;background:rgba(255,255,255,.9);backdrop-filter:blur(10px);min-height:64px}
-                .chat-wrap{padding:16px;display:flex;flex-direction:column;gap:12px;overflow:auto}
-                .msg{max-width:78%;padding:12px 14px;border-radius:16px;position:relative;line-height:1.6;font-size:14px;box-shadow:0 6px 18px rgba(15,23,42,.06)}
-                .msg-user{margin-left:auto;background:linear-gradient(135deg,#4f46e5,#6d28d9);border:1px solid rgba(255,255,255,.15);color:#fff}
-                .msg-admin{margin-right:auto;background:#ffffff;border:1px solid #e2e8f0;color:#0f172a}
-                .msg-author{font-size:12px;font-weight:600;opacity:.9;margin-bottom:6px}
-                .msg-group{display:flex;flex-direction:column;gap:6px;max-width:78%}
-                .msg-group-user{margin-left:auto;align-items:flex-end}
-                .msg-group-admin{margin-right:auto;align-items:flex-start}
-                .bubble{width:100%}
-                .bubble .attachments{margin-top:0}
-                .msg-attach{background:transparent;border:none;box-shadow:none;padding:0;margin:0}
-                .attachments{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin:10px 0 0}
-                .attachments .item{border-radius:12px;overflow:hidden;border:1px solid rgba(226,232,240,.9);background:#fff}
-                .attachments .item img{display:block;width:100%;height:120px;object-fit:cover}
-                .attachments-user{justify-content:flex-end}
-                .attachments-admin{justify-content:flex-start}
-                .msg-time{font-size:11px;opacity:.75;margin-top:8px;text-align:right}
-                .chat-composer{padding:12px;border-top:1px solid #eef2f7;background:#fff}
-                .chat-composer-inner{display:grid;grid-template-columns:1fr 44px;gap:10px;border:1px solid #e2e8f0;border-radius:14px;background:#fff;padding:10px;width:100%;align-items:end}
-                .chat-composer .field{flex:1;position:relative}
-                .chat-composer .actions{display:flex;gap:8px;align-items:center}
-                .icon-btn{display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border:1px solid #e5e7eb;border-radius:8px;background:#fff}
-                .send-btn{height:44px;width:44px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;background:#4f46e5;color:#fff;border:none}
-                .file-count{font-size:12px;color:#64748b}
-                .file-input{display:none}
-                .chat-composer textarea{min-height:44px;max-height:220px;resize:none;border:none;outline:none;padding:10px 12px;overflow-y:auto;width:100%;word-break:break-word;background:transparent;font-size:14px;line-height:1.6;color:#0f172a}
-                .composer-top{display:flex;gap:10px;align-items:center;margin-bottom:12px}
-                .upload-btn{display:inline-flex;gap:6px;align-items:center;padding:8px 12px;border:1px solid #e2e8f0;border-radius:12px;background:#fff;cursor:pointer;color:#0f172a}
-                .status-chip{display:inline-flex;align-items:center;gap:8px;font-size:12px;padding:6px 10px;border-radius:9999px;border:1px solid #e2e8f0;background:#fff;color:#0f172a}
-                .dot{width:8px;height:8px;border-radius:50%}
-                .dot-waiting-admin{background:#f59e0b}
-                .dot-waiting-customer{background:#3b82f6}
-                .dot-open{background:#10b981}
-                .dot-closed{background:#ef4444}
-                @media (max-width: 768px){
-                    .chat-wrapper{width:100%;padding:8px}
-                    .chat-container{min-height:calc(100vh - 160px)}
-                    .chat-wrap{padding:12px}
-                    .msg{max-width:92%}
-                    .attachments{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
-                    .attachments .item img{height:110px}
-                    .chat-composer{padding:8px}
-                    .chat-composer textarea{min-height:40px;max-height:160px}
-                    .send-btn{height:40px;width:40px}
+                .modern-chat{display:flex;flex-direction:column;height:calc(100vh - 280px);min-height:600px;background:#fff}
+                .chat-header-modern{padding:20px 24px;border-bottom:1.5px solid #f3f4f6;background:#fff;display:flex;justify-content:space-between;align-items:center}
+                .chat-title{font-size:15px;font-weight:600;color:#111827}
+                .status-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;border:1.5px solid}
+                .status-waiting-admin{background:#fef3c7;border-color:#fbbf24;color:#92400e}
+                .status-waiting-customer{background:#dbeafe;border-color:#60a5fa;color:#1e40af}
+                .status-closed{background:#fee2e2;border-color:#f87171;color:#991b1b}
+                .status-open{background:#d1fae5;border-color:#34d399;color:#065f46}
+                .status-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+                .messages-area{flex:1;overflow-y:auto;padding:24px;background:#f9fafb;display:flex;flex-direction:column;gap:16px}
+                .message-group{display:flex;flex-direction:column;gap:8px;max-width:75%}
+                .message-group-user{align-self:flex-end;align-items:flex-end}
+                .message-group-admin{align-self:flex-start;align-items:flex-start}
+                .message-sender{font-size:12px;font-weight:600;color:#6b7280;margin-bottom:4px;padding:0 4px}
+                .message-bubble{padding:14px 16px;border-radius:12px;font-size:14px;line-height:1.6;word-wrap:break-word;box-shadow:0 2px 8px rgba(0,0,0,0.04)}
+                .message-bubble-user{background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border-bottom-right-radius:4px}
+                .message-bubble-admin{background:#fff;color:#111827;border:1.5px solid #e5e7eb;border-bottom-left-radius:4px}
+                .message-images{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:8px}
+                .message-image{border-radius:8px;overflow:hidden;cursor:pointer}
+                .message-image *{border:none !important;outline:none !important;box-shadow:none !important}
+                .message-image img{display:block;width:100%;height:140px;object-fit:cover;transition:transform 0.2s}
+                .message-image:hover img{transform:scale(1.02)}
+                .message-time{font-size:11px;color:#9ca3af;margin-top:4px;padding:0 4px}
+                .composer-modern{padding:20px 24px;border-top:1.5px solid #f3f4f6;background:#fff}
+                .composer-upload{margin-bottom:12px;display:flex;gap:10px;align-items:center}
+                .upload-btn-modern{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1.5px solid #e5e7eb;border-radius:8px;background:#fff;color:#6b7280;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s}
+                .upload-btn-modern:hover{border-color:#6366f1;color:#6366f1;background:#f0f1ff}
+                .file-count-modern{font-size:12px;color:#9ca3af}
+                .composer-input-area{display:flex;gap:12px;align-items:flex-end;padding:12px;border:1.5px solid #e5e7eb;border-radius:10px;background:#f9fafb;transition:all 0.2s}
+                .composer-input-area:focus-within{border-color:#6366f1;background:#fff;box-shadow:0 0 0 4px rgba(99,102,241,0.08)}
+                .composer-textarea{flex:1;border:none;background:transparent;outline:none;resize:none;min-height:44px;max-height:200px;font-size:14px;color:#111827;font-family:inherit;line-height:1.6;padding:8px}
+                .composer-textarea::placeholder{color:#9ca3af}
+                .send-btn-modern{width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,#6366f1,#4f46e5);color:#fff;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;box-shadow:0 4px 12px rgba(99,102,241,0.3)}
+                .send-btn-modern:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(99,102,241,0.4)}
+                .send-btn-modern:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+                @media(max-width:768px){
+                    .modern-chat{height:calc(100vh - 200px);min-height:500px}
+                    .chat-header-modern{padding:16px 20px}
+                    .messages-area{padding:16px}
+                    .message-group{max-width:85%}
+                    .composer-modern{padding:16px 20px}
                 }
             </style>
-            <div class="chat-wrapper"><div class="chat-card"><div class="chat-container">
-                <div class="chat-header d-flex justify-content-between align-items-center">
-                    <div></div>
-                    <div class="status-chip">
+            
+            <div class="modern-chat">
+                <div class="chat-header-modern">
+                    <div class="chat-title">
+                        {{ $ticket->subject }}
+                        
+                        @if($ticket->order_id)
+                            <div style="margin-top:6px;">
+                                <span style="padding:4px 10px;background:#e0e7ff;color:#4338ca;border-radius:6px;font-size:12px;font-weight:600;">
+                                    📦 Sipariş: <a href="{{ route('account.orders.show', $ticket->order_id) }}" style="color:#4338ca;text-decoration:underline;">Sipariş #{{ $ticket->order->displayOrderNumber() }}</a>
+                                </span>
+                            </div>
+                        @endif
+                    </div>
+                    <div class="status-badge status-{{ str_replace('_', '-', $ticket->status) }}">
+                        <span class="status-dot"></span>
                         @php($s = (string) $ticket->status)
-                        <span class="dot {{ $s === 'closed' ? 'dot-closed' : ($s === 'waiting_admin' ? 'dot-waiting-admin' : ($s === 'waiting_customer' ? 'dot-waiting-customer' : 'dot-open')) }}"></span>
-                        <span>
-                            {{ $s === 'closed' ? 'Kapalı' : ($s === 'waiting_admin' ? 'Admin Bekleniyor' : ($s === 'waiting_customer' ? 'Cevabınız Bekleniyor' : 'Açık')) }}
-                        </span>
+                        {{ $s === 'closed' ? 'Kapalı' : ($s === 'waiting_admin' ? 'Admin Bekleniyor' : ($s === 'waiting_customer' ? 'Cevabınız Bekleniyor' : 'Açık')) }}
                     </div>
                 </div>
-                <div class="chat-wrap">
+
+                <div class="messages-area" id="messagesArea">
                     @foreach($ticket->messages as $m)
                         @if($m->is_internal)
                             @continue
                         @endif
-                        <div class="msg-group {{ $m->sender_type === 'admin' ? 'msg-group-admin' : 'msg-group-user' }}">
-                            <div class="msg-author">
-                                {{ $m->sender_type === 'admin' ? 'Admin' : optional(auth()->user())->full_name }}
+                        <div class="message-group message-group-{{ $m->sender_type === 'admin' ? 'admin' : 'user' }}">
+                            <div class="message-sender">
+                                {{ $m->sender_type === 'admin' ? 'Destek Ekibi' : 'Siz' }}
                             </div>
 
                             @if($m->attachments->isNotEmpty())
-                                <div class="msg {{ $m->sender_type === 'admin' ? 'msg-admin' : 'msg-user' }} bubble">
-                                    <div class="attachments">
-                                        @foreach($m->attachments as $a)
-                                            <div class="item">
-                                                <a href="{{ $a->url }}" class="ticket-lightbox" data-gallery="ticket-{{ $ticket->id }}">
-                                                    <img src="{{ $a->url }}" alt="attachment">
-                                                </a>
-                                            </div>
-                                        @endforeach
-                                    </div>
+                                <div class="message-images">
+                                    @foreach($m->attachments as $a)
+                                        <div class="message-image">
+                                            <a href="{{ $a->url }}" class="ticket-lightbox" data-gallery="ticket-{{ $ticket->id }}">
+                                                <img src="{{ $a->url }}" alt="attachment">
+                                            </a>
+                                        </div>
+                                    @endforeach
                                 </div>
                             @endif
 
                             @if(trim((string) $m->body) !== '')
-                                <div class="msg {{ $m->sender_type === 'admin' ? 'msg-admin' : 'msg-user' }} bubble">
-                                    <div>{{ $m->body }}</div>
+                                <div class="message-bubble message-bubble-{{ $m->sender_type === 'admin' ? 'admin' : 'user' }}">
+                                    {{ $m->body }}
                                 </div>
                             @endif
 
-                            <div class="msg-time">{{ optional($m->created_at)->format('Y-m-d H:i') }}</div>
+                            <div class="message-time">{{ optional($m->created_at)->format('d.m.Y H:i') }}</div>
                         </div>
                     @endforeach
                 </div>
+
                 @if($ticket->status !== 'closed')
-                    <form method="POST" action="{{ route('account.tickets.messages.store', $ticket->id) }}" enctype="multipart/form-data" class="chat-composer">
+                    <form method="POST" action="{{ route('account.tickets.messages.store', $ticket->id) }}" enctype="multipart/form-data" class="composer-modern">
                         {{ csrf_field() }}
-                        <div class="composer-top">
-                            <input id="ticket-upload" type="file" name="images[]" multiple accept="image/*" class="file-input">
-                            <label for="ticket-upload" class="upload-btn"><i class="las la-image"></i> {{ __('Görsel ekle') }}</label>
-                            <span class="file-count"></span>
+                        <div class="composer-upload">
+                            <input id="ticketUpload" type="file" name="images[]" multiple accept="image/*" style="display:none">
+                            <label for="ticketUpload" class="upload-btn-modern">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <polyline points="21 15 16 10 5 21"></polyline>
+                                </svg>
+                                Görsel Ekle
+                            </label>
+                            <span class="file-count-modern" id="fileCount"></span>
                         </div>
-                        <div class="chat-composer-inner">
-                            <div class="field">
-                                <textarea id="ticket-textarea" name="body" rows="1" placeholder="{{ trans('ticket::ticket.write_message') }}" required></textarea>
-                            </div>
-                            <button class="btn btn-primary send-btn"><i class="las la-paper-plane"></i></button>
+                        <div class="composer-input-area">
+                            <textarea id="ticketTextarea" name="body" class="composer-textarea" placeholder="Mesajınızı yazın..." required></textarea>
+                            <button type="submit" class="send-btn-modern">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                </svg>
+                            </button>
                         </div>
                     </form>
                 @else
-                    <div class="chat-composer" style="opacity:.7">
-                        <div class="chat-composer-inner">
-                            <div class="field">
-                                <textarea rows="1" placeholder="{{ __('Ticket kapalı, mesaj gönderemezsiniz.') }}" disabled></textarea>
-                            </div>
-                            <button class="btn btn-default send-btn" disabled><i class="las la-paper-plane"></i></button>
+                    <div class="composer-modern" style="opacity:0.6">
+                        <div class="composer-input-area">
+                            <textarea class="composer-textarea" placeholder="Ticket kapalı, mesaj gönderemezsiniz." disabled></textarea>
+                            <button class="send-btn-modern" disabled>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                </svg>
+                            </button>
                         </div>
                     </div>
                 @endif
-            </div></div></div>
+            </div>
         </div>
     </div>
 @endsection
+
 @push('scripts')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/glightbox/dist/css/glightbox.min.css" />
     <script src="https://cdn.jsdelivr.net/npm/glightbox/dist/js/glightbox.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded',function(){
+        document.addEventListener('DOMContentLoaded', function() {
+            // Lightbox
             if (window.GLightbox) {
                 GLightbox({ selector: '.ticket-lightbox' });
             }
-            var wrap = document.querySelector('.chat-wrap');
-            if (wrap) { wrap.scrollTop = wrap.scrollHeight; }
-            var fi = document.getElementById('ticket-upload');
-            var fc = document.querySelector('.file-count');
-            if (fi && fc) {
-                fi.addEventListener('change', function(){
-                    fc.textContent = fi.files && fi.files.length ? (fi.files.length + ' dosya') : '';
+
+            // Scroll to bottom
+            const messagesArea = document.getElementById('messagesArea');
+            if (messagesArea) {
+                messagesArea.scrollTop = messagesArea.scrollHeight;
+            }
+
+            // File upload
+            const fileInput = document.getElementById('ticketUpload');
+            const fileCount = document.getElementById('fileCount');
+            if (fileInput && fileCount) {
+                fileInput.addEventListener('change', function() {
+                    fileCount.textContent = this.files.length > 0 ? `${this.files.length} dosya seçildi` : '';
                 });
             }
-            var ta = document.getElementById('ticket-textarea');
-            if (ta) {
-                var auto = function(){
-                    ta.style.height = 'auto';
-                    var h = Math.min(ta.scrollHeight, 220);
-                    ta.style.height = h + 'px';
-                    ta.style.overflowY = ta.scrollHeight > 220 ? 'auto' : 'hidden';
-                };
-                ta.addEventListener('input', auto);
-                auto();
 
-                var form = document.querySelector('.chat-composer');
-                ta.addEventListener('keydown', function(e){
+            // Textarea auto-resize
+            const textarea = document.getElementById('ticketTextarea');
+            if (textarea) {
+                const autoResize = function() {
+                    textarea.style.height = 'auto';
+                    const newHeight = Math.min(textarea.scrollHeight, 200);
+                    textarea.style.height = newHeight + 'px';
+                };
+                textarea.addEventListener('input', autoResize);
+
+                // Enter to submit (Shift+Enter for new line)
+                const form = textarea.closest('form');
+                textarea.addEventListener('keydown', function(e) {
                     if (e.key === 'Enter' && !e.shiftKey && form) {
                         e.preventDefault();
                         form.submit();

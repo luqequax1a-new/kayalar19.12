@@ -40,8 +40,9 @@ class Welcome extends Mailable implements ShouldQueue
     public function build()
     {
         return $this->subject(trans('user::mail.welcome', ['name' => $this->firstName]))
-            ->view("storefront::emails.{$this->getViewName()}", [
+            ->view("storefront::emails.welcome", [
                 'logo' => File::findOrNew(setting('storefront_mail_logo'))->path,
+                'action_url' => route('login'),
             ]);
     }
 

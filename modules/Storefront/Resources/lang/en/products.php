@@ -28,4 +28,10 @@ return [
     'category_faq_title' => 'Frequently Asked Questions About :category',
     'no_products_found' => 'Oops! No products found.',
     'showing_results' => 'Showing :from-:to of :total results',
+    'brand' => 'Brand',
+    'rating' => 'Rating',
+    'and_up' => '& Up',
+    'clear_rating' => 'Clear Rating',
+    'clear_all' => 'Clear All',
+    'loading' => 'Loading...',
 ];

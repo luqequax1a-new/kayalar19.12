@@ -1,7 +1,6 @@
 import axios from "axios";
 
 let topProductsLimit = 10;
-let topEntitiesTab = "products";
 
 function escapeHtml(s) {
     return String(s ?? "")
@@ -91,13 +90,12 @@ function renderTopBrandsTable(brands) {
 function setTopEntitiesTab(key) {
     const tabsRoot = document.querySelector("[data-top-entities-tabs]");
     const limitRoot = document.querySelector("[data-top-products-limit]");
+    const variantsRoot = document.querySelector("[data-top-products-variants]");
     const colTitle = document.querySelector("[data-top-col-title]");
 
     const productsBody = document.querySelector("[data-top-products-body]");
     const categoriesBody = document.querySelector("[data-top-categories-body]");
     const brandsBody = document.querySelector("[data-top-brands-body]");
-
-    topEntitiesTab = key;
 
     if (tabsRoot) {
         tabsRoot.querySelectorAll("[data-entity-tab]").forEach((t) => t.classList.remove("active"));
@@ -105,11 +103,18 @@ function setTopEntitiesTab(key) {
         if (active) active.classList.add("active");
     }
 
-    if (productsBody) productsBody.classList.toggle("it-hidden", key !== "products");
-    if (categoriesBody) categoriesBody.classList.toggle("it-hidden", key !== "categories");
-    if (brandsBody) brandsBody.classList.toggle("it-hidden", key !== "brands");
+    // Use CSS display for instant switching - no re-rendering needed
+    if (productsBody) {
+        const tbody = productsBody.closest("tbody");
+        if (tbody) {
+            tbody.style.display = key === "products" ? "" : "none";
+        }
+    }
+    if (categoriesBody) categoriesBody.style.display = key === "categories" ? "" : "none";
+    if (brandsBody) brandsBody.style.display = key === "brands" ? "" : "none";
 
-    if (limitRoot) limitRoot.classList.toggle("it-hidden", key !== "products");
+    if (limitRoot) limitRoot.style.display = key === "products" ? "" : "none";
+    if (variantsRoot) variantsRoot.style.display = key === "products" ? "" : "none";
 
     if (colTitle) {
         colTitle.textContent = key === "products" ? "En Çok Satanlar" : key === "categories" ? "Kategori Bazlı Satış" : "Marka Bazlı Satış";
@@ -119,27 +124,17 @@ function setTopEntitiesTab(key) {
     if (entityHeader) {
         entityHeader.textContent = key === "products" ? "Ürün" : key === "categories" ? "Kategori" : "Marka";
     }
-
-    try {
-        const data = window.__dashboardAnalyticsCache;
-        if (data) {
-            if (key === "products") renderTopProductsTable(data.top_products || []);
-            if (key === "categories") renderTopCategoriesTable(data.top_categories || []);
-            if (key === "brands") renderTopBrandsTable(data.top_brands || []);
-        }
-    } catch (e) {
-    }
 }
 
 function initTopEntitiesTabs() {
-    const root = document.querySelector("[data-top-entities-tabs]");
-    if (!root) return;
+    const tabsRoot = document.querySelector("[data-top-entities-tabs]");
+    if (!tabsRoot) return;
 
-    root.querySelectorAll("[data-entity-tab]").forEach((t) => {
-        t.addEventListener("click", (e) => {
+    tabsRoot.querySelectorAll("[data-entity-tab]").forEach((tab) => {
+        tab.addEventListener("click", (e) => {
             e.preventDefault();
-            const key = t.getAttribute("data-entity-tab") || "products";
-            setTopEntitiesTab(key);
+            const key = tab.getAttribute("data-entity-tab");
+            if (key) setTopEntitiesTab(key);
         });
     });
 }
@@ -156,25 +151,37 @@ function resizeCharts() {
 function renderActiveTabFromCache(root, activeKey, data) {
     if (!root || !activeKey || !data) return;
 
-    if (activeKey === "trend") {
-        getApi()?.renderTrendChart?.(data.daily || []);
-    } else if (activeKey === "customers") {
-        getApi()?.renderCustomersChart?.(data.daily || []);
-    } else if (activeKey === "traffic") {
-        getApi()?.renderTrafficChart?.(data.traffic_breakdown || []);
-    } else if (activeKey === "hourly") {
-        getApi()?.renderHourlyChart?.(data.hourly || []);
-    } else if (activeKey === "order_status") {
-        getApi()?.renderOrderStatusChart?.(data.order_status || []);
-    } else if (activeKey === "conversion") {
-        getApi()?.renderConversionChart?.(data.conversion || null);
+    // Only render the chart that is actually visible to the user
+    switch (activeKey) {
+        case "trend":
+            getApi()?.renderTrendChart?.(data.daily || []);
+            break;
+        case "customers":
+            getApi()?.renderCustomersChart?.(data.daily || []);
+            break;
+        case "traffic":
+            getApi()?.renderTrafficChart?.(data.traffic_breakdown || []);
+            renderTrafficTable(data.traffic_breakdown || []);
+            break;
+        case "categories":
+            getApi()?.renderCategoriesChart?.(data.top_categories || []);
+            break;
+        case "brands":
+            getApi()?.renderBrandsChart?.(data.top_brands || []);
+            break;
+        case "order_status":
+            getApi()?.renderOrderStatusChart?.(data.order_status || []);
+            break;
+        case "conversion":
+            getApi()?.renderConversionChart?.(data.conversion || {});
 
-        const visitsEl = root.querySelector("[data-conversion-visits]");
-        const ordersEl = root.querySelector("[data-conversion-orders]");
+            const visitsEl = root.querySelector("[data-conversion-visits]");
+            const ordersEl = root.querySelector("[data-conversion-orders]");
 
-        const numberFormat = getApi()?.numberFormat || ((v) => String(v ?? ""));
-        if (visitsEl) visitsEl.textContent = numberFormat(data?.conversion?.visits);
-        if (ordersEl) ordersEl.textContent = numberFormat(data?.conversion?.orders);
+            const numberFormat = getApi()?.numberFormat || ((v) => String(v ?? ""));
+            if (visitsEl) visitsEl.textContent = numberFormat(data?.conversion?.visits);
+            if (ordersEl) ordersEl.textContent = numberFormat(data?.conversion?.orders);
+            break;
     }
 
     requestAnimationFrame(() => resizeCharts());
@@ -271,10 +278,7 @@ function renderTopProductsTable(products) {
             const imgHtml = resolvedImageUrl
                 ? `<img src="${escapeHtml(
                     resolvedImageUrl
-                )}" alt="" loading="lazy" onerror="this.onerror=null;${placeholderUrl
-                    ? `this.src='${escapeHtml(placeholderUrl)}';`
-                    : "this.remove();"
-                }" data-tp-lightbox data-preview-url="${escapeHtml(resolvedImageUrl)}" />`
+                )}" alt="${escapeHtml(name)}" loading="lazy" width="40" height="40" style="object-fit: cover;" data-tp-lightbox data-preview-url="${escapeHtml(resolvedImageUrl)}" />`
                 : `<span class="tp-thumb-fallback"></span>`;
 
             return `
@@ -365,6 +369,45 @@ function initTopProductsLightbox() {
     });
 }
 
+function renderTrafficTable(breakdown) {
+    const body = document.querySelector("[data-traffic-body]");
+    if (!body) return;
+
+    const moneyFormat = getApi()?.moneyFormat || ((v) => String(v ?? ""));
+    const numberFormat = getApi()?.numberFormat || ((v) => String(v ?? ""));
+
+    const rows = Array.isArray(breakdown) ? breakdown : [];
+    if (!rows.length) {
+        body.innerHTML = `<tr><td class="empty" colspan="3">${trans("admin::dashboard.no_data")}</td></tr>`;
+        return;
+    }
+
+    const trafficSourceLabel = (key) => {
+        const k = String(key || "");
+        switch (k) {
+            case "google_ads": return "Google Ads";
+            case "google_organic": return "Google Organic";
+            case "facebook_ads": return "Facebook Ads";
+            case "instagram_ads": return "Instagram Ads";
+            case "direct": return "Doğrudan (Direct)";
+            case "etsy": return "Etsy Shop";
+            default: return k.charAt(0).toUpperCase() + k.slice(1) || "Diğer";
+        }
+    };
+
+    body.innerHTML = rows
+        .map((r) => {
+            return `
+                <tr>
+                    <td><strong>${trafficSourceLabel(r.source)}</strong></td>
+                    <td class="text-right">${numberFormat(r.orders || 0)}</td>
+                    <td class="text-right">${moneyFormat(r.revenue || 0)}</td>
+                </tr>
+            `;
+        })
+        .join("");
+}
+
 function initTrafficControls() {
     const root = document.querySelector("[data-dashboard-analytics]");
     if (!root) return;
@@ -386,6 +429,7 @@ function initTrafficControls() {
                 const data = window.__dashboardAnalyticsCache;
                 if (data) {
                     getApi()?.renderTrafficChart?.(data.traffic_breakdown || []);
+                    renderTrafficTable(data.traffic_breakdown || []);
                     setTimeout(resizeCharts, 50);
                 }
             } catch (err) {
@@ -393,32 +437,54 @@ function initTrafficControls() {
         });
     });
 }
-
 function initTopProductsControls(onChange) {
-    const root = document.querySelector("[data-top-products-limit]");
-    if (!root) return;
+    const limitRoot = document.querySelector("[data-top-products-limit]");
+    const variantsRoot = document.querySelector("[data-top-products-variants]");
 
-    const btns = root.querySelectorAll("[data-limit]");
+    let debounceTimer = null;
+    const debouncedOnChange = () => {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            onChange?.();
+        }, 300); // Wait 300ms after last click
+    };
 
-    btns.forEach((b) => {
-        b.addEventListener("click", (e) => {
-            e.preventDefault();
-
-            const raw = b.getAttribute("data-limit") || "10";
-            const n = Number(raw);
-            const allowed = [5, 10, 15, 20];
-            topProductsLimit = allowed.includes(n) ? n : 10;
-
-            btns.forEach((x) => x.classList.remove("active"));
-            b.classList.add("active");
-
-            try {
-                onChange?.(topProductsLimit);
-            } catch (err) {
-            }
+    if (limitRoot) {
+        const limitBtns = limitRoot.querySelectorAll("[data-limit]");
+        limitBtns.forEach((b) => {
+            b.addEventListener("click", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const raw = b.getAttribute("data-limit") || "10";
+                const newLimit = Number(raw) || 10;
+                if (newLimit === topProductsLimit) return; // No change, skip
+                topProductsLimit = newLimit;
+                limitBtns.forEach((x) => x.classList.remove("active"));
+                b.classList.add("active");
+                debouncedOnChange();
+            });
         });
-    });
+    }
+
+    if (variantsRoot) {
+        const variantBtns = variantsRoot.querySelectorAll("[data-variants]");
+        variantBtns.forEach((b) => {
+            b.addEventListener("click", (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const raw = b.getAttribute("data-variants") || "1";
+                const group = raw === "1";
+                const currentGroup = window.__topProductsGroupVariants !== false;
+                if (group === currentGroup) return; // No change, skip
+                variantBtns.forEach((x) => x.classList.remove("active"));
+                b.classList.add("active");
+                window.__topProductsGroupVariants = group;
+                debouncedOnChange();
+            });
+        });
+    }
 }
+
 
 async function initDashboardAnalyticsPanel() {
     const root = document.querySelector("[data-dashboard-analytics]");
@@ -470,18 +536,22 @@ async function initDashboardAnalyticsPanel() {
     const renderAll = (data) => {
         window.__dashboardAnalyticsCache = data;
         renderKpis(data.totals);
-        if (topEntitiesTab === "products") renderTopProductsTable(data.top_products || []);
-        if (topEntitiesTab === "categories") renderTopCategoriesTable(data.top_categories || []);
-        if (topEntitiesTab === "brands") renderTopBrandsTable(data.top_brands || []);
+
+        // Render all entity tables so they're ready when tabs are switched
+        renderTopProductsTable(data.top_products || []);
+        renderTopCategoriesTable(data.top_categories || []);
+        renderTopBrandsTable(data.top_brands || []);
 
         getApi()?.renderStockStatusChart?.(data.stock_status || null);
 
+        // Crucial: Only render the ACTIVE tab's chart to save resources
         renderActiveTabFromCache(root, activeTabKey, data);
     };
 
     const load = async (range) => {
         const data = await fetchDashboardAnalytics(range, {
             top_products_limit: topProductsLimit,
+            group_variants: window.__topProductsGroupVariants === false ? 0 : 1
         });
         if (!data) return;
         cache = data;
@@ -506,9 +576,7 @@ async function initDashboardAnalyticsPanel() {
     await load(currentRange);
 
     initTrafficControls();
-
     initTopEntitiesTabs();
-    setTopEntitiesTab(topEntitiesTab);
 
     initTopProductsControls(async () => {
         await load(currentRange);

@@ -85,19 +85,22 @@ class ProductShowPageComposer
         try {
             $imagePath = optional(optional($product->variant)->base_image)->path
                 ?: optional($product->base_image)->path
-                ?: asset('build/assets/image-placeholder.png');
+                ?: 'storage/media/image-placeholder.png';
+            
+            // Ensure absolute URL
+            $imagePath = str_starts_with($imagePath, 'http') ? $imagePath : url($imagePath);
         } catch (\Throwable $e) {
-            $imagePath = asset('build/assets/image-placeholder.png');
+            $imagePath = url('storage/media/image-placeholder.png');
         }
 
-        $rawDescription = $product->short_description ?: $product->description;
+        $rawDescription = $product->short_description ?: $product->description ?: $product->seo_meta_description;
 
         if ($rawDescription) {
             try {
                 $rawDescription = trim(strip_tags((string) $rawDescription));
                 // Çok uzun açıklamaları kısalt, Google için temiz ve öz bir metin bırak
-                if (mb_strlen($rawDescription) > 400) {
-                    $rawDescription = mb_substr($rawDescription, 0, 400);
+                if (mb_strlen($rawDescription) > 300) {
+                    $rawDescription = mb_substr($rawDescription, 0, 300) . '...';
                 }
             } catch (\Throwable $e) {
                 // Temizleme sırasında hata olursa olduğu gibi bırak
@@ -106,9 +109,9 @@ class ProductShowPageComposer
 
         $schema = Schema::product()
             ->name($product->name)
-            ->sku($product->sku)
-            ->url(url($product->url()))
-            ->image(url($imagePath))
+            ->sku($product->sku ?: (string) $product->id)
+            ->url($product->url()) // $product->url() already returns absolute URL usually
+            ->image($imagePath)
             ->brand($this->brandSchema($product))
             ->description($rawDescription);
 
@@ -142,6 +145,12 @@ class ProductShowPageComposer
 
         if (($reviewStats['count'] ?? 0) > 0) {
             $schema->aggregateRating($this->aggregateRatingSchema($reviewStats));
+            
+            // Add actual reviews to the schema
+            $reviews = $this->reviewsSchema($product);
+            if (!empty($reviews)) {
+                $schema->review($reviews);
+            }
         }
 
         return $schema;

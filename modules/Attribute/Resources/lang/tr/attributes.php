@@ -6,7 +6,15 @@ return [
         'name' => 'Name',
         'categories' => 'Categories',
         'slug' => 'URL',
-        'is_filterable' => 'Filterable',
+        'is_filterable' => 'Filtrelenebilir',
+        'filterable_type' => 'Filtre Tipi',
+    ],
+    'filterable_types' => [
+        'checkbox' => 'Onay Kutusu (Checkbox)',
+        'radio' => 'Tekli Seçim (Radio)',
+        'dropdown' => 'Açılır Menü (Dropdown)',
+        'range' => 'Sayısal Aralık (Range)',
+        'color' => 'Renk Seçimi (Swatch)',
     ],
     'attribute_sets' => [
         'name' => 'Name',

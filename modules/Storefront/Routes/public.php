@@ -13,3 +13,8 @@ Route::get('storefront/vertical-products/{columnNumber}', 'VerticalProductContro
 Route::delete('storefront/newsletter-popup', 'NewsletterPopup@destroy')->name('storefront.newsletter_popup.destroy');
 
 Route::delete('storefront/cookie-bar', 'CookieBarController@destroy')->name('storefront.cookie_bar.destroy');
+
+// İkas-style clean URL resolver (must be last)
+Route::get('{slug}', 'UrlResolverController@resolve')
+    ->where('slug', '^(?!admin|api|storage|cart|checkout|account|assets|media|login|register|password|email|logout|install|license|telescope|debugbar|_debugbar|storefront|brands\/|categories|products|suggestions|stock-notify).*')
+    ->name('storefront.url_resolver');

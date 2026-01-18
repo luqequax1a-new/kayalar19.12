@@ -5,14 +5,22 @@ export default function (product) {
         addingToCart: false,
 
         get productName() {
+            // Priority 1: Separately listed variants
             if (this.product.list_variants_separately && this.hasAnyVariant && this.item?.name) {
                 return `${this.product.name} - ${this.item.name}`;
             }
+
+            // Priority 2: Currently selected/hovered variant name (if available)
+            if (this.hasAnyVariant && this.item && this.item.name && this.item.uid && this.item.uid !== this.product.uid) {
+                return `${this.product.name} - ${this.item.name}`;
+            }
+
             return this.product.name;
         },
 
         get productUrl() {
-            let url = `/products/${this.product.slug}`;
+            // İkas-style: Use backend URL or clean format
+            let url = this.product.url || `/${this.product.slug}`;
 
             if (this.hasAnyVariant && this.item.uid) {
                 url += `?variant=${this.item.uid}`;
@@ -26,43 +34,47 @@ export default function (product) {
         },
 
         get productPrice() {
+            const suf = this.unitSuffix ? `/${this.unitSuffix}` : "";
+
             if (this.hasSpecialPrice) {
                 const sp = formatCurrency(this.specialPrice);
                 const rp = formatCurrency(this.regularPrice);
-                const suf = this.unitSuffix ? ` /${this.unitSuffix}` : "";
-                return `<span class='special-price'>${sp}${suf}</span> <span class='previous-price'>${rp}${suf}</span>`;
+                return `<span class='special-price'>${sp}${suf}</span><span class='previous-price'>${rp}${suf}</span>`;
             }
 
             const rp = formatCurrency(this.regularPrice);
-            const suf = this.unitSuffix ? ` /${this.unitSuffix}` : "";
-            return `${rp}${suf}`;
+            return `<span class='current-price'>${rp}${suf}</span>`;
         },
 
         get regularPrice() {
-            return this.item.price.inCurrentCurrency.amount;
+            const price = this.item?.price;
+            if (!price) return 0;
+            return price.inCurrentCurrency?.amount ?? price.amount ?? 0;
         },
 
         get hasSpecialPrice() {
-            return this.item.special_price !== null;
+            return this.item?.special_price !== null && this.item?.special_price !== undefined;
         },
 
         get hasPercentageSpecialPrice() {
-            return this.item.has_percentage_special_price;
+            return !!this.item?.has_percentage_special_price;
         },
 
         get specialPrice() {
-            return this.item.selling_price.inCurrentCurrency.amount;
+            const price = this.item?.selling_price;
+            if (!price) return this.regularPrice;
+            return price.inCurrentCurrency?.amount ?? price.amount ?? 0;
         },
 
         get specialPricePercent() {
             return Math.round(
                 ((this.regularPrice - this.specialPrice) / this.regularPrice) *
-                    100
+                100
             );
         },
 
         get hasAnyVariant() {
-            return this.product.variant !== null;
+            return !!this.product.variant;
         },
 
         get hasAnyOption() {
@@ -74,7 +86,7 @@ export default function (product) {
         },
 
         get hasAnyMedia() {
-            return this.item.media.length !== 0;
+            return (this.item?.media?.length || 0) !== 0;
         },
 
         get hasBaseImage() {
@@ -94,7 +106,7 @@ export default function (product) {
             if (vt) return vt;
             if (p) return p;
             if (v) return v;
-            return `${window.location.origin}/build/assets/image-placeholder.png`;
+            return `${window.location.origin}/measurements/image-placeholder.png`;
         },
 
         get baseImageThumb() {
@@ -104,19 +116,19 @@ export default function (product) {
         },
 
         get isInStock() {
-            return this.item.is_in_stock;
+            return !!this.item?.is_in_stock;
         },
 
         get isOutOfStock() {
-            return this.item.is_out_of_stock;
+            return !!this.item?.is_out_of_stock;
         },
 
         get doesManageStock() {
-            return this.item.does_manage_stock;
+            return !!this.item?.does_manage_stock;
         },
 
         get isNew() {
-            return !this.isOutOfStock && this.product.is_new;
+            return !this.isOutOfStock && !!this.product?.is_new;
         },
 
         syncWishlist() {

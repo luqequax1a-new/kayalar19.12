@@ -220,10 +220,11 @@ class OrderService
             'sub_total' => Cart::subTotal()->amount(),
             'shipping_method' => Cart::shippingMethod()->name(),
             'shipping_cost' => Cart::shippingCost()->amount(),
-            'coupon_id' => Cart::coupon()->id(),
-            'coupon_code' => Cart::coupon()->code(),
+            'coupon_id' => Cart::coupon()?->id(),
+            'coupon_code' => Cart::coupon()?->code(),
             'discount' => Cart::discount()->amount(),
             'total' => Cart::total()->amount(),
+            'cod_fee' => Cart::codFee()->amount(),
             'payment_method' => $request->payment_method,
             'currency' => currency(),
             'currency_rate' => CurrencyRate::for(currency()),
@@ -532,7 +533,9 @@ class OrderService
 
     private function incrementCouponUsage()
     {
-        Cart::coupon()->usedOnce();
+        if (Cart::coupon()) {
+            Cart::coupon()->usedOnce();
+        }
     }
 
     private function markCouponAsRedeemed(Order $order): void
@@ -544,10 +547,6 @@ class OrderService
         $coupon = Coupon::query()->withoutGlobalScope('active')->find($order->coupon_id);
         if (!$coupon) {
             return;
-        }
-
-        if (! is_null($coupon->usage_limit_per_coupon) && $coupon->usage_limit_per_coupon > 0) {
-            $coupon->usage_limit_per_coupon = max(0, $coupon->usage_limit_per_coupon - 1);
         }
 
         $coupon->redeemed_order_id = $order->id;
@@ -563,13 +562,58 @@ class OrderService
 
     private function markCartAsRecovered(Order $order)
     {
-        $sessionId = session()->getId();
-        \Modules\Cart\Entities\Cart::where('id', 'like', $sessionId . '%')
+        $recoveredCartIds = [];
+
+        // 1. Check session for direct recovery link (set by cart.track)
+        // This is the ONLY cart that should be marked as recovered
+        if (session()->has('recovered_from_cart_id')) {
+            $recoveredCartIds[] = session()->get('recovered_from_cart_id');
+        } else {
+            // 2. If no session cart, try to find the most recent cart by email
+            // Only mark ONE cart as recovered, not all of them
+            $recentCart = \Modules\Cart\Entities\Cart::where('is_recovered', false)
+                ->where('id', 'like', '%_cart_items')
+                ->where(function ($query) use ($order) {
+                    if ($order->customer_email) {
+                        $query->where('customer_email', $order->customer_email);
+                    }
+                    
+                    if ($order->customer_id) {
+                        $query->orWhere('user_id', $order->customer_id);
+                    }
+                })
+                ->orderBy('updated_at', 'desc')
+                ->first();
+            
+            if ($recentCart) {
+                $recoveredCartIds[] = $recentCart->id;
+            }
+        }
+
+        $cartIds = $recoveredCartIds;
+
+        if (empty($cartIds)) {
+            return;
+        }
+
+        // Also mark the conditions cart for each items cart
+        $allRelatedIds = [];
+        foreach ($cartIds as $id) {
+            $allRelatedIds[] = $id;
+            
+            if (str_contains($id, '_cart_items')) {
+                $allRelatedIds[] = str_replace('_cart_items', '_cart_conditions', $id);
+            }
+        }
+
+        \Modules\Cart\Entities\Cart::whereIn('id', $allRelatedIds)
             ->update([
                 'is_recovered' => true,
                 'recovered_at' => now(),
                 'order_id' => $order->id,
             ]);
+
+        session()->forget('recovered_from_cart_id');
     }
 
 

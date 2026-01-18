@@ -5,6 +5,12 @@ use Illuminate\Support\Facades\Route;
 Route::get('login', 'AuthController@getLogin')->name('admin.login');
 Route::post('login', 'AuthController@postLogin')->name('admin.login.post');
 
+Route::get('login/verify', 'AuthController@getVerify')->name('admin.login.verify');
+Route::post('login/verify', 'AuthController@postVerify')->name('admin.login.verify.post');
+Route::post('login/verify/resend', 'AuthController@postResendCode')->name('admin.login.verify.resend');
+Route::post('login/verify/resend/sms', 'AuthController@postResendCodeSms')->name('admin.login.verify.resend.sms');
+
+
 Route::get('logout', 'AuthController@getLogout')->name('admin.logout');
 
 Route::get('password/reset', 'AuthController@getReset')->name('admin.reset');

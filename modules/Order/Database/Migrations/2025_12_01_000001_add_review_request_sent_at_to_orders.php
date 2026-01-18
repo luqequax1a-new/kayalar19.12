@@ -10,7 +10,7 @@ return new class extends Migration
     {
         if (! Schema::hasColumn('orders', 'review_request_sent_at')) {
             Schema::table('orders', function (Blueprint $table) {
-                $table->timestamp('review_request_sent_at')->nullable()->after('deleted_at');
+                $table->timestamp('review_request_sent_at')->nullable();
             });
         }
     }

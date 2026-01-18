@@ -17,8 +17,12 @@ class BrandController
      */
     public function index()
     {
+        $pageId = setting('storefront_brands_page');
+        $page = \Modules\Page\Entities\Page::where('id', $pageId)->first();
+
         return view('storefront::public.brands.index', [
-            'brands' => Brand::with('files')->get(),
+            'brands' => Brand::with('files')->withCount('products')->get()->sortBy('name'),
+            'page' => $page,
         ]);
     }
 }

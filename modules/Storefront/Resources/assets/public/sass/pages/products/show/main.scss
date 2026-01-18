@@ -1,6 +1,6 @@
+@import "../../../utils/z-index";
 /*rtl:begin:ignore*/
 @import "flatpickr/dist/flatpickr";
-@import "glightbox/dist/css/glightbox";
 /*rtl:end:ignore*/
 @import "../../../vendors/drift-zoom";
 @import "../../../utils/common/_custom-page-content";
@@ -12,24 +12,6 @@
 @import "sections/_product-specification";
 @import "sections/_product-reviews";
 
-/*rtl:begin:ignore*/
-.glightbox-container {
-    .gslide-image img {
-        width: auto !important;
-        height: auto !important;
-        max-width: 100vw !important;
-        max-height: 90vh !important;
-        object-fit: contain !important;
-    }
-
-    .gdesc-inner,
-    .gslide-description,
-    .gslide-title {
-        display: none !important;
-    }
-}
-/*rtl:end:ignore*/
-
 .product-details-wrap {
     margin-top: 50px;
 }
@@ -39,6 +21,7 @@
 }
 
 .product-page-custom-text {
+
     .container,
     .container-fluid {
         max-width: 100% !important;

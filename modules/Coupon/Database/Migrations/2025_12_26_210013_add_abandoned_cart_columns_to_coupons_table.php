@@ -14,8 +14,8 @@ class AddAbandonedCartColumnsToCouponsTable extends Migration
     public function up()
     {
         Schema::table('coupons', function (Blueprint $table) {
-            $table->boolean('is_abandoned_cart_coupon')->default(false)->after('is_review_coupon');
-            $table->string('cart_id')->nullable()->after('is_abandoned_cart_coupon');
+            $table->boolean('is_abandoned_cart_coupon')->default(false);
+            $table->string('cart_id')->nullable();
         });
     }
 

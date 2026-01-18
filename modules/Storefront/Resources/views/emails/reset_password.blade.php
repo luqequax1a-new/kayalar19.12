@@ -1,113 +1,108 @@
 <!DOCTYPE html>
-<html lang="en" style="-ms-text-size-adjust: 100%;
-                    -webkit-text-size-adjust: 100%;
-                    -webkit-print-color-adjust: exact;"
->
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-        <style>
-            body { margin:0; padding:0; font-family:'Poppins', Arial, sans-serif; font-size:16px; background:#f3f4f6; color:#374151; }
-            .wrapper { width:100%; max-width:720px; margin:auto; background:#ffffff; border-radius:12px; overflow:hidden; }
-            .section { padding:24px 16px; }
-            .title { font-size:22px; font-weight:800; color:#111827; text-align:center; margin:0 0 8px; }
-            .subtitle { font-size:14px; color:#6b7280; text-align:center; }
-            .btn { display:inline-block; background:{{ mail_theme_color() }}; color:#fafafa; text-decoration:none; padding:12px 28px; border-radius:8px; font-weight:700; }
-            .footer { background:#0f172a; color:#ffffff; text-align:center; padding:18px 16px; }
-            .card { border:1px solid #e5e7eb; border-radius:12px; background:#ffffff; }
-        </style>
-    </head>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.6; color: #1e293b; background: #f1f5f9; }
+        .main-wrapper { width: 100%; padding: 40px 15px; background-color: #f1f5f9; }
+        .container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        
+        .preheader { display: none; max-width: 0; max-height: 0; overflow: hidden; font-size: 1px; line-height: 1px; color: #fff; opacity: 0; }
 
-    <body>
-        <table style="border-collapse: collapse; width: 100%;">
-            <tbody>
-                <tr>
-                    <td style="padding: 0;">
-                        <table style="border-collapse: collapse; width: 100%;">
-                            <tbody>
-                                <tr>
-                                    <td style="background: {{ mail_theme_color() }}; text-align: center;">
-                                        @if (is_null($logo))
-                                            <h5 style="font-size: 30px; line-height: 36px; margin: 0; padding: 24px 15px; text-align: center;">
-                                                <a href="{{ route('home') }}" style="font-family:'Poppins', Arial, sans-serif; font-weight:700; color:#ffffff; text-decoration:none;">{{ setting('store_name') }}</a>
-                                            </h5>
-                                        @else
-                                            <div style="display:flex; height:64px; width:200px; align-items:center; justify-content:center; margin:auto; padding:16px 15px;">
-                                                <img src="{{ $logo }}" style="max-height:100%; max-width:100%;" alt="Logo">
-                                            </div>
-                                        @endif
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </td>
-                </tr>
+        .header { 
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%); 
+            padding: 60px 30px; 
+            text-align: center; 
+            color: #fff; 
+        }
+        .header h1 { margin: 10px 0 0; font-size: 32px; font-weight: 800; letter-spacing: -0.5px; }
+        .header p { margin: 15px 0 0; font-size: 18px; opacity: 0.95; font-weight: 600; }
 
-                <tr>
-                    <td style="padding: 24px 8px;">
-                        <table role="presentation" cellpadding="0" cellspacing="0" class="wrapper">
-                            <tr>
-                                <td class="section" style="padding-bottom:8px;">
-                                    <div class="title">Şifrenizi Sıfırlayın</div>
-                                    <div class="subtitle">Merhaba {{ $user->first_name }}, şifre sıfırlama talebiniz alındı.</div>
-                                </td>
-                            </tr>
+        .content { padding: 40px 35px; border-bottom: 1px solid #f1f5f9; text-align: center; }
+        .main-text { font-size: 16px; color: #475569; line-height: 1.8; margin-bottom: 30px; }
+        
+        .url-box { 
+            background: #f8fafc; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 12px; 
+            padding: 20px; 
+            margin: 30px 0; 
+            word-break: break-all;
+            font-size: 13px;
+            color: #64748b;
+        }
 
-                            <tr>
-                                <td class="section" style="padding-top:0;">
-                                    <span style="display:block; text-align:center; font-size:15px; color:#4b5563;">Butona tıklayarak yeni şifrenizi belirleyebilirsiniz.</span>
-                                </td>
-                            </tr>
+        .cta-wrapper { text-align: center; padding: 40px 30px; background: #fcfcfc; }
+        .btn { 
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); 
+            color: #fff !important; 
+            padding: 18px 45px; 
+            border-radius: 50px; 
+            text-decoration: none; 
+            font-weight: 800; 
+            font-size: 16px; 
+            display: inline-block; 
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3); 
+        }
+        
+        .footer { padding: 40px 30px; text-align: center; background: #f8fafc; font-size: 12px; color: #94a3b8; }
+        .footer-links { margin-bottom: 20px; }
+        .footer-links a { color: #6366f1; text-decoration: none; margin: 0 10px; font-weight: 600; }
 
-                            <tr>
-                                <td class="section" style="text-align:center;">
-                                    <a href="{{ $url }}" class="btn">Şifremi Sıfırla</a>
-                                </td>
-                            </tr>
+        @media screen and (max-width: 480px) {
+            .header h1 { font-size: 26px; }
+            .content { padding: 30px 20px; }
+        }
+    </style>
+</head>
+<body>
+<span class="preheader">Şifrenizi sıfırlamak için bu güvenli bağlantıyı kullanın. 🛡️</span>
+<table class="main-wrapper" width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+        <td align="center">
+            <div class="container">
+                <div class="header">
+                    <span style="font-size: 48px;">🔐</span>
+                    <h1>Şifreni mi Unuttun?</h1>
+                    <p>Endişelenme, senin için buradayız!</p>
+                </div>
 
-                            <tr>
-                                <td class="section" style="padding-top:8px;">
-                                    <div class="card" style="padding:14px;">
-                                        <div style="font-size:14px; color:#374151; text-align:center;">Bağlantı çalışmıyorsa aşağıdaki URL’yi kopyalayıp tarayıcınıza yapıştırın.</div>
-                                        <div style="text-align:center; margin-top:8px;">
-                                            <a href="{{ $url }}" style="font-size:14px; color:#31629f; word-break:break-all;">{{ $url }}</a>
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
+                <div class="content">
+                    <div class="main-text">
+                        Merhaba {{ $user->first_name }},<br><br>
+                        Görünüşe göre şifreni sıfırlamak için bir talepte bulundun. Güvenliğin bizim için her şeyden önemli. Aşağıdaki butona tıklayarak yeni şifreni hemen oluşturabilirsin.
+                    </div>
 
-                            <tr>
-                                <td class="section" style="padding-top:8px;">
-                                    <div class="card" style="padding:14px; text-align:center;">
-                                        <div style="font-size:14px; color:#374151; font-weight:700; margin-bottom:6px;">Yardım mı lazım?</div>
-                                        @if (setting('store_phone') && ! setting('store_phone_hide'))
-                                            <div style="margin:4px 0;"><a href="tel:{{ setting('store_phone') }}" style="text-decoration:none; color:#31629f;">{{ setting('store_phone') }}</a></div>
-                                        @endif
-                                        @if (setting('store_email') && ! setting('store_email_hide'))
-                                            <div style="margin:4px 0;"><a href="mailto:{{ setting('store_email') }}" style="text-decoration:none; color:#31629f;">{{ setting('store_email') }}</a></div>
-                                        @endif
-                                        <div style="margin-top:6px;"><a href="{{ route('contact.create') }}" style="text-decoration:none; color:#31629f;">İletişim</a></div>
-                                    </div>
-                                </td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
+                    <div style="text-align:center; padding: 20px 0;">
+                        <a href="{{ $url }}" class="btn">Şifremi Yenile</a>
+                    </div>
 
-                <tr>
-                    <td class="footer">
-                        <div style="font-family:'Poppins', Arial, sans-serif; font-size:16px; font-weight:800;">{{ setting('store_name') }}</div>
-                        @if (setting('store_phone') && ! setting('store_phone_hide'))
-                            <div><a href="tel:{{ setting('store_phone') }}" style="text-decoration:none; color:#ffffff;">{{ setting('store_phone') }}</a></div>
-                        @endif
-                        @if (setting('store_email') && ! setting('store_email_hide'))
-                            <div><a href="mailto:{{ setting('store_email') }}" style="text-decoration:none; color:#ffffff;">{{ setting('store_email') }}</a></div>
-                        @endif
-                        <div style="margin-top:8px; opacity:0.85; font-size:13px;">&copy; {{ date('Y') }} Tüm hakları saklıdır.</div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </body>
+                    <div class="url-box">
+                        <strong>Bağlantı çalışmıyor mu?</strong><br>
+                        Aşağıdaki linki kopyalayıp tarayıcının adres çubuğuna yapıştırabilirsin:<br><br>
+                        <a href="{{ $url }}" style="color: #6366f1; text-decoration: none;">{{ $url }}</a>
+                    </div>
+                </div>
+
+                <div class="cta-wrapper">
+                    <p style="margin: 0; color: #64748b; font-size: 13px;">Bu işlemi sen yapmadıysan bu e-postayı güvenle görmezden gelebilirsin. Şifren güvende kalacaktır.</p>
+                </div>
+
+                <div class="footer">
+                    <div style="font-weight: 800; font-size: 16px; color: #64748b; margin-bottom: 5px;">{{ setting('store_name') }}</div>
+                    <div style="margin-bottom: 20px;">{{ setting('store_address') }}</div>
+                    <div class="footer-links">
+                        <a href="{{ url('/') }}">Mağazayı Ziyaret Et</a>
+                        <a href="{{ url('/contact') }}">Destek Al</a>
+                        <a href="{{ url('/login') }}">Giriş Yap</a>
+                    </div>
+                    <p>&copy; {{ date('Y') }} {{ setting('store_name') }}. Güvenle Hazırlandı. 🛡️</p>
+                </div>
+            </div>
+        </td>
+    </tr>
+</table>
+</body>
 </html>

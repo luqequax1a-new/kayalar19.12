@@ -536,6 +536,8 @@ class ProductFeedBuilder
             'main_image' => $this->normalizeAbsoluteUrl($this->mainImage($product)),
             'additional_images' => array_slice(array_map([$this, 'normalizeAbsoluteUrl'], $this->additionalImages($product)), 0, 10),
             'vat_rate' => $this->resolveVatRate($product),
+            'stock' => (int) $product->qty,
+            'weight' => (float) ($product->weight ?? 0),
         ];
     }
 
@@ -584,6 +586,8 @@ class ProductFeedBuilder
             'main_image' => $this->normalizeAbsoluteUrl($mainImage),
             'additional_images' => array_slice(array_map([$this, 'normalizeAbsoluteUrl'], $additional), 0, 10),
             'vat_rate' => $this->resolveVatRate($product),
+            'stock' => (int) $variant->qty,
+            'weight' => (float) ($variant->weight ?? $product->weight ?? 0),
         ];
     }
 }

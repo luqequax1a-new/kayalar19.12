@@ -11,7 +11,7 @@ return new class extends Migration
     {
         if (! Schema::hasColumn('stock_notify_requests', 'variant_id')) {
             Schema::table('stock_notify_requests', function (Blueprint $table) {
-                $table->unsignedInteger('variant_id')->nullable()->after('product_id');
+                $table->unsignedInteger('variant_id')->nullable();
             });
         }
 

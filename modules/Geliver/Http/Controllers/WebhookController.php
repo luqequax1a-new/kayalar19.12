@@ -48,6 +48,7 @@ class WebhookController
                 $payload = $decoded;
             }
         }
+        \Log::info('GELIVER_WEBHOOK_PAYLOAD', ['payload' => $payload]);
         \Log::info('GELIVER_PAYLOAD_DECODED', [
             'has_id' => isset($payload['id']) || isset($payload['shipmentID']) || isset($payload['data']['id']) || isset($payload['data']['shipmentID']) || isset($payload['shipment']['id']) || isset($payload['shipment']['shipmentID']),
             'has_status' => isset($payload['trackingSubStatusCode'])
@@ -150,49 +151,13 @@ class WebhookController
             return response()->json(['message' => 'order not found'], 200);
         }
 
-        $trackingNumber = data_get($payload, 'tracking_number')
-            ?? data_get($payload, 'trackingNo')
-            ?? data_get($payload, 'trackingNumber')
-            ?? data_get($payload, 'shipment.tracking_number')
-            ?? data_get($payload, 'shipment.trackingNo')
-            ?? data_get($payload, 'data.tracking_number')
-            ?? data_get($payload, 'data.trackingNo')
-            ?? data_get($payload, 'awb')
-            ?? data_get($payload, 'waybillNo');
-        $carrierName = data_get($payload, 'carrier')
-            ?? data_get($payload, 'carrierName')
-            ?? data_get($payload, 'carrier.name')
-            ?? data_get($payload, 'providerName')
-            ?? data_get($payload, 'providerCode')
-            ?? data_get($payload, 'trackingStatus.providerName')
-            ?? data_get($payload, 'trackingStatus.providerCode')
-            ?? data_get($payload, 'data.providerName')
-            ?? data_get($payload, 'data.providerCode')
-            ?? data_get($payload, 'data.trackingStatus.providerName')
-            ?? data_get($payload, 'data.trackingStatus.providerCode')
-            ?? data_get($payload, 'shipment.providerName')
-            ?? data_get($payload, 'shipment.providerCode')
-            ?? data_get($payload, 'shipment.trackingStatus.providerName')
-            ?? data_get($payload, 'shipment.trackingStatus.providerCode')
-            ?? data_get($payload, 'shipment.carrier')
-            ?? data_get($payload, 'shipment.carrierName')
-            ?? data_get($payload, 'shipment.carrier.name')
-            ?? data_get($payload, 'data.carrier')
-            ?? data_get($payload, 'data.carrierName')
-            ?? data_get($payload, 'data.carrier.name');
-        $trackingUrl = data_get($payload, 'tracking_url')
-            ?? data_get($payload, 'trackingUrl')
-            ?? data_get($payload, 'shipment.tracking_url')
-            ?? data_get($payload, 'shipment.trackingUrl')
-            ?? data_get($payload, 'data.tracking_url')
-            ?? data_get($payload, 'data.trackingUrl')
-            ?? data_get($payload, 'tracking.link')
-            ?? data_get($payload, 'shipment.tracking.link')
-            ?? data_get($payload, 'data.tracking.link');
+        $svc = app(\Modules\Geliver\Services\GeliverService::class);
+        $trackingNumber = $svc->extractTrackingNumber($payload);
+        $carrierName = $svc->extractCarrierName($payload);
+        $trackingUrl = $svc->extractTrackingUrl($payload);
 
         if ((!$trackingNumber || !$carrierName) && $shipmentId) {
             try {
-                $svc = app(\Modules\Geliver\Services\GeliverService::class);
                 $remote = $svc->fetchShipmentById($shipmentId);
                 if (!$trackingNumber) { $trackingNumber = $svc->extractTrackingNumber($remote); }
                 if (!$carrierName) { $carrierName = $svc->extractCarrierName($remote); }
@@ -224,6 +189,7 @@ class WebhookController
                 }
             }
         }
+        \Log::info('GELIVER_UPDATE_PAYLOAD', ['payload' => $updatePayload, 'order_id' => $order->id]);
 
         $map = config('geliver.status_map');
         $finals = config('geliver.final_statuses');

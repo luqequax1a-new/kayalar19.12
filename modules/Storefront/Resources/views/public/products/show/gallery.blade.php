@@ -2,6 +2,9 @@
     <div class="product-gallery-wrapper" style="position: relative;">
     </div>
     <div class="product-gallery-preview-wrap position-relative overflow-hidden">
+        @php
+            $displayName = $product->name;
+        @endphp
         @include('storefront::public.partials.products.tag_badges', [
             'product' => $product,
             'context' => 'detail',
@@ -15,9 +18,10 @@
                     @foreach ($product->media as $media)
                         @php($isLcp = !$lcpAssigned)
                         @php($lcpAssigned = true)
+                        @php($detailAvif = $media->detail_avif_url)
+                        @php($detailWebp = $media->detail_webp_url)
                         @php(
                             $detailJpeg = $media->detail_jpeg_url
-                                ?? $media->grid_jpeg_url
                                 ?? $media->path
                                 ?? asset('build/assets/image-placeholder.png')
                         )
@@ -26,30 +30,16 @@
                             <div class="gallery-preview-slide">
                                 <div class="gallery-preview-item" @click="triggerGalleryPreviewLightbox($event)">
                                     <picture>
-                                        @if ($media->ikas_avif_srcset)
-                                            <source
-                                                srcset="{{ $media->ikas_avif_srcset }}"
-                                                sizes="{{ $detailSizes }}"
-                                                type="image/avif"
-                                            >
+                                        @if ($detailAvif)
+                                            <source srcset="{{ $detailAvif }}" type="image/avif">
                                         @endif
-
-                                        @if ($media->ikas_webp_srcset)
-                                            <source
-                                                srcset="{{ $media->ikas_webp_srcset }}"
-                                                sizes="{{ $detailSizes }}"
-                                                type="image/webp"
-                                            >
+                                        @if ($detailWebp)
+                                            <source srcset="{{ $detailWebp }}" type="image/webp">
                                         @endif
-
                                         <img
-                                            src="{{ $detailJpeg }}"
-                                            @if ($media->ikas_jpeg_srcset)
-                                                srcset="{{ $media->ikas_jpeg_srcset }}"
-                                            @endif
-                                            sizes="{{ $detailSizes }}"
+                                            src="{{$detailJpeg }}"
                                             data-zoom="{{ $detailJpeg }}"
-                                            alt="{{ $product->name }}"
+                                            alt="{{ $displayName }}"
                                             width="1100"
                                             height="1100"
                                             loading="{{ $isLcp ? 'eager' : 'lazy' }}"
@@ -81,7 +71,7 @@
                                         controls
                                         controlslist="nofullscreen"
                                         playsinline
-                                        preload="metadata"
+                                        preload="none"
                                         poster="{{ $poster }}"
                                         style="width: 100%; height: 100%; object-fit: cover;"
                                     >
@@ -96,7 +86,7 @@
                     <div class="swiper-slide">
                         <div class="gallery-preview-slide">
                             <div class="gallery-preview-item" @click="triggerGalleryPreviewLightbox($event)">
-                                <img src="{{ asset('build/assets/image-placeholder.png') }}" data-zoom="{{ asset('build/assets/image-placeholder.png') }}" alt="{{ $product->name }}" class="image-placeholder">
+                                <img src="{{ asset('build/assets/image-placeholder.png') }}" data-zoom="{{ asset('build/assets/image-placeholder.png') }}" alt="{{ $displayName }}" class="image-placeholder">
                             </div>
 
                             <a href="{{ asset('build/assets/image-placeholder.png') }}" data-gallery="product-gallery-preview" class="gallery-view-icon glightbox" aria-label="View image">

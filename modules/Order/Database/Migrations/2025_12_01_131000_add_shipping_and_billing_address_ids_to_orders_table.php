@@ -21,8 +21,8 @@ return new class extends Migration {
         });
 
         Schema::table('orders', function (Blueprint $table) {
-            $table->unsignedInteger('shipping_address_id')->nullable()->after('shipping_country');
-            $table->unsignedInteger('billing_address_id')->nullable()->after('shipping_address_id');
+            $table->unsignedInteger('shipping_address_id')->nullable();
+            $table->unsignedInteger('billing_address_id')->nullable();
         });
 
         Schema::table('orders', function (Blueprint $table) {
